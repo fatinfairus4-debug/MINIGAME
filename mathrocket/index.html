@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Rocket Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00bfff, 0 0 20px #00bfff;
+            background: linear-gradient(to right, #00bfff, #ff00ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #00bfff;
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+        }
+        
+        .stat-box {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00ffcc;
+        }
+        
+        .game-area {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid #00bfff;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.6);
+        }
+        
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            background: linear-gradient(to right, #00bfff, #0080ff);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(to right, #00ccff, #0099ff);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        .question-container {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            text-align: center;
+            border: 2px solid #ff00ff;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+        }
+        
+        .question {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+        
+        .answers {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .answer-btn {
+            padding: 10px 20px;
+            background: linear-gradient(to right, #ff00ff, #cc00ff);
+            min-width: 80px;
+        }
+        
+        .instructions {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+            margin-top: 10px;
+            border: 1px solid #00ffcc;
+        }
+        
+        .instructions h3 {
+            color: #00ffcc;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            list-style-type: none;
+            padding-left: 10px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .instructions li:before {
+            content: "🚀";
+            margin-right: 10px;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 15px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .final-score {
+            font-size: 2.5rem;
+            color: #ffcc00;
+            margin: 20px 0;
+            text-shadow: 0 0 10px #ffcc00;
+        }
+        
+        .difficulty-selector {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .difficulty-btn {
+            padding: 8px 15px;
+            font-size: 1rem;
+        }
+        
+        .active-difficulty {
+            background: linear-gradient(to right, #ffcc00, #ff9900);
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🚀 Math Rocket Adventure</h1>
+        <p>Solve math problems to fuel your rocket and collect stars!</p>
+    </header>
+    
+    <div class="game-container">
+        <div class="stats">
+            <div class="stat-box">
+                <div>Score</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat-box">
+                <div>Fuel</div>
+                <div class="stat-value" id="fuel">100%</div>
+            </div>
+            <div class="stat-box">
+                <div>Level</div>
+                <div class="stat-value" id="level">1</div>
+            </div>
+        </div>
+        
+        <div class="difficulty-selector">
+            <button class="difficulty-btn active-difficulty" data-difficulty="easy">Easy</button>
+            <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+            <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+        </div>
+        
+        <div class="game-area">
+            <canvas id="gameCanvas"></canvas>
+            
+            <div id="gameOverScreen" class="game-over hidden">
+                <h2>Game Over!</h2>
+                <div class="final-score" id="finalScore">Score: 0</div>
+                <button id="restartBtn">Play Again</button>
+            </div>
+        </div>
+        
+        <div class="question-container">
+            <div class="question" id="question">What is 5 + 3?</div>
+            <div class="answers" id="answers">
+                <!-- Answer buttons will be generated here -->
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="leftBtn">⬅️ Left</button>
+            <button id="rightBtn">➡️ Right</button>
+            <button id="boostBtn">🚀 Boost</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>How to Play:</h3>
+            <ul>
+                <li>Use Left/Right buttons or A/D keys to move your rocket</li>
+                <li>Answer math questions correctly to gain fuel and points</li>
+                <li>Collect stars for bonus points</li>
+                <li>Avoid running out of fuel!</li>
+                <li>Use Boost for a speed burst (consumes extra fuel)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let canvas, ctx;
+        let rocket = {
+            x: 400,
+            y: 300,
+            width: 60,
+            height: 80,
+            speed: 5,
+            fuel: 100,
+            isBoosting: false
+        };
+        
+        let stars = [];
+        let score = 0;
+        let level = 1;
+        let gameRunning = true;
+        let difficulty = "easy";
+        
+        // DOM elements
+        const scoreElement = document.getElementById('score');
+        const fuelElement = document.getElementById('fuel');
+        const levelElement = document.getElementById('level');
+        const questionElement = document.getElementById('question');
+        const answersElement = document.getElementById('answers');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const finalScoreElement = document.getElementById('finalScore');
+        const restartBtn = document.getElementById('restartBtn');
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        const boostBtn = document.getElementById('boostBtn');
+        const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+        
+        // Initialize the game
+        function init() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Set canvas dimensions
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            // Set initial rocket position
+            rocket.x = canvas.width / 2;
+            rocket.y = canvas.height - 100;
+            
+            // Create initial stars
+            createStars(10);
+            
+            // Generate first question
+            generateQuestion();
+            
+            // Start game loop
+            gameLoop();
+            
+            // Set up event listeners
+            setupEventListeners();
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a') {
+                    moveRocket('left');
+                } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                    moveRocket('right');
+                } else if (e.key === ' ' || e.key === 'w') {
+                    activateBoost();
+                }
+            });
+            
+            // Button controls
+            leftBtn.addEventListener('mousedown', () => moveRocket('left'));
+            leftBtn.addEventListener('touchstart', () => moveRocket('left'));
+            rightBtn.addEventListener('mousedown', () => moveRocket('right'));
+            rightBtn.addEventListener('touchstart', () => moveRocket('right'));
+            boostBtn.addEventListener('mousedown', activateBoost);
+            boostBtn.addEventListener('touchstart', activateBoost);
+            
+            // Stop movement when buttons are released
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || 
+                    e.key === 'a' || e.key === 'd') {
+                    rocket.speed = 5;
+                }
+            });
+            
+            [leftBtn, rightBtn].forEach(btn => {
+                btn.addEventListener('mouseup', () => rocket.speed = 5);
+                btn.addEventListener('touchend', () => rocket.speed = 5);
+            });
+            
+            boostBtn.addEventListener('mouseup', deactivateBoost);
+            boostBtn.addEventListener('touchend', deactivateBoost);
+            
+            // Restart game
+            restartBtn.addEventListener('click', restartGame);
+            
+            // Difficulty selection
+            difficultyBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    difficultyBtns.forEach(b => b.classList.remove('active-difficulty'));
+                    btn.classList.add('active-difficulty');
+                    difficulty = btn.dataset.difficulty;
+                    generateQuestion();
+                });
+            });
+        }
+        
+        // Move the rocket
+        function moveRocket(direction) {
+            if (!gameRunning) return;
+            
+            if (direction === 'left') {
+                rocket.x -= rocket.speed;
+                if (rocket.x < 0) rocket.x = 0;
+            } else if (direction === 'right') {
+                rocket.x += rocket.speed;
+                if (rocket.x > canvas.width - rocket.width) rocket.x = canvas.width - rocket.width;
+            }
+        }
+        
+        // Activate boost
+        function activateBoost() {
+            if (!gameRunning || rocket.fuel <= 0) return;
+            rocket.isBoosting = true;
+            rocket.speed = 10;
+        }
+        
+        // Deactivate boost
+        function deactivateBoost() {
+            rocket.isBoosting = false;
+            rocket.speed = 5;
+        }
+        
+        // Create stars
+        function createStars(count) {
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 10 + 5,
+                    speed: Math.random() * 2 + 1,
+                    collected: false
+                });
+            }
+        }
+        
+        // Generate a math question
+        function generateQuestion() {
+            let num1, num2, operation, answer;
+            let wrongAnswers = [];
+            
+            // Adjust difficulty based on level and selected difficulty
+            let maxNum = 10;
+            if (difficulty === "medium") maxNum = 20;
+            if (difficulty === "hard") maxNum = 50;
+            
+            // Generate question based on level
+            if (level < 3) {
+                // Addition
+                operation = '+';
+                num1 = Math.floor(Math.random() * maxNum) + 1;
+                num2 = Math.floor(Math.random() * maxNum) + 1;
+                answer = num1 + num2;
+            } else if (level < 6) {
+                // Subtraction
+                operation = '-';
+                num1 = Math.floor(Math.random() * maxNum) + 1;
+                num2 = Math.floor(Math.random() * num1) + 1;
+                answer = num1 - num2;
+            } else {
+                // Multiplication
+                operation = '×';
+                num1 = Math.floor(Math.random() * (maxNum/2)) + 1;
+                num2 = Math.floor(Math.random() * (maxNum/2)) + 1;
+                answer = num1 * num2;
+            }
+            
+            // Generate wrong answers
+            while (wrongAnswers.length < 3) {
+                let wrongAnswer;
+                if (operation === '+') {
+                    wrongAnswer = answer + Math.floor(Math.random() * 10) - 5;
+                } else if (operation === '-') {
+                    wrongAnswer = answer + Math.floor(Math.random() * 10) - 5;
+                } else {
+                    wrongAnswer = answer + Math.floor(Math.random() * 10) - 5;
+                }
+                
+                // Ensure wrong answer is different from correct answer and positive
+                if (wrongAnswer !== answer && wrongAnswer > 0 && !wrongAnswers.includes(wrongAnswer)) {
+                    wrongAnswers.push(wrongAnswer);
+                }
+            }
+            
+            // Display question
+            questionElement.textContent = `What is ${num1} ${operation} ${num2}?`;
+            
+            // Create answer buttons
+            answersElement.innerHTML = '';
+            
+            // Combine correct and wrong answers and shuffle
+            let allAnswers = [answer, ...wrongAnswers];
+            allAnswers.sort(() => Math.random() - 0.5);
+            
+            allAnswers.forEach(ans => {
+                const button = document.createElement('button');
+                button.className = 'answer-btn';
+                button.textContent = ans;
+                button.addEventListener('click', () => checkAnswer(ans, answer));
+                answersElement.appendChild(button);
+            });
+        }
+        
+        // Check if the answer is correct
+        function checkAnswer(selectedAnswer, correctAnswer) {
+            if (!gameRunning) return;
+            
+            if (selectedAnswer === correctAnswer) {
+                // Correct answer
+                score += 10 * level;
+                rocket.fuel = Math.min(100, rocket.fuel + 20);
+                
+                // Level up every 5 correct answers
+                if (score % 50 === 0) {
+                    level++;
+                    levelElement.textContent = level;
+                }
+                
+                // Update UI
+                scoreElement.textContent = score;
+                fuelElement.textContent = `${Math.round(rocket.fuel)}%`;
+                
+                // Generate new question
+                generateQuestion();
+            } else {
+                // Wrong answer
+                rocket.fuel -= 10;
+                fuelElement.textContent = `${Math.round(rocket.fuel)}%`;
+                
+                // Check if game over
+                if (rocket.fuel <= 0) {
+                    gameOver();
+                }
+            }
+        }
+        
+        // Game over function
+        function gameOver() {
+            gameRunning = false;
+            finalScoreElement.textContent = `Final Score: ${score}`;
+            gameOverScreen.classList.remove('hidden');
+        }
+        
+        // Restart game
+        function restartGame() {
+            // Reset game state
+            rocket = {
+                x: canvas.width / 2,
+                y: canvas.height - 100,
+                width: 60,
+                height: 80,
+                speed: 5,
+                fuel: 100,
+                isBoosting: false
+            };
+            
+            stars = [];
+            score = 0;
+            level = 1;
+            gameRunning = true;
+            
+            // Update UI
+            scoreElement.textContent = score;
+            fuelElement.textContent = `${rocket.fuel}%`;
+            levelElement.textContent = level;
+            
+            // Create new stars
+            createStars(10);
+            
+            // Generate new question
+            generateQuestion();
+            
+            // Hide game over screen
+            gameOverScreen.classList.add('hidden');
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            if (!gameRunning) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            
+            // Clear canvas
+            ctx.fillStyle = 'rgba(10, 20, 40, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw stars
+            drawStars();
+            
+            // Draw rocket
+            drawRocket();
+            
+            // Update fuel if boosting
+            if (rocket.isBoosting && rocket.fuel > 0) {
+                rocket.fuel -= 0.5;
+                fuelElement.textContent = `${Math.round(rocket.fuel)}%`;
+                
+                if (rocket.fuel <= 0) {
+                    gameOver();
+                }
+            }
+            
+            // Check for star collection
+            checkStarCollection();
+            
+            // Move stars
+            moveStars();
+            
+            // Continue game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Draw the rocket
+        function drawRocket() {
+            // Rocket body
+            ctx.fillStyle = rocket.isBoosting ? '#ff9900' : '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(rocket.x + rocket.width / 2, rocket.y);
+            ctx.lineTo(rocket.x + rocket.width, rocket.y + rocket.height * 0.7);
+            ctx.lineTo(rocket.x, rocket.y + rocket.height * 0.7);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Rocket window
+            ctx.fillStyle = '#00bfff';
+            ctx.beginPath();
+            ctx.arc(rocket.x + rocket.width / 2, rocket.y + rocket.height * 0.3, 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Rocket flames
+            if (rocket.isBoosting) {
+                ctx.fillStyle = '#ff3300';
+                ctx.beginPath();
+                ctx.moveTo(rocket.x + rocket.width / 2 - 10, rocket.y + rocket.height * 0.7);
+                ctx.lineTo(rocket.x + rocket.width / 2, rocket.y + rocket.height + 20);
+                ctx.lineTo(rocket.x + rocket.width / 2 + 10, rocket.y + rocket.height * 0.7);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffcc00';
+                ctx.beginPath();
+                ctx.moveTo(rocket.x + rocket.width / 2 - 7, rocket.y + rocket.height * 0.7);
+                ctx.lineTo(rocket.x + rocket.width / 2, rocket.y + rocket.height + 15);
+                ctx.lineTo(rocket.x + rocket.width / 2 + 7, rocket.y + rocket.height * 0.7);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+        
+        // Draw stars
+        function drawStars() {
+            stars.forEach(star => {
+                if (!star.collected) {
+                    ctx.fillStyle = '#ffcc00';
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Add star points
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (i * Math.PI * 2) / 5;
+                        const x1 = star.x + Math.cos(angle) * star.radius;
+                        const y1 = star.y + Math.sin(angle) * star.radius;
+                        const x2 = star.x + Math.cos(angle) * (star.radius * 1.5);
+                        const y2 = star.y + Math.sin(angle) * (star.radius * 1.5);
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.stroke();
+                    }
+                }
+            });
+        }
+        
+        // Move stars
+        function moveStars() {
+            stars.forEach(star => {
+                if (!star.collected) {
+                    star.y += star.speed;
+                    
+                    // Reset star if it goes off screen
+                    if (star.y > canvas.height) {
+                        star.y = -star.radius;
+                        star.x = Math.random() * canvas.width;
+                    }
+                }
+            });
+        }
+        
+        // Check for star collection
+        function checkStarCollection() {
+            stars.forEach(star => {
+                if (!star.collected) {
+                    // Check collision with rocket
+                    const dx = rocket.x + rocket.width / 2 - star.x;
+                    const dy = rocket.y + rocket.height / 2 - star.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < rocket.width / 2 + star.radius) {
+                        // Collect star
+                        star.collected = true;
+                        score += 5;
+                        scoreElement.textContent = score;
+                        
+                        // Create new star
+                        setTimeout(() => {
+                            star.collected = false;
+                            star.x = Math.random() * canvas.width;
+                            star.y = -star.radius;
+                        }, 1000);
+                    }
+                }
+            });
+        }
+        
+        // Start the game when the page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

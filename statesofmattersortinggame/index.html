@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>States of Matter Challenge</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #e6f7ff;
+    text-align: center;
+    padding: 20px;
+  }
+  h1 { color: #004d80; }
+
+  .items, .zones {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin: 15px 0;
+  }
+
+  .item {
+    background: white;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: grab;
+    border: 2px solid #0077cc;
+    font-weight: 600;
+  }
+
+  .dropzone {
+    width: 180px;
+    min-height: 170px;
+    background: #d9f1ff;
+    border: 2px dashed #0077cc;
+    border-radius: 12px;
+  }
+
+  #timer, #score, #round {
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  button {
+    background: #0099cc;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    margin-top: 15px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>⚡ States of Matter Challenge</h1>
+<p>Drag items to Solid, Liquid, Gas, or Plasma before time runs out!</p>
+
+<p>⏳ Time: <span id="timer">30</span>s  
+&nbsp;|&nbsp; 🧠 Round: <span id="round">1</span>/5  
+&nbsp;|&nbsp; 🏆 Score: <span id="score">0</span></p>
+
+<div class="items" id="items"></div>
+
+<div class="zones">
+  <div class="dropzone" data-accept="solid"><h3>🧊 Solid</h3></div>
+  <div class="dropzone" data-accept="liquid"><h3>💧 Liquid</h3></div>
+  <div class="dropzone" data-accept="gas"><h3>🌬️ Gas</h3></div>
+  <div class="dropzone" data-accept="plasma"><h3>⚡ Plasma</h3></div>
+</div>
+
+<p id="status"></p>
+
+<button id="nextBtn" onclick="nextRound()" style="display:none;">Next Round</button>
+
+<script>
+const itemsData = [
+  {name:"Ice", type:"solid"},{name:"Rock", type:"solid"},{name:"Sand", type:"solid"},{name:"Iron", type:"solid"},
+  {name:"Water", type:"liquid"},{name:"Oil", type:"liquid"},{name:"Milk", type:"liquid"},{name:"Mercury", type:"liquid"},
+  {name:"Oxygen", type:"gas"},{name:"Helium", type:"gas"},{name:"Steam", type:"gas"},{name:"CO₂", type:"gas"},
+  {name:"Lightning", type:"plasma"},{name:"Neon Light", type:"plasma"},{name:"Aurora", type:"plasma"},{name:"Sun Core", type:"plasma"}
+];
+
+let score = 0, round = 1, timer, timeLeft = 30;
+
+function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+
+function startGame() {
+  document.getElementById("round").textContent = round;
+  document.getElementById("status").textContent = "";
+  document.getElementById("nextBtn").style.display = "none";
+
+  // Reset drop zones
+  document.querySelectorAll(".dropzone").forEach(z => z.innerHTML = `<h3>${z.querySelector("h3").textContent}</h3>`);
+
+  // Create new items
+  const gameItems = shuffle(itemsData).slice(0, 8);
+  const itemsDiv = document.getElementById("items");
+  itemsDiv.innerHTML = "";
+
+  gameItems.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "item";
+    div.textContent = item.name;
+    div.dataset.type = item.type;
+    div.draggable = true;
+
+    div.ondragstart = e => {
+      e.dataTransfer.setData("type", item.type);
+      window.draggedItem = div;
+    };
+
+    itemsDiv.appendChild(div);
+  });
+
+  document.querySelectorAll(".dropzone").forEach(zone => {
+    zone.ondragover = e => e.preventDefault();
+    zone.ondrop = e => {
+      const correct = zone.dataset.accept;
+      const type = e.dataTransfer.getData("type");
+
+      if (type === correct) {
+        zone.appendChild(window.draggedItem);
+        score += 2;
+      } else {
+        score--;
+        document.getElementById("status").textContent = "❌ Incorrect!";
+      }
+      document.getElementById("score").textContent = score;
+
+      if (document.getElementById("items").children.length === 0) {
+        endRound();
+      }
+    };
+  });
+
+  // Start timer
+  timeLeft = 30;  
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").textContent = timeLeft;
+
+    if (timeLeft <= 0) { endRound(); }
+  }, 1000);
+}
+
+function endRound() {
+  clearInterval(timer);
+  document.getElementById("status").textContent = "✅ Round finished!";
+  document.getElementById("nextBtn").style.display = "block";
+}
+
+function nextRound() {
+  round++;
+  if (round > 5) {
+    document.getElementById("status").textContent = `🏁 Game Over! Final Score: ${score}`;
+    document.getElementById("nextBtn").style.display = "none";
+    return;
+  }
+  startGame();
+}
+
+startGame();
+</script>
+</body>
+</html>

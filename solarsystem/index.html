@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🚀 Solar System Adventure</title>
+<style>
+    body{
+        font-family: system-ui, sans-serif;
+        background:#0b1038;
+        color:white;
+        text-align:center;
+        padding:20px;
+    }
+    h1{ margin-bottom:5px }
+    .game-box{
+        background:#11163f;
+        padding:20px;
+        border-radius:15px;
+        width:350px;
+        margin:auto;
+        box-shadow:0 0 20px rgba(255,255,255,0.2);
+    }
+    button{
+        background:#ffda57;
+        border:none;
+        padding:10px 18px;
+        margin:8px;
+        border-radius:8px;
+        font-size:16px;
+        cursor:pointer;
+        transition:.2s;
+    }
+    button:hover{ transform:scale(1.1); background:#ffe88c }
+    .option-btn{
+        display:block; width:100%;
+    }
+    #result{ font-weight:bold; margin-top:10px }
+    #scoreDisplay{ color:#ffda57; margin-top:6px; font-size:18px }
+</style>
+</head>
+<body>
+
+<h1>🌌 Solar System Adventure</h1>
+<p>Answer the questions & explore space!</p>
+
+<div class="game-box">
+    <p id="question"></p>
+    <div id="options"></div>
+    <p id="result"></p>
+    <p id="scoreDisplay">Score: 0</p>
+
+    <button id="nextBtn" style="display:none;">Next 🌟</button>
+    <button id="restartBtn" style="display:none;">Restart Game 🔄</button>
+</div>
+
+<script>
+// ✅ 15 questions
+const allQuestions = [
+    {q:"Which planet is known as the Red Planet?", options:["Earth","Mars","Venus","Jupiter"], answer:"Mars"},
+    {q:"Closest planet to the Sun?", options:["Venus","Mars","Mercury","Earth"], answer:"Mercury"},
+    {q:"Planet with the most rings?", options:["Jupiter","Uranus","Neptune","Saturn"], answer:"Saturn"},
+    {q:"Which planet is Blue Planet?", options:["Earth","Neptune","Venus","Mercury"], answer:"Earth"},
+    {q:"Name of our galaxy?", options:["Milky Way","Andromeda","Solar Galaxy","Dark Ring"], answer:"Milky Way"},
+    {q:"Which planet spins the fastest?", options:["Jupiter","Mars","Earth","Venus"], answer:"Jupiter"},
+    {q:"Hottest planet?", options:["Mercury","Venus","Mars","Earth"], answer:"Venus"},
+    {q:"Which planet has a big red storm spot?", options:["Neptune","Jupiter","Mars","Saturn"], answer:"Jupiter"},
+    {q:"Earth’s natural satellite?", options:["Sun","Mars","Moon","Titan"], answer:"Moon"},
+    {q:"Which planet is tilted on its side?", options:["Saturn","Uranus","Neptune","Earth"], answer:"Uranus"},
+    {q:"Sun is a…", options:["Planet","Star","Comet","Asteroid"], answer:"Star"},
+    {q:"Which planet has ice caps like Earth?", options:["Venus","Mars","Saturn","Mercury"], answer:"Mars"},
+    {q:"How many planets in Solar System?", options:["9","8","10","7"], answer:"8"},
+    {q:"Which planet is known as Earth's twin?", options:["Uranus","Venus","Mars","Mercury"], answer:"Venus"},
+    {q:"Largest planet?", options:["Earth","Neptune","Jupiter","Saturn"], answer:"Jupiter"}
+];
+
+let questions = [];
+let current = 0, score = 0;
+
+const qEl = document.getElementById("question");
+const optEl = document.getElementById("options");
+const rEl = document.getElementById("result");
+const nextBtn = document.getElementById("nextBtn");
+const restartBtn = document.getElementById("restartBtn");
+const scoreDisplay = document.getElementById("scoreDisplay");
+
+// Shuffle array
+function shuffle(arr){ return arr.sort(()=>Math.random()-0.5); }
+
+function startGame(){
+    questions = shuffle([...allQuestions]);
+    current = 0; score = 0;
+    scoreDisplay.textContent = "Score: 0";
+    restartBtn.style.display = "none";
+    showQuestion();
+}
+
+function showQuestion(){
+    rEl.textContent = "";
+    nextBtn.style.display = "none";
+    let q = questions[current];
+
+    qEl.textContent = "🪐 " + q.q;
+    optEl.innerHTML = "";
+
+    q.options.forEach(opt=>{
+        const btn=document.createElement("button");
+        btn.textContent=opt;
+        btn.className="option-btn";
+        btn.onclick=()=>checkAnswer(opt);
+        optEl.appendChild(btn);
+    });
+}
+
+function checkAnswer(sel){
+    let correct = questions[current].answer;
+    if(sel===correct){
+        rEl.textContent="✅ Correct!";
+        score++; scoreDisplay.textContent = `Score: ${score}`;
+    } else {
+        rEl.textContent="❌ Wrong! Answer: " + correct;
+    }
+    
+    Array.from(optEl.children).forEach(btn=>btn.disabled=true);
+    nextBtn.style.display="inline-block";
+}
+
+nextBtn.onclick=()=>{
+    current++;
+    if(current < questions.length){
+        showQuestion();
+    } else {
+        qEl.textContent = `🎉 Game Over! Final Score: ${score}/${questions.length}`;
+        optEl.innerHTML="";
+        nextBtn.style.display="none";
+        restartBtn.style.display="inline-block";
+    }
+};
+
+restartBtn.onclick=startGame;
+startGame();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Quest - Educational Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #4a4a9c;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+
+        .subtitle {
+            color: #777;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .game-screen {
+            display: none;
+        }
+
+        #start-screen {
+            display: block;
+        }
+
+        .level-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .level-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            background-color: #6e8efb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .level-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .level-btn.easy {
+            background-color: #4CAF50;
+        }
+
+        .level-btn.medium {
+            background-color: #FF9800;
+        }
+
+        .level-btn.hard {
+            background-color: #F44336;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #4a4a9c;
+        }
+
+        .question-container {
+            background-color: #f5f7ff;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            text-align: center;
+            margin: 15px 0;
+            transition: border-color 0.3s;
+        }
+
+        .answer-input:focus {
+            border-color: #6e8efb;
+            outline: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background-color: #6e8efb;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background-color: #5a7dfa;
+        }
+
+        .feedback {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .correct {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .incorrect {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .game-over {
+            text-align: center;
+        }
+
+        .final-score {
+            font-size: 3rem;
+            color: #4a4a9c;
+            margin: 20px 0;
+        }
+
+        .restart-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            background-color: #6e8efb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.1rem;
+            margin-top: 20px;
+        }
+
+        .restart-btn:hover {
+            background-color: #5a7dfa;
+            transform: translateY(-3px);
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .timer {
+            font-size: 1.2rem;
+            color: #f44336;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Math Quest</h1>
+        <p class="subtitle">Practice math skills in a fun way!</p>
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="game-screen">
+            <p>Select difficulty level:</p>
+            <div class="level-buttons">
+                <button class="level-btn easy" data-level="easy">Easy</button>
+                <button class="level-btn medium" data-level="medium">Medium</button>
+                <button class="level-btn hard" data-level="hard">Hard</button>
+            </div>
+            <p>Solve math problems as quickly as you can!</p>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" class="game-screen">
+            <div class="game-info">
+                <div class="score">Score: <span id="score">0</span></div>
+                <div class="level">Level: <span id="level-display">Easy</span></div>
+            </div>
+            <div class="timer">Time: <span id="time">60</span>s</div>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="question-container">
+                <div id="question">5 + 3 = ?</div>
+            </div>
+            <input type="number" class="answer-input" id="answer" placeholder="Enter your answer" autofocus>
+            <button class="submit-btn" id="submit">Submit Answer</button>
+            <div class="feedback" id="feedback"></div>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="game-screen">
+            <h2>Game Over!</h2>
+            <div class="final-score" id="final-score">0</div>
+            <p>You answered <span id="correct-answers">0</span> out of <span id="total-questions">0</span> questions correctly!</p>
+            <button class="restart-btn" id="restart">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let score = 0;
+        let currentLevel = 'easy';
+        let timeLeft = 60;
+        let timer;
+        let correctAnswers = 0;
+        let totalQuestions = 0;
+        let currentQuestion = {};
+        let gameActive = false;
+
+        // DOM elements
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level-display');
+        const questionDisplay = document.getElementById('question');
+        const answerInput = document.getElementById('answer');
+        const submitButton = document.getElementById('submit');
+        const feedbackDisplay = document.getElementById('feedback');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const correctAnswersDisplay = document.getElementById('correct-answers');
+        const totalQuestionsDisplay = document.getElementById('total-questions');
+        const timeDisplay = document.getElementById('time');
+        const progressBar = document.getElementById('progress');
+        const levelButtons = document.querySelectorAll('.level-btn');
+        const restartButton = document.getElementById('restart');
+
+        // Level configurations
+        const levels = {
+            easy: {
+                operations: ['+', '-'],
+                min: 1,
+                max: 10,
+                time: 60,
+                points: 10
+            },
+            medium: {
+                operations: ['+', '-', '*'],
+                min: 5,
+                max: 20,
+                time: 60,
+                points: 15
+            },
+            hard: {
+                operations: ['+', '-', '*', '/'],
+                min: 10,
+                max: 50,
+                time: 60,
+                points: 20
+            }
+        };
+
+        // Event listeners
+        levelButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                currentLevel = button.getAttribute('data-level');
+                startGame();
+            });
+        });
+
+        submitButton.addEventListener('click', checkAnswer);
+        answerInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        restartButton.addEventListener('click', () => {
+            gameOverScreen.style.display = 'none';
+            startScreen.style.display = 'block';
+        });
+
+        // Start the game
+        function startGame() {
+            score = 0;
+            correctAnswers = 0;
+            totalQuestions = 0;
+            timeLeft = levels[currentLevel].time;
+            
+            startScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            gameOverScreen.style.display = 'none';
+            
+            levelDisplay.textContent = currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1);
+            scoreDisplay.textContent = score;
+            timeDisplay.textContent = timeLeft;
+            
+            gameActive = true;
+            generateQuestion();
+            startTimer();
+        }
+
+        // Generate a random math question
+        function generateQuestion() {
+            const levelConfig = levels[currentLevel];
+            const operation = levelConfig.operations[Math.floor(Math.random() * levelConfig.operations.length)];
+            
+            let num1, num2, answer;
+            
+            switch(operation) {
+                case '+':
+                    num1 = getRandomNumber(levelConfig.min, levelConfig.max);
+                    num2 = getRandomNumber(levelConfig.min, levelConfig.max);
+                    answer = num1 + num2;
+                    break;
+                case '-':
+                    num1 = getRandomNumber(levelConfig.min, levelConfig.max);
+                    num2 = getRandomNumber(levelConfig.min, num1);
+                    answer = num1 - num2;
+                    break;
+                case '*':
+                    num1 = getRandomNumber(1, 12);
+                    num2 = getRandomNumber(1, 12);
+                    answer = num1 * num2;
+                    break;
+                case '/':
+                    // For division, we'll make sure it divides evenly
+                    num2 = getRandomNumber(2, 12);
+                    answer = getRandomNumber(1, 12);
+                    num1 = num2 * answer;
+                    break;
+            }
+            
+            currentQuestion = {
+                num1: num1,
+                num2: num2,
+                operation: operation,
+                answer: answer
+            };
+            
+            questionDisplay.textContent = `${num1} ${operation} ${num2} = ?`;
+            answerInput.value = '';
+            answerInput.focus();
+            feedbackDisplay.textContent = '';
+            feedbackDisplay.className = 'feedback';
+            
+            totalQuestions++;
+            updateProgressBar();
+        }
+
+        // Check the answer
+        function checkAnswer() {
+            if (!gameActive) return;
+            
+            const userAnswer = parseInt(answerInput.value);
+            
+            if (isNaN(userAnswer)) {
+                feedbackDisplay.textContent = 'Please enter a valid number!';
+                feedbackDisplay.className = 'feedback incorrect';
+                return;
+            }
+            
+            if (userAnswer === currentQuestion.answer) {
+                // Correct answer
+                score += levels[currentLevel].points;
+                correctAnswers++;
+                feedbackDisplay.textContent = 'Correct! Well done!';
+                feedbackDisplay.className = 'feedback correct';
+            } else {
+                // Incorrect answer
+                feedbackDisplay.textContent = `Incorrect. The answer was ${currentQuestion.answer}.`;
+                feedbackDisplay.className = 'feedback incorrect';
+            }
+            
+            scoreDisplay.textContent = score;
+            
+            // Generate next question after a short delay
+            setTimeout(generateQuestion, 1500);
+        }
+
+        // Start the timer
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                timeDisplay.textContent = timeLeft;
+                updateProgressBar();
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            const progress = ((levels[currentLevel].time - timeLeft) / levels[currentLevel].time) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // End the game
+        function endGame() {
+            gameActive = false;
+            clearInterval(timer);
+            
+            gameScreen.style.display = 'none';
+            gameOverScreen.style.display = 'block';
+            
+            finalScoreDisplay.textContent = score;
+            correctAnswersDisplay.textContent = correctAnswers;
+            totalQuestionsDisplay.textContent = totalQuestions;
+        }
+
+        // Utility function to get random number
+        function getRandomNumber(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+    </script>
+</body>
+</html>

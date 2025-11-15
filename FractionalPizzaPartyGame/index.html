@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fractional Pizza Party</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .game-container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 0 #ffcc00;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .pizza-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 0 auto;
+        }
+        
+        .pizza {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #f39c12;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            cursor: crosshair;
+        }
+        
+        .pizza-crust {
+            position: absolute;
+            width: 90%;
+            height: 90%;
+            top: 5%;
+            left: 5%;
+            border-radius: 50%;
+            background: #e67e22;
+        }
+        
+        .pizza-topping {
+            position: absolute;
+            width: 85%;
+            height: 85%;
+            top: 7.5%;
+            left: 7.5%;
+            border-radius: 50%;
+            background: #ffcc00;
+        }
+        
+        .pepperoni {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e74c3c;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .mushroom {
+            position: absolute;
+            width: 25px;
+            height: 15px;
+            border-radius: 50%;
+            background: #ecf0f1;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .green-pepper {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2ecc71;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .slice-line {
+            position: absolute;
+            height: 100%;
+            width: 2px;
+            background-color: rgba(0, 0, 0, 0.7);
+            top: 0;
+            left: 50%;
+            transform-origin: center;
+            z-index: 10;
+        }
+
+        /* The fixed interactive slice area */
+        .slice-area-fixed {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-origin: 50% 50%;
+            cursor: pointer;
+            z-index: 5;
+            /* Default clip-path: full circle for visual fallback/debug */
+            clip-path: circle(50% at 50% 50%); 
+        }
+        
+        .order-display {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .order-text {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .fraction-display {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+        }
+        
+        .slice-btn {
+            background: #3498db;
+            color: white;
+        }
+        
+        .select-btn {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .reset-btn {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .feedback {
+            margin-top: 20px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .correct {
+            color: #27ae60;
+        }
+        
+        .incorrect {
+            color: #e74c3c;
+        }
+        
+        .instructions {
+            background: #fff9c4;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+            font-size: 1rem;
+            color: #5d4037;
+        }
+        
+        .score-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 0 #2980b9;
+        }
+        
+        .selected-slice {
+            background: rgba(46, 204, 113, 0.3) !important;
+        }
+        
+        @media (max-width: 600px) {
+            .pizza-container {
+                width: 300px;
+                height: 300px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .fraction-display {
+                font-size: 1.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Fractional Pizza Party 🍕</h1>
+        <p class="subtitle">Slice the pizza and select the correct fraction!</p>
+        
+        <div class="score-display">Score: <span id="score">0</span></div>
+        
+        <div class="game-area">
+            <div class="pizza-container">
+                <div class="pizza" id="pizza">
+                    <div class="pizza-crust">
+                        <div class="pizza-topping" id="pizza-topping">
+                            </div>
+                    </div>
+                    </div>
+            </div>
+            
+            <div class="order-display">
+                <p class="order-text">Customer's Order:</p>
+                <div class="fraction-display" id="fraction-display">3/8</div>
+                <div class="controls">
+                    <button class="slice-btn" id="slice-btn">Slice Pizza</button>
+                    <button class="select-btn" id="select-btn">Select Slices</button>
+                    <button class="reset-btn" id="reset-btn">Reset</button>
+                </div>
+                <div class="feedback" id="feedback"></div>
+            </div>
+            
+            <div class="instructions">
+                <p><strong>How to Play:</strong></p>
+                <p>1. Click **"Slice Pizza"** to divide the pizza into equal parts based on the **denominator**.</p>
+                <p>2. Click on the slices to select the amount matching the **numerator**.</p>
+                <p>3. Click **"Select Slices"** to check your answer.</p>
+                <p>4. Try to get as many correct as possible!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game elements
+            const pizza = document.getElementById('pizza');
+            const pizzaTopping = document.getElementById('pizza-topping');
+            const fractionDisplay = document.getElementById('fraction-display');
+            const sliceBtn = document.getElementById('slice-btn');
+            const selectBtn = document.getElementById('select-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const feedback = document.getElementById('feedback');
+            const scoreDisplay = document.getElementById('score');
+            
+            // Game state
+            let currentFraction = { numerator: 3, denominator: 8 };
+            let slices = [];
+            let selectedSlicesIndices = []; 
+            let score = 0;
+            let isSliced = false;
+            
+            // Initialize the game
+            initGame();
+            
+            // Add toppings to the pizza
+            function addToppings() {
+                pizzaTopping.innerHTML = '';
+                
+                // Add pepperoni
+                for (let i = 0; i < 20; i++) {
+                    const pepperoni = document.createElement('div');
+                    pepperoni.className = 'pepperoni';
+                    pepperoni.style.top = `${Math.random() * 70 + 15}%`;
+                    pepperoni.style.left = `${Math.random() * 70 + 15}%`;
+                    pizzaTopping.appendChild(pepperoni);
+                }
+                
+                // Add mushrooms
+                for (let i = 0; i < 15; i++) {
+                    const mushroom = document.createElement('div');
+                    mushroom.className = 'mushroom';
+                    mushroom.style.top = `${Math.random() * 70 + 15}%`;
+                    mushroom.style.left = `${Math.random() * 70 + 15}%`;
+                    pizzaTopping.appendChild(mushroom);
+                }
+                
+                // Add green peppers
+                for (let i = 0; i < 12; i++) {
+                    const greenPepper = document.createElement('div');
+                    greenPepper.className = 'green-pepper';
+                    greenPepper.style.top = `${Math.random() * 70 + 15}%`;
+                    greenPepper.style.left = `${Math.random() * 70 + 15}%`;
+                    pizzaTopping.appendChild(greenPepper);
+                }
+            }
+            
+            // Generate a random fraction
+            function generateFraction() {
+                // Denominator from 2 to 8
+                const denominator = Math.floor(Math.random() * 7) + 2; 
+                // Numerator from 1 to denominator-1
+                const numerator = Math.floor(Math.random() * (denominator - 1)) + 1; 
+                
+                // Simplify fraction
+                const gcd = findGCD(numerator, denominator);
+                currentFraction = {
+                    numerator: numerator / gcd,
+                    denominator: denominator / gcd
+                };
+                
+                fractionDisplay.textContent = `${currentFraction.numerator}/${currentFraction.denominator}`;
+            }
+            
+            // Find greatest common divisor (Euclidean algorithm)
+            function findGCD(a, b) {
+                return b === 0 ? a : findGCD(b, a % b);
+            }
+            
+            // Slice the pizza using trigonometric clip-paths for accurate wedges
+            function slicePizza() {
+                if (isSliced) return;
+                
+                clearSlices();
+                
+                const denominator = currentFraction.denominator;
+                const angle = 360 / denominator;
+                
+                for (let i = 0; i < denominator; i++) {
+                    // 1. Create a slice line (Visual Separator)
+                    const sliceLine = document.createElement('div');
+                    sliceLine.className = 'slice-line';
+                    // We only need lines every 'angle' degrees, starting at 0.
+                    if (i * angle < 180) { 
+                        sliceLine.style.transform = `rotate(${i * angle}deg)`; 
+                        pizza.appendChild(sliceLine);
+                    }
+                    
+                    // 2. Create the interactive slice area (The Fix)
+                    const angle_rad = angle * Math.PI / 180;
+                    
+                    const newSlice = document.createElement('div');
+                    newSlice.className = 'slice-area-fixed';
+                    
+                    // --- FIX FOR 1/2 ---
+                    if (denominator === 2) {
+                        // For 1/2 (180 degrees), we use a semi-circle shape 
+                        // by defining a 4-point shape that covers half the container
+                        if (i === 0) {
+                             // Top half: points are center, top-left, top-right, center-right
+                             // We use 0% and 100% boundary points to ensure area is covered
+                             newSlice.style.clipPath = `polygon(50% 50%, 0% 50%, 0% 0%, 100% 0%, 100% 50%)`;
+                             newSlice.style.transform = `rotate(0deg)`;
+                        } 
+                        if (i === 1) {
+                            // Bottom half: rotated by 180 degrees, effectively covering the bottom
+                             newSlice.style.clipPath = `polygon(50% 50%, 0% 50%, 0% 0%, 100% 0%, 100% 50%)`;
+                             newSlice.style.transform = `rotate(180deg)`;
+                        }
+                    } else {
+                        // Standard triangular wedge logic for all other angles
+                        const x2 = 50 + 50 * Math.sin(angle_rad);
+                        const y2 = 50 - 50 * Math.cos(angle_rad);
+                        
+                        // Clip path defines the triangular wedge: Center, Top-Center, Calculated Corner
+                        newSlice.style.clipPath = `polygon(50% 50%, 50% 0%, ${x2}% ${y2}%)`;
+                        
+                        // Rotate the wedge to its position
+                        newSlice.style.transform = `rotate(${i * angle}deg)`;
+                    }
+                    // --- END FIX FOR 1/2 ---
+
+                    
+                    newSlice.setAttribute('data-index', i);
+                    
+                    // Add click event to select/deselect slice
+                    newSlice.addEventListener('click', function(e) {
+                        const index = parseInt(e.target.getAttribute('data-index'));
+                        
+                        if (newSlice.classList.contains('selected-slice')) {
+                            newSlice.classList.remove('selected-slice');
+                            selectedSlicesIndices = selectedSlicesIndices.filter(s => s !== index);
+                        } else {
+                            newSlice.classList.add('selected-slice');
+                            selectedSlicesIndices.push(index);
+                        }
+                        feedback.textContent = `Selected ${selectedSlicesIndices.length} out of ${denominator} slices.`;
+                        feedback.className = 'feedback';
+                    });
+                    
+                    pizza.appendChild(newSlice);
+                    slices.push(newSlice); 
+                }
+                
+                isSliced = true;
+                feedback.textContent = `Pizza sliced into ${denominator} equal parts!`;
+                feedback.className = 'feedback';
+            }
+            
+            // Clear all slices
+            function clearSlices() {
+                // Remove the interactive slices
+                const fixedSlices = document.querySelectorAll('.slice-area-fixed');
+                fixedSlices.forEach(slice => slice.remove());
+                
+                // Remove the lines
+                const sliceLines = document.querySelectorAll('.slice-line');
+                sliceLines.forEach(line => line.remove());
+                
+                slices = [];
+                selectedSlicesIndices = [];
+                isSliced = false;
+                feedback.textContent = '';
+                feedback.className = 'feedback';
+            }
+            
+            // Check if the selected slices match the fraction
+            function checkSelection() {
+                if (!isSliced) {
+                    feedback.textContent = "Please slice the pizza first!";
+                    feedback.className = 'feedback incorrect';
+                    return;
+                }
+                
+                if (selectedSlicesIndices.length === currentFraction.numerator) {
+                    feedback.textContent = "Correct! You selected the right fraction! 🎉";
+                    feedback.className = 'feedback correct';
+                    score += 10;
+                    scoreDisplay.textContent = score;
+                    
+                    // Generate a new fraction and clear slices after a short delay
+                    setTimeout(() => {
+                        generateFraction();
+                        clearSlices();
+                    }, 2000);
+                } else {
+                    feedback.textContent = `Incorrect. You selected ${selectedSlicesIndices.length} slices, but needed ${currentFraction.numerator}. Try again!`;
+                    feedback.className = 'feedback incorrect';
+                }
+            }
+            
+            // Reset the game
+            function resetGame() {
+                clearSlices();
+                generateFraction();
+                feedback.textContent = '';
+                score = 0;
+                scoreDisplay.textContent = score;
+            }
+            
+            // Initialize the game
+            function initGame() {
+                addToppings();
+                generateFraction();
+                
+                // Event listeners
+                sliceBtn.addEventListener('click', slicePizza);
+                selectBtn.addEventListener('click', checkSelection);
+                resetBtn.addEventListener('click', resetGame);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Block Connector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .game-area {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .instructions {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .instructions h2 {
+            margin-bottom: 15px;
+            color: #fdbb2d;
+        }
+        
+        .instructions p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .task {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .task h3 {
+            color: #4dabf7;
+            margin-bottom: 10px;
+        }
+        
+        .blocks-panel {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .blocks-panel h2 {
+            margin-bottom: 15px;
+            color: #fdbb2d;
+        }
+        
+        .blocks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .code-block {
+            padding: 12px 15px;
+            /* Added background colors for command types for better visual separation */
+            background: #4dabf7; /* Default for movement */
+            color: white;
+            border-radius: 8px;
+            cursor: grab;
+            transition: all 0.2s;
+            border: 2px dashed transparent;
+            user-select: none;
+            font-weight: bold;
+        }
+
+        /* Specific colors for different block types */
+        .code-block[data-command^="LOOP"] {
+            background: #ff6b6b; /* Red for loop blocks */
+        }
+
+        .code-block[data-command^="IF"] {
+            background: #51cf66; /* Green for conditional blocks */
+        }
+        
+        .code-block:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .code-block.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        
+        .workspace-panel {
+            flex: 2;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .workspace-panel h2 {
+            margin-bottom: 15px;
+            color: #fdbb2d;
+        }
+        
+        .workspace {
+            flex: 1;
+            min-height: 300px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .workspace-slot {
+            min-height: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+            padding: 5px; /* Added padding to hold block */
+            display: flex;
+            align-items: center;
+        }
+        
+        .workspace-slot.highlight {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #4dabf7;
+        }
+        
+        .output-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .output-panel h2 {
+            margin-bottom: 15px;
+            color: #fdbb2d;
+        }
+        
+        .output-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 2px;
+            width: 280px; /* Adjusted size for better fit */
+            height: 280px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 10px;
+        }
+        
+        .cell {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+        
+        .cell.obstacle {
+            background: #ff6b6b !important; /* Obstacles are red/active */
+            box-shadow: 0 0 5px #ff6b6b;
+        }
+        
+        .cell.goal {
+            background: #51cf66;
+            box-shadow: 0 0 10px #51cf66;
+        }
+
+        .cell.red-floor {
+            background: #ff6b6b; /* Specific class for Level 4 */
+        }
+        
+        .cell.blue-floor {
+            background: #4dabf7; /* Specific class for Level 4 */
+        }
+        
+        .robot {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #fdbb2d;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.5s ease-in-out;
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(253, 187, 45, 0.7);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background: #4dabf7;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            background: #339af0;
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            background: #868e96;
+            cursor: not-allowed;
+        }
+        
+        button.reset {
+            background: #ff6b6b;
+        }
+        
+        button.reset:hover {
+            background: #fa5252;
+        }
+        
+        .feedback {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .success {
+            background: rgba(81, 207, 102, 0.3);
+            color: #51cf66;
+        }
+        
+        .error {
+            background: rgba(255, 107, 107, 0.3);
+            color: #ff6b6b;
+        }
+        
+        .level-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .level-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+        }
+        
+        .level-dot.active {
+            background: #4dabf7;
+            box-shadow: 0 0 10px #4dabf7;
+        }
+        
+        @media (max-width: 768px) {
+            .game-area {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Code Block Connector</h1>
+            <p class="subtitle">Learn programming logic by solving puzzles with visual code blocks!</p>
+        </header>
+        
+        <div class="game-area">
+            <div class="panel instructions">
+                <h2>Instructions</h2>
+                <p>Drag a code block from the left and drop it onto an empty slot in the workspace.</p>
+                <p>Your goal is to program the robot (🤖) to reach the green target cell.</p>
+                
+                <div class="task">
+                    <h3>Current Task</h3>
+                    <p id="task-description">Move the robot 3 steps right and 1 step up to reach the target.</p>
+                </div>
+                
+                <div class="level-indicator">
+                    <div class="level-dot active" data-level="1"></div>
+                    <div class="level-dot" data-level="2"></div>
+                    <div class="level-dot" data-level="3"></div>
+                    <div class="level-dot" data-level="4"></div>
+                </div>
+            </div>
+            
+            <div class="panel blocks-panel">
+                <h2>Code Blocks</h2>
+                <div class="blocks-container">
+                    <div class="code-block" data-command="MOVE_RIGHT" draggable="true">Move Right</div>
+                    <div class="code-block" data-command="MOVE_LEFT" draggable="true">Move Left</div>
+                    <div class="code-block" data-command="MOVE_UP" draggable="true">Move Up</div>
+                    <div class="code-block" data-command="MOVE_DOWN" draggable="true">Move Down</div>
+                    <div class="code-block" data-command="LOOP_START_3X" draggable="true">Loop Start (3x)</div>
+                    <div class="code-block" data-command="LOOP_END" draggable="true">Loop End</div>
+                    <div class="code-block" data-command="IF_RED" draggable="true">If On Red...</div>
+                    <div class="code-block" data-command="IF_BLUE" draggable="true">If On Blue...</div>
+                </div>
+            </div>
+            
+            <div class="panel workspace-panel">
+                <h2>Workspace</h2>
+                <div class="workspace" id="workspace">
+                    <div class="workspace-slot"></div>
+                    <div class="workspace-slot"></div>
+                    <div class="workspace-slot"></div>
+                    <div class="workspace-slot"></div>
+                    <div class="workspace-slot"></div>
+                    <div class="workspace-slot"></div>
+                    <div class="workspace-slot"></div>
+                    <div class="workspace-slot"></div>
+                </div>
+                
+                <div class="controls">
+                    <button id="run-btn">Run Program</button>
+                    <button id="reset-btn" class="reset">Reset</button>
+                </div>
+                
+                <div class="feedback" id="feedback"></div>
+            </div>
+            
+            <div class="panel output-panel">
+                <h2>Output</h2>
+                <div class="output-area">
+                    <div class="grid" id="grid">
+                        </div>
+                    <div class="robot" id="robot">🤖</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            currentLevel: 1,
+            robotPosition: { x: 0, y: 0 },
+            goalPosition: { x: 3, y: 1 },
+            blocksInWorkspace: [],
+            isRunning: false
+        };
+
+        const GRID_SIZE = 5; // 5x5 grid
+
+        // Level configurations
+        const levels = {
+            1: {
+                description: "Move the robot 3 steps right and 1 step up to reach the target.",
+                startPosition: { x: 0, y: 0 },
+                goalPosition: { x: 3, y: 1 },
+                // Solution hint: ['MOVE_RIGHT', 'MOVE_RIGHT', 'MOVE_RIGHT', 'MOVE_UP']
+            },
+            2: {
+                description: "Move the robot 4 steps right using the LOOP block to be efficient.",
+                startPosition: { x: 0, y: 2 },
+                goalPosition: { x: 4, y: 2 },
+                // Solution hint: ['LOOP_START_4X', 'MOVE_RIGHT', 'LOOP_END'] (Note: Loop iterations are hardcoded to 3 for simplicity)
+            },
+            3: {
+                description: "Navigate around the red obstacle cells to reach the target.",
+                startPosition: { x: 0, y: 0 },
+                goalPosition: { x: 4, y: 4 },
+                obstacles: [{x:1,y:0}, {x:1,y:1}, {x:0,y:1}, {x:2,y:3}, {x:3,y:3}],
+                // Solution hint: MOVE_RIGHT, MOVE_DOWN, MOVE_DOWN, MOVE_DOWN, MOVE_DOWN, MOVE_RIGHT, MOVE_RIGHT, MOVE_UP, MOVE_UP, MOVE_UP, MOVE_UP
+            },
+            4: {
+                description: "Use conditional 'If' blocks to move ONLY when on the correct colored cell (Red/Blue floors).",
+                startPosition: { x: 0, y: 0 },
+                goalPosition: { x: 4, y: 4 },
+                coloredCells: [
+                    {x:1,y:0, color:'red'}, {x:2,y:0, color:'blue'}, {x:3,y:0, color:'red'},
+                    {x:1,y:1, color:'blue'}, {x:2,y:1, color:'red'}, {x:3,y:1, color:'blue'},
+                ],
+                // This level is designed to test IF statements but will need a proper IF/END IF structure for full functionality. 
+                // We'll use the IF block to conditionally execute the NEXT instruction only.
+            }
+        };
+
+        // Initialize the game
+        function initGame() {
+            createGrid();
+            setupEventListeners();
+            loadLevel(1);
+        }
+
+        // Create the 5x5 grid
+        function createGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        // Set up event listeners for drag and drop
+        function setupEventListeners() {
+            // Code block drag start
+            document.querySelectorAll('.code-block').forEach(block => {
+                block.addEventListener('dragstart', handleDragStart);
+            });
+            
+            // Workspace drag events
+            const workspace = document.getElementById('workspace');
+            workspace.addEventListener('dragover', handleDragOver);
+            workspace.addEventListener('dragleave', handleDragLeave);
+            workspace.addEventListener('drop', handleDrop);
+            
+            // Control buttons
+            document.getElementById('run-btn').addEventListener('click', runProgram);
+            document.getElementById('reset-btn').addEventListener('click', resetWorkspace);
+            
+            // Level selection
+            document.querySelectorAll('.level-dot').forEach(dot => {
+                dot.addEventListener('click', function() {
+                    const level = parseInt(this.dataset.level);
+                    loadLevel(level);
+                });
+            });
+        }
+
+        // --- DRAG AND DROP HANDLERS ---
+        function handleDragStart(e) {
+            // Check if the block is from the Blocks Panel (it should have a parent with class 'blocks-container')
+            if (e.target.closest('.blocks-container')) {
+                 // Clone the block data for drag operation
+                e.dataTransfer.setData('text/plain', e.target.dataset.command);
+                e.dataTransfer.setData('text/html', e.target.outerHTML); // Pass the structure for cloning
+            } else {
+                 // If dragging a block already in the workspace, we treat it as moving/removing.
+                e.dataTransfer.setData('text/plain', e.target.dataset.command);
+                e.dataTransfer.setData('source-slot-index', Array.from(e.target.parentNode.parentNode.children).indexOf(e.target.parentNode));
+                e.target.classList.add('dragging');
+            }
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            const slot = e.target.closest('.workspace-slot');
+            if (slot && !slot.querySelector('.code-block')) { // Only allow drop on empty slots
+                slot.classList.add('highlight');
+            }
+        }
+
+        function handleDragLeave(e) {
+            const slot = e.target.closest('.workspace-slot');
+            if (slot) {
+                slot.classList.remove('highlight');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const slot = e.target.closest('.workspace-slot');
+            
+            if (slot) {
+                slot.classList.remove('highlight');
+                
+                const command = e.dataTransfer.getData('text/plain');
+                
+                // 1. If dragging a block FROM the code blocks panel
+                const originalBlockHTML = e.dataTransfer.getData('text/html');
+                if (originalBlockHTML) {
+                    if (!slot.querySelector('.code-block')) { // Only drop if slot is empty
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = originalBlockHTML;
+                        const blockClone = tempDiv.firstChild;
+                        
+                        blockClone.classList.remove('dragging');
+                        blockClone.draggable = true; // Make the dragged block draggable again
+
+                        // Add removal functionality (double-click to remove)
+                        blockClone.addEventListener('dblclick', function() {
+                            this.remove();
+                            updateBlocksInWorkspace();
+                        });
+                        
+                        slot.appendChild(blockClone);
+                        updateBlocksInWorkspace();
+                    }
+                } 
+                // Note: To allow moving blocks in the workspace, you would need more complex logic (not implemented here for simplicity).
+            }
+        }
+
+        // Update the blocks in workspace array
+        function updateBlocksInWorkspace() {
+            const workspace = document.getElementById('workspace');
+            const slots = workspace.querySelectorAll('.workspace-slot');
+            
+            // The blocksInWorkspace array will contain the command of the block in each slot
+            gameState.blocksInWorkspace = Array.from(slots).map(slot => {
+                const block = slot.querySelector('.code-block');
+                return block ? block.dataset.command : null; // Use null for empty slots
+            }).filter(cmd => cmd !== null); // Filter out empty slots
+        }
+
+        // --- LEVEL AND GRID SETUP ---
+
+        // Load a specific level
+        function loadLevel(level) {
+            gameState.currentLevel = level;
+            const levelConfig = levels[level];
+            
+            // Update task description
+            document.getElementById('task-description').textContent = levelConfig.description;
+            
+            // Update level indicator
+            document.querySelectorAll('.level-dot').forEach(dot => {
+                dot.classList.toggle('active', parseInt(dot.dataset.level) === level);
+            });
+            
+            // Reset workspace
+            resetWorkspace(false); // Reset without changing level position
+            
+            // Set robot and goal positions
+            gameState.robotPosition = { ...levelConfig.startPosition };
+            gameState.goalPosition = { ...levelConfig.goalPosition };
+            
+            // Update grid and robot
+            updateGrid();
+            
+            // Clear feedback
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('feedback').className = 'feedback';
+        }
+
+        // Check the robot's current cell environment
+        function isRobotOnColor(color) {
+            const levelConfig = levels[gameState.currentLevel];
+            if (!levelConfig.coloredCells) return false;
+            
+            // Check if the current position matches any colored cell of the specified color
+            return levelConfig.coloredCells.some(cell => 
+                cell.x === gameState.robotPosition.x && 
+                cell.y === gameState.robotPosition.y && 
+                cell.color === color
+            );
+        }
+
+        // Update the grid display
+        function updateGrid() {
+            const levelConfig = levels[gameState.currentLevel];
+            
+            // Clear all cells
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.className = 'cell';
+            });
+            
+            // Mark goal position
+            const goalCell = document.querySelector(`.cell[data-x="${gameState.goalPosition.x}"][data-y="${gameState.goalPosition.y}"]`);
+            if (goalCell) goalCell.classList.add('goal');
+            
+            // Mark obstacles
+            if (levelConfig.obstacles) {
+                levelConfig.obstacles.forEach(obs => {
+                    const obstacleCell = document.querySelector(`.cell[data-x="${obs.x}"][data-y="${obs.y}"]`);
+                    if (obstacleCell) obstacleCell.classList.add('obstacle');
+                });
+            }
+            
+            // Mark colored cells (Level 4)
+            if (levelConfig.coloredCells) {
+                levelConfig.coloredCells.forEach(cell => {
+                    const coloredCell = document.querySelector(`.cell[data-x="${cell.x}"][data-y="${cell.y}"]`);
+                    if (coloredCell) {
+                        coloredCell.classList.add(`${cell.color}-floor`);
+                    }
+                });
+            }
+            
+            // Position the robot
+            const robot = document.getElementById('robot');
+            // Calculate position based on grid element's structure and cell size (approx 50px cell + 2px gap)
+            // The grid is 280px wide with 10px padding on each side, so 260px for the 5 cells, or 52px per cell
+            const CELL_DIMENSION = 52; 
+            const GRID_PADDING = 10;
+            
+            // X position: GRID_PADDING + (X * CELL_DIMENSION) + half_cell - half_robot
+            robot.style.left = `${GRID_PADDING + (gameState.robotPosition.x * CELL_DIMENSION) + (CELL_DIMENSION / 2) - 20}px`;
+            robot.style.top = `${GRID_PADDING + (gameState.robotPosition.y * CELL_DIMENSION) + (CELL_DIMENSION / 2) - 20}px`;
+        }
+
+        // --- PROGRAM EXECUTION ---
+
+        // Run the program
+        async function runProgram() {
+            if (gameState.isRunning || gameState.blocksInWorkspace.length === 0) return;
+            
+            gameState.isRunning = true;
+            document.getElementById('run-btn').disabled = true;
+            
+            // Reset robot position
+            const levelConfig = levels[gameState.currentLevel];
+            gameState.robotPosition = { ...levelConfig.startPosition };
+            updateGrid();
+
+            const MAX_STEPS = 50; // Safety stop for infinite loops
+            let steps = 0;
+            
+            let success = false;
+            // Loop stack stores objects: { start: index, count: remaining_iterations }
+            let loopStack = [];
+            const DEFAULT_LOOP_ITERATIONS = 3; 
+
+            // Execute blocks
+            let i = 0;
+            while (i < gameState.blocksInWorkspace.length && steps < MAX_STEPS) {
+                const command = gameState.blocksInWorkspace[i];
+                let shouldMove = true;
+                let instructionExecuted = true;
+                
+                // Conditional logic check
+                if (command === 'IF_RED') {
+                    if (!isRobotOnColor('red')) {
+                        i++; // Skip the next instruction block
+                        shouldMove = false;
+                    }
+                } else if (command === 'IF_BLUE') {
+                    if (!isRobotOnColor('blue')) {
+                        i++; // Skip the next instruction block
+                        shouldMove = false;
+                    }
+                }
+                
+                // Movement and loop logic
+                if (shouldMove) {
+                    switch(command) {
+                        case 'MOVE_RIGHT':
+                            if (gameState.robotPosition.x < GRID_SIZE - 1) gameState.robotPosition.x++;
+                            break;
+                        case 'MOVE_LEFT':
+                            if (gameState.robotPosition.x > 0) gameState.robotPosition.x--;
+                            break;
+                        case 'MOVE_UP':
+                            if (gameState.robotPosition.y > 0) gameState.robotPosition.y--;
+                            break;
+                        case 'MOVE_DOWN':
+                            if (gameState.robotPosition.y < GRID_SIZE - 1) gameState.robotPosition.y++;
+                            break;
+                            
+                        case 'LOOP_START_3X':
+                            // Push loop information onto the stack
+                            loopStack.push({ start: i, count: DEFAULT_LOOP_ITERATIONS });
+                            break;
+                            
+                        case 'LOOP_END':
+                            if (loopStack.length > 0) {
+                                let currentLoop = loopStack.pop();
+                                currentLoop.count--; // Decrement the loop counter
+
+                                if (currentLoop.count > 0) {
+                                    // Re-push the loop object and jump back to the instruction *after* LOOP_START
+                                    loopStack.push(currentLoop);
+                                    i = currentLoop.start; 
+                                    // NOTE: We don't increment i here, as the loop structure handles the advance.
+                                } else {
+                                    // Loop finished, let i increment naturally to the next instruction after LOOP_END
+                                }
+                            }
+                            break;
+                        
+                        default:
+                            instructionExecuted = false; // Command was not a movement/loop block
+                            break;
+                    }
+                }
+                
+                // Check for obstacle collision (Level 3)
+                const isObstacle = levelConfig.obstacles && levelConfig.obstacles.some(obs => 
+                    obs.x === gameState.robotPosition.x && 
+                    obs.y === gameState.robotPosition.y
+                );
+                
+                if (isObstacle) {
+                    showFeedback("Collision! The robot hit an obstacle.", "error");
+                    gameState.isRunning = false;
+                    document.getElementById('run-btn').disabled = false;
+                    return;
+                }
+
+                // Wait and update visual state
+                if (instructionExecuted) {
+                    steps++;
+                    updateGrid();
+                    // Check if robot reached the goal
+                    if (gameState.robotPosition.x === gameState.goalPosition.x && 
+                        gameState.robotPosition.y === gameState.goalPosition.y) {
+                        success = true;
+                        break;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                }
+                
+                i++; // Advance to the next instruction
+            }
+            
+            // Final Feedback
+            if (success) {
+                showFeedback("Success! You've reached the target!", "success");
+                
+                // Auto-advance to next level after a delay
+                if (gameState.currentLevel < Object.keys(levels).length) {
+                    setTimeout(() => {
+                        loadLevel(gameState.currentLevel + 1);
+                    }, 2000);
+                }
+            } else if (steps >= MAX_STEPS) {
+                 showFeedback("Program failed (Infinite Loop detected or too many steps).", "error");
+            } else {
+                showFeedback("The robot didn't reach the target. Try again!", "error");
+            }
+            
+            gameState.isRunning = false;
+            document.getElementById('run-btn').disabled = false;
+        }
+
+        // Helper function to display feedback
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `feedback ${type}`;
+        }
+
+        // Reset the workspace
+        function resetWorkspace(resetPosition = true) {
+            const workspace = document.getElementById('workspace');
+            workspace.querySelectorAll('.code-block').forEach(block => block.remove());
+            gameState.blocksInWorkspace = [];
+            
+            showFeedback('', '');
+            
+            if (resetPosition) {
+                const levelConfig = levels[gameState.currentLevel];
+                gameState.robotPosition = { ...levelConfig.startPosition };
+                updateGrid();
+            }
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

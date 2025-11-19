@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Precision Writer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
+        /* Custom styling for the sentence highlight */
+        #sentence-display b {
+            background-color: #fef9c3; /* Light yellow highlight */
+            padding: 2px 4px;
+            border-radius: 4px;
+            color: #b45309; /* Darker text for contrast */
+        }
+        .btn-suggestion {
+            transition: all 0.1s;
+        }
+        .btn-suggestion:hover {
+            background-color: #e0f2fe;
+            transform: translateY(-1px);
+        }
+        .btn-suggestion.selected {
+            background-color: #3b82f6;
+            color: white;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.5);
+        }
+        .disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-3xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-800">The Precision Writer</h1>
+            <p class="text-gray-500 mt-2">Improve vague sentences by choosing a stronger, more precise word.</p>
+        </header>
+
+        <main class="space-y-6">
+            <!-- Game Progress -->
+            <div class="flex justify-between items-center card p-4 bg-white">
+                <div class="font-medium text-gray-700">Round: <span id="round-count" class="text-indigo-600 font-bold">1</span> / 10</div>
+                <div class="font-medium text-gray-700">Score: <span id="score-count" class="text-green-600 font-bold">0</span></div>
+            </div>
+
+            <!-- Sentence Display -->
+            <div class="card p-6 bg-blue-50 border-blue-200 border">
+                <h2 class="text-xl font-semibold mb-3 text-blue-800">Challenge Sentence:</h2>
+                <p id="sentence-display" class="text-2xl font-serif leading-relaxed text-gray-900">Loading...</p>
+            </div>
+
+            <!-- User Input & Suggestions -->
+            <div class="card p-6">
+                <h2 class="text-lg font-semibold mb-4 text-gray-700">1. Replace the highlighted word:</h2>
+                
+                <div id="suggestions-area" class="flex flex-wrap gap-3 mb-6">
+                    <!-- Suggestion buttons appear here -->
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <input type="text" id="user-input" placeholder="...or type your own strong word here" class="flex-grow border-gray-300 rounded-lg shadow-sm p-3 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100" />
+                    <button id="check-btn" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 disabled:opacity-50">
+                        Check Word
+                    </button>
+                </div>
+                
+                <p id="hint-display" class="text-sm text-gray-500 mt-3 italic"></p>
+            </div>
+
+            <!-- Feedback Area -->
+            <div id="feedback-area" class="card p-4 hidden">
+                <h3 class="font-bold text-lg mb-2" id="feedback-title"></h3>
+                <p id="feedback-message" class="text-gray-700"></p>
+            </div>
+            
+            <button id="next-btn" class="w-full bg-green-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-green-600 disabled hidden disabled:opacity-50">
+                Next Challenge &rarr;
+            </button>
+        </main>
+        
+        <!-- Game Over Modal -->
+        <div id="modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+            <div class="card p-8 w-full max-w-md text-center">
+                <h3 class="text-2xl font-bold mb-4" id="modal-title">Game Over!</h3>
+                <p class="mb-6" id="modal-message"></p>
+                <div class="text-lg font-semibold mb-6">Final Score: <span id="final-score" class="text-green-600 font-bold">0 / 10</span></div>
+                <button id="restart-btn" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700">Play Again</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Game Data ---
+        const challenges = [
+            {
+                vague: "The scientist **said** the discovery was important.",
+                targetWord: "said",
+                strongSynonyms: ["announced", "declared", "asserted", "revealed", "stated"],
+                hint: "Use a verb that implies conviction or formal announcement.",
+                points: 1
+            },
+            {
+                vague: "She felt **good** about winning the championship game.",
+                targetWord: "good",
+                strongSynonyms: ["exhilarated", "joyful", "elated", "triumphant", "ecstatic"],
+                hint: "Find an adjective expressing intense happiness and victory.",
+                points: 1
+            },
+            {
+                vague: "The house was **big** and old, standing on the hill.",
+                targetWord: "big",
+                strongSynonyms: ["massive", "enormous", "colossal", "sprawling", "imposing"],
+                hint: "Think about adjectives that describe overwhelming size or presence.",
+                points: 1
+            },
+            {
+                vague: "When the clock struck twelve, the children **went** to bed.",
+                targetWord: "went",
+                strongSynonyms: ["retreated", "proceeded", "ascended", "marched", "strolled"],
+                hint: "Use a verb that shows deliberate movement or action, not just simple movement.",
+                points: 2 // Slightly harder, worth more
+            },
+            {
+                vague: "He **looked** at the mysterious package on his doorstep.",
+                targetWord: "looked",
+                strongSynonyms: ["examined", "gazed", "inspected", "scrutinized", "peered"],
+                hint: "Use a verb that implies careful, intense attention.",
+                points: 2
+            },
+            {
+                vague: "The storm was **bad** for the entire city infrastructure.",
+                targetWord: "bad",
+                strongSynonyms: ["catastrophic", "devastating", "severe", "destructive", "ruinous"],
+                hint: "Replace this vague word with an adjective showing extreme damage.",
+                points: 2
+            },
+            {
+                vague: "The runner **ran** past the finish line in first place.",
+                targetWord: "ran",
+                strongSynonyms: ["sprinted", "streaked", "blazed", "dashed", "surged"],
+                hint: "Use a powerful verb that emphasizes speed and momentum.",
+                points: 3
+            },
+            {
+                vague: "The ancient temple was **beautiful** but completely abandoned.",
+                targetWord: "beautiful",
+                strongSynonyms: ["magnificent", "stunning", "exquisite", "splendid", "awe-inspiring"],
+                hint: "Find an adjective that suggests grandeur and wonder.",
+                points: 3
+            },
+            {
+                vague: "The manager **was mad** when the shipment was delayed.",
+                targetWord: "was mad", // Combined two words for complexity
+                strongSynonyms: ["fumed", "erupted", "seethed", "raged", "exploded"],
+                hint: "Use a single, powerful verb to describe extreme anger.",
+                points: 4
+            },
+            {
+                vague: "The small stream was **running** quickly down the mountain.",
+                targetWord: "running",
+                strongSynonyms: ["rushing", "cascading", "gushing", "tumbling", "surging"],
+                hint: "Use an '-ing' verb that captures the chaotic, fast movement of water.",
+                points: 4
+            },
+        ];
+
+        // --- Game State & Elements ---
+        let currentChallengeIndex = 0;
+        let score = 0;
+        let isRoundComplete = false;
+        let challengesAttempted = 0;
+
+        const D = {
+            roundCount: document.getElementById('round-count'),
+            scoreCount: document.getElementById('score-count'),
+            sentenceDisplay: document.getElementById('sentence-display'),
+            suggestionsArea: document.getElementById('suggestions-area'),
+            userInput: document.getElementById('user-input'),
+            checkBtn: document.getElementById('check-btn'),
+            hintDisplay: document.getElementById('hint-display'),
+            feedbackArea: document.getElementById('feedback-area'),
+            feedbackTitle: document.getElementById('feedback-title'),
+            feedbackMessage: document.getElementById('feedback-message'),
+            nextBtn: document.getElementById('next-btn'),
+            modal: document.getElementById('modal'),
+            finalScore: document.getElementById('final-score'),
+            restartBtn: document.getElementById('restart-btn'),
+        };
+
+        // --- Game Logic ---
+
+        function loadChallenge() {
+            if (currentChallengeIndex >= challenges.length) {
+                endGame();
+                return;
+            }
+
+            isRoundComplete = false;
+            const challenge = challenges[currentChallengeIndex];
+
+            // 1. Update HUD
+            D.roundCount.textContent = currentChallengeIndex + 1;
+            D.scoreCount.textContent = score;
+
+            // 2. Display Sentence & Hint
+            D.sentenceDisplay.innerHTML = challenge.vague;
+            D.hintDisplay.textContent = `Hint: ${challenge.hint}`;
+
+            // 3. Reset UI state
+            D.userInput.value = '';
+            D.userInput.classList.remove('disabled');
+            D.userInput.disabled = false;
+            D.checkBtn.classList.remove('hidden', 'disabled');
+            D.checkBtn.disabled = false;
+            D.nextBtn.classList.add('hidden');
+            D.feedbackArea.classList.add('hidden');
+            D.suggestionsArea.innerHTML = '';
+
+            // 4. Create Suggestion Buttons
+            challenge.strongSynonyms.forEach(word => {
+                const btn = document.createElement('button');
+                btn.textContent = word;
+                btn.className = 'btn-suggestion bg-white border border-blue-300 text-blue-700 font-medium py-2 px-4 rounded-full text-sm hover:border-blue-500';
+                btn.addEventListener('click', () => handleSuggestionClick(btn, word));
+                D.suggestionsArea.appendChild(btn);
+            });
+        }
+        
+        function handleSuggestionClick(clickedBtn, word) {
+            if (isRoundComplete) return;
+
+            // Deselect all others
+            document.querySelectorAll('.btn-suggestion').forEach(btn => {
+                btn.classList.remove('selected');
+                btn.classList.add('bg-white');
+            });
+
+            // Select clicked button and set input value
+            clickedBtn.classList.add('selected');
+            clickedBtn.classList.remove('bg-white');
+            D.userInput.value = word;
+        }
+
+        function checkAnswer(chosenWord) {
+            if (isRoundComplete) return;
+
+            // Clean the input word
+            const input = chosenWord.trim().toLowerCase();
+            const challenge = challenges[currentChallengeIndex];
+
+            // Check if the input is one of the target synonyms
+            const isCorrect = challenge.strongSynonyms.map(s => s.toLowerCase()).includes(input);
+
+            if (isCorrect) {
+                // CORRECT ANSWER
+                const points = challenge.points;
+                score += points;
+                
+                showFeedback('Correct! (+ ' + points + ' points)', 'bg-green-100 border-green-400 text-green-800', 
+                    `"${chosenWord}" is a powerful choice. The sentence now reads: "${challenge.vague.replace(`**${challenge.targetWord}**`, `<b>${chosenWord}</b>`)}"`);
+                
+            } else {
+                // INCORRECT ANSWER
+                showFeedback('Not Quite.', 'bg-red-100 border-red-400 text-red-800', 
+                    `"${chosenWord}" is a good word, but it might not be the most precise fit, or it could be grammatically incorrect in this context. Try focusing on the hint. (No points earned)`);
+            }
+            
+            // End the round
+            isRoundComplete = true;
+            challengesAttempted++;
+            D.userInput.disabled = true;
+            D.checkBtn.disabled = true;
+            D.nextBtn.classList.remove('hidden');
+            D.scoreCount.textContent = score;
+
+            // Remove suggestion buttons event listeners
+            document.querySelectorAll('.btn-suggestion').forEach(btn => {
+                btn.removeEventListener('click', handleSuggestionClick);
+                btn.classList.add('disabled');
+            });
+        }
+
+        function showFeedback(title, className, message) {
+            D.feedbackArea.className = `card p-4 border mt-4 ${className}`;
+            D.feedbackArea.classList.remove('hidden');
+            D.feedbackTitle.textContent = title;
+            D.feedbackMessage.innerHTML = message;
+        }
+
+        function endGame() {
+            D.finalScore.textContent = `${score} / ${challengesAttempted}`;
+            D.modal.classList.remove('hidden');
+
+            let title, message;
+            if (score > 15) {
+                title = "Grammar Guru!";
+                message = "You have an impressive grasp of vocabulary and descriptive language. Your writing is sharp and engaging!";
+            } else if (score > 5) {
+                title = "Strong Start!";
+                message = "Good effort! You understand the goal, but pay close attention to the context and specific meaning of the synonyms next time.";
+            } else {
+                title = "Time to Refine!";
+                message = "Keep practicing! Replacing vague words with stronger verbs and adjectives is key to effective writing.";
+            }
+            D.modalTitle.textContent = title;
+            D.modalMessage.textContent = message;
+        }
+
+        function resetGame() {
+            currentChallengeIndex = 0;
+            score = 0;
+            challengesAttempted = 0;
+            D.modal.classList.add('hidden');
+            loadChallenge();
+        }
+
+        // --- Event Listeners ---
+
+        D.checkBtn.addEventListener('click', () => checkAnswer(D.userInput.value));
+        D.nextBtn.addEventListener('click', () => {
+            currentChallengeIndex++;
+            loadChallenge();
+        });
+        D.restartBtn.addEventListener('click', resetGame);
+
+        // --- Initial Load ---
+        loadChallenge();
+
+    </script>
+</body>
+</html>

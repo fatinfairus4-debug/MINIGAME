@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbit Stabilizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the space theme */
+        body {
+            background-color: #0d0c1d; /* Deep space blue/purple */
+            color: #e0f2fe; /* Light blue text */
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 800px;
+            background: #1c1a33;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(100, 100, 255, 0.4);
+            padding: 20px;
+        }
+
+        canvas {
+            background-color: #0d0c1d;
+            border: 2px solid #6366f1; /* Indigo border */
+            border-radius: 0.75rem;
+            touch-action: none; /* Prevent scrolling/zooming on canvas touch */
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .control-button {
+            padding: 10px 20px;
+            background-color: #4f46e5; /* Indigo 600 */
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.1s, transform 0.1s, box-shadow 0.2s;
+            font-weight: bold;
+            box-shadow: 0 4px #3730a3; /* Darker shadow */
+            user-select: none;
+        }
+
+        .control-button:hover {
+            background-color: #6366f1; /* Indigo 500 */
+        }
+
+        .control-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #3730a3;
+        }
+
+        .message-box {
+            background-color: #2e1065; /* Purple 900 */
+            color: #d8b4fe; /* Purple 300 */
+            padding: 10px;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .controls {
+                flex-wrap: wrap;
+            }
+            .control-button {
+                flex-grow: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1 class="text-3xl font-bold text-center text-indigo-400">Gravitational Orbit Simulator</h1>
+        <p class="text-center text-sm text-indigo-200">Goal: Stabilize the satellite's orbit around the planet using minimal thrust.</p>
+
+        <div id="message" class="message-box">Use the buttons below to apply thrust and maintain a stable orbit!</div>
+
+        <canvas id="orbitCanvas" width="760" height="400"></canvas>
+
+        <div class="controls">
+            <button id="thrustUp" class="control-button">↑ Thrust (Y+)</button>
+            <button id="thrustDown" class="control-button">↓ Thrust (Y-)</button>
+            <button id="thrustLeft" class="control-button">← Thrust (X-)</button>
+            <button id="thrustRight" class="control-button">→ Thrust (X+)</button>
+            <button id="resetButton" class="control-button bg-red-600 hover:bg-red-500 shadow-md">Reset Orbit</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('orbitCanvas');
+            const ctx = canvas.getContext('2d');
+            const messageEl = document.getElementById('message');
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const PLANET_RADIUS = 30;
+            const SATELLITE_RADIUS = 5;
+            const G_CONSTANT = 1000; // Gravitational constant (simplified)
+            const THRUST_MAGNITUDE = 1.5; // Small force applied by user
+            const MAX_TRACE_LENGTH = 150; // Number of previous positions to draw
+
+            let satellite = {};
+            let trace = [];
+            let isGameOver = false;
+
+            // --- Game Setup and Reset ---
+
+            function resetGame() {
+                // Initial state for the satellite: near the planet, moving perpendicular to the radius
+                const initialDistance = 150;
+                const initialVelocity = Math.sqrt(G_CONSTANT / initialDistance) * 1.5; // Slightly faster than circular orbit speed
+
+                satellite = {
+                    x: centerX + initialDistance,
+                    y: centerY,
+                    vx: 0,
+                    vy: initialVelocity,
+                    mass: 1, // Normalized mass
+                };
+
+                trace = [];
+                isGameOver = false;
+                messageEl.textContent = 'Use the buttons below to apply thrust and maintain a stable orbit!';
+                messageEl.className = 'message-box';
+            }
+
+            // --- Physics Functions ---
+
+            function updatePhysics(dt) {
+                if (isGameOver) return;
+
+                const dx = centerX - satellite.x;
+                const dy = centerY - satellite.y;
+                const distanceSq = dx * dx + dy * dy;
+                const distance = Math.sqrt(distanceSq);
+
+                // 1. Calculate Gravitational Force (Inverse Square Law)
+                const forceMagnitude = G_CONSTANT / distanceSq;
+
+                // Check for crash (too close)
+                if (distance < PLANET_RADIUS + SATELLITE_RADIUS) {
+                    endGame("CRASHED! You hit the planet. Try again.", 'bg-red-900', 'text-red-300');
+                    return;
+                }
+
+                // Check for escape (too far, outside canvas)
+                if (distance > Math.max(canvas.width, canvas.height) * 0.75) {
+                    endGame("ESCAPED! The satellite flew too far away. Try again.", 'bg-purple-900', 'text-purple-300');
+                    return;
+                }
+
+                // Calculate force components using normalized direction vector
+                const forceX = forceMagnitude * (dx / distance);
+                const forceY = forceMagnitude * (dy / distance);
+
+                // 2. Calculate Acceleration (F = ma, so a = F/m)
+                const ax = forceX / satellite.mass;
+                const ay = forceY / satellite.mass;
+
+                // 3. Update Velocity (Euler integration)
+                satellite.vx += ax * dt;
+                satellite.vy += ay * dt;
+
+                // 4. Update Position
+                satellite.x += satellite.vx * dt;
+                satellite.y += satellite.vy * dt;
+
+                // Store trace
+                trace.push({ x: satellite.x, y: satellite.y });
+                if (trace.length > MAX_TRACE_LENGTH) {
+                    trace.shift(); // Remove oldest point
+                }
+            }
+
+            // --- Drawing Functions ---
+
+            function draw() {
+                // Clear canvas
+                ctx.fillStyle = '#0d0c1d';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // 1. Draw Orbit Trace
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(129, 140, 248, 0.4)'; // Light trail color
+                ctx.lineWidth = 1;
+                if (trace.length > 0) {
+                    ctx.moveTo(trace[0].x, trace[0].y);
+                    for (let i = 1; i < trace.length; i++) {
+                        // Fade the trace over time/length
+                        const alpha = i / MAX_TRACE_LENGTH;
+                        ctx.strokeStyle = `rgba(129, 140, 248, ${alpha * 0.5})`;
+                        ctx.lineTo(trace[i].x, trace[i].y);
+                    }
+                }
+                ctx.stroke();
+
+                // 2. Draw Planet (Star)
+                ctx.beginPath();
+                // Gradient for a glowing effect
+                const gradient = ctx.createRadialGradient(
+                    centerX, centerY, PLANET_RADIUS * 0.5,
+                    centerX, centerY, PLANET_RADIUS * 1.5
+                );
+                gradient.addColorStop(0, '#f97316'); // Center: Orange
+                gradient.addColorStop(1, '#7c2d12'); // Edge: Dark red/brown
+                ctx.fillStyle = gradient;
+                ctx.arc(centerX, centerY, PLANET_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 3. Draw Satellite
+                ctx.beginPath();
+                ctx.fillStyle = '#38bdf8'; // Sky blue
+                ctx.arc(satellite.x, satellite.y, SATELLITE_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Optional: Draw velocity vector (for advanced visualization)
+                // ctx.beginPath();
+                // ctx.strokeStyle = '#a78bfa'; // Purple
+                // ctx.lineWidth = 2;
+                // ctx.moveTo(satellite.x, satellite.y);
+                // ctx.lineTo(satellite.x + satellite.vx * 10, satellite.y + satellite.vy * 10);
+                // ctx.stroke();
+            }
+
+            // --- Game Loop and Control ---
+
+            let lastTime = 0;
+            function gameLoop(currentTime) {
+                const dt = (currentTime - lastTime) / 1000; // Delta time in seconds
+                lastTime = currentTime;
+
+                updatePhysics(dt);
+                draw();
+
+                if (!isGameOver) {
+                    requestAnimationFrame(gameLoop);
+                }
+            }
+
+            function endGame(message, bgClass, textClass) {
+                isGameOver = true;
+                messageEl.textContent = message + ' Click Reset to try a different approach.';
+                messageEl.className = `message-box ${bgClass} ${textClass}`;
+            }
+
+            // Function to apply user thrust
+            function applyThrust(dx, dy) {
+                if (isGameOver) return;
+                // A small change in velocity (impulse)
+                satellite.vx += dx;
+                satellite.vy += dy;
+
+                // Quick visual feedback
+                messageEl.textContent = `Thrust Applied! (Velocity changed by ${dx.toFixed(2)}, ${dy.toFixed(2)})`;
+                messageEl.className = 'message-box bg-green-900 text-green-300';
+                setTimeout(() => {
+                    if (!isGameOver) {
+                        messageEl.textContent = 'Keep stabilizing the orbit...';
+                        messageEl.className = 'message-box';
+                    }
+                }, 500);
+            }
+
+            // --- Event Listeners ---
+            document.getElementById('thrustUp').addEventListener('click', () => applyThrust(0, -THRUST_MAGNITUDE));
+            document.getElementById('thrustDown').addEventListener('click', () => applyThrust(0, THRUST_MAGNITUDE));
+            document.getElementById('thrustLeft').addEventListener('click', () => applyThrust(-THRUST_MAGNITUDE, 0));
+            document.getElementById('thrustRight').addEventListener('click', () => applyThrust(THRUST_MAGNITUDE, 0));
+            document.getElementById('resetButton').addEventListener('click', () => {
+                resetGame();
+                requestAnimationFrame(gameLoop);
+            });
+
+            // Handle keyboard input for quick control
+            document.addEventListener('keydown', (e) => {
+                switch (e.key) {
+                    case 'ArrowUp':
+                    case 'w':
+                        applyThrust(0, -THRUST_MAGNITUDE);
+                        break;
+                    case 'ArrowDown':
+                    case 's':
+                        applyThrust(0, THRUST_MAGNITUDE);
+                        break;
+                    case 'ArrowLeft':
+                    case 'a':
+                        applyThrust(-THRUST_MAGNITUDE, 0);
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                        applyThrust(THRUST_MAGNITUDE, 0);
+                        break;
+                }
+            });
+
+            // Initial setup and start the loop
+            resetGame();
+            requestAnimationFrame(gameLoop);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ecosystem Balance — Educational MiniGame</title>
+  <style>
+    :root{--bg:#f3fbff;--card:#fff;--accent:#2b90d9}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial; margin:0; background:linear-gradient(180deg,var(--bg),#e9f7ff); color:#0b2540}
+    header{padding:14px 18px; display:flex; align-items:center; gap:12px}
+    h1{font-size:18px;margin:0}
+    .wrap{display:grid; grid-template-columns:260px 1fr; gap:16px; padding:12px}
+    .panel{background:var(--card); border-radius:12px; box-shadow:0 6px 18px rgba(10,40,80,0.06); padding:12px}
+    .sidebar{height:74vh; display:flex; flex-direction:column; gap:10px}
+    .species-list{display:flex;flex-direction:column;gap:8px}
+    .species{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;border:1px dashed rgba(10,40,80,0.06);cursor:grab;background:linear-gradient(180deg,#fff,#f7fdff)}
+    .species .emo{font-size:26px}
+    .controls{display:flex;gap:8px; margin-top:auto}
+    button{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+    button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(43,144,217,0.15)}
+    .canvas-area{display:flex;flex-direction:column;gap:10px}
+    #world{background:linear-gradient(180deg,#dff6ea,#e8f7ff); height:74vh; border-radius:12px; position:relative; overflow:hidden}
+    .slot{position:absolute;left:12px;top:12px;padding:6px 8px;background:rgba(255,255,255,0.9);border-radius:8px;box-shadow:0 4px 10px rgba(10,40,80,0.05)}
+    .hud{display:flex;gap:12px;flex-wrap:wrap}
+    .stat{background:rgba(255,255,255,0.9);padding:6px 10px;border-radius:10px;font-weight:600}
+    .log{max-height:110px; overflow:auto;padding:8px;background:rgba(255,255,255,0.9);border-radius:8px}
+    footer{padding:12px;text-align:center;color:#567}
+    .draggable{user-select:none}
+    /* FIX: Add definition for the dropped visual element */
+    .entity {
+        /* This ensures the entity is visible, even if the JS sets most styles */
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    @media (max-width:900px){.wrap{grid-template-columns:1fr; padding:10px} .sidebar{order:2;height:auto} #world{height:50vh}}
+  </style>
+</head>
+<body>
+  <header><h1>Ecosystem Balance — Educational MiniGame</h1></header>
+
+  <div class="wrap">
+    <aside class="panel sidebar">
+      <h3>Species (drag into the world)</h3>
+      <div class="species-list">
+        <div class="species draggable" data-type="plant" draggable="true"><div class="emo">🌿</div><div>
+          <div>Plant</div>
+          <small>Produces energy / base of the food chain</small>
+        </div></div>
+
+        <div class="species draggable" data-type="herbivore" draggable="true"><div class="emo">🐇</div><div>
+          <div>Herbivore</div>
+          <small>Feeds on plants</small>
+        </div></div>
+
+        <div class="species draggable" data-type="predator" draggable="true"><div class="emo">🦊</div><div>
+          <div>Predator</div>
+          <small>Feeds on herbivores</small>
+        </div></div>
+
+        <div class="species draggable" data-type="human" draggable="true"><div class="emo">👩‍🔬</div><div>
+          <div>Human (Intervention)</div>
+          <small>Can add or remove resources</small>
+        </div></div>
+      </div>
+
+      <div style="margin-top:10px">
+        <div style="font-size:13px;margin-bottom:6px">Goal: Keep the ecosystem balanced for <strong>30</strong> steps (days)</div>
+        <div class="controls">
+          <button id="start">Start</button>
+          <button id="pause" class="ghost">Pause</button>
+          <button id="reset" class="ghost">Reset</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <h4>Status</h4>
+        <div class="log" id="log"></div>
+      </div>
+    </aside>
+
+    <main class="panel canvas-area">
+      <div class="hud">
+        <div class="stat">Day: <span id="day">0</span></div>
+        <div class="stat">Plants: <span id="plants-count">0</span></div>
+        <div class="stat">Herbivores: <span id="herb-count">0</span></div>
+        <div class="stat">Predators: <span id="pred-count">0</span></div>
+      </div>
+
+      <div id="world">
+        <div class="slot" style="right:12px;top:12px">Drop species here</div>
+      </div>
+
+      <div>
+        <small>Tip: Place some plants before adding herbivores; add predators if herbivores become too many. Use "Human" to manually adjust resources.</small>
+      </div>
+    </main>
+  </div>
+
+  <footer class="panel">Built for learning — not a scientifically accurate simulator, but fun and educational.</footer>
+
+<script>
+// Simple ecosystem simulation (discrete time steps)
+const world = document.getElementById('world');
+const logEl = document.getElementById('log');
+const dayEl = document.getElementById('day');
+const plantsCountEl = document.getElementById('plants-count');
+const herbCountEl = document.getElementById('herb-count');
+const predCountEl = document.getElementById('pred-count');
+
+let state = {
+  day: 0,
+  plants: 0,
+  herbivores: 0,
+  predators: 0,
+  running: false
+};
+
+const TARGET_DAYS = 30;
+let timer = null;
+const startBtn = document.getElementById('start');
+const pauseBtn = document.getElementById('pause');
+
+function log(msg){
+  const p = document.createElement('div'); p.textContent = `[Day ${state.day}] ${msg}`;
+  logEl.prepend(p);
+  if(logEl.children.length>200) logEl.removeChild(logEl.lastChild);
+}
+
+function updateHUD(){
+  dayEl.textContent = state.day;
+  plantsCountEl.textContent = Math.round(state.plants);
+  herbCountEl.textContent = Math.round(state.herbivores);
+  predCountEl.textContent = Math.round(state.predators);
+  
+  // FIX: Update button states
+  startBtn.disabled = state.running || state.day >= TARGET_DAYS;
+  pauseBtn.disabled = !state.running || state.day >= TARGET_DAYS;
+}
+
+// Simple rules (not biologically precise, just to teach concepts)
+function step(){
+  // parameters
+  const plantGrowthRate = 0.12; // fractional growth per day
+  const plantCarrying = 500; // max plants
+  const plantConsumedPerHerb = 0.9; // plants consumed per herbivore per day
+  const herbConversion = 0.25; // how much consumption turns to herbivore growth
+  const herbMortality = 0.06; // daily mortality
+  const predConsumptionPerPred = 0.8; // herbivores eaten per predator per day
+  const predConversion = 0.2;
+  const predMortality = 0.05;
+
+  // plants logistic growth
+  const plantGrowth = plantGrowthRate * state.plants * (1 - state.plants / plantCarrying);
+  // consumption by herbivores
+  const totalPlantConsumed = Math.min(state.plants, state.herbivores * plantConsumedPerHerb);
+  // herbivore growth from eating
+  const herbGrowth = herbConversion * totalPlantConsumed;
+  const herbDeaths = herbMortality * state.herbivores;
+
+  // predators eat herbivores
+  const totalHerbEaten = Math.min(state.herbivores, state.predators * predConsumptionPerPred);
+  const predGrowth = predConversion * totalHerbEaten;
+  const predDeaths = predMortality * state.predators;
+
+  // update
+  state.plants += plantGrowth - totalPlantConsumed;
+  state.herbivores += herbGrowth - herbDeaths - totalHerbEaten * 0.02; // small extra loss
+  state.predators += predGrowth - predDeaths;
+
+  // floor and safety
+  state.plants = Math.max(0, state.plants);
+  state.herbivores = Math.max(0, state.herbivores);
+  state.predators = Math.max(0, state.predators);
+
+  state.day++;
+  updateHUD();
+
+  // visual hints
+  if(state.day % 5 === 0) {
+    log(`Populations — Plants: ${Math.round(state.plants)}, Herbivores: ${Math.round(state.herbivores)}, Predators: ${Math.round(state.predators)}`);
+  }
+
+  // check win/lose
+  if(state.day >= TARGET_DAYS){
+    state.running = false; clearInterval(timer);
+    evaluateEcosystem();
+  }
+}
+
+function evaluateEcosystem(){
+  const p = Math.round(state.plants);
+  const h = Math.round(state.herbivores);
+  const r = Math.round(state.predators);
+  // Corrected win condition check: ensuring all populations are above a safe level
+  if(p > 50 && h > 10 && r >= 1){
+    log(`✅ Congratulations! The ecosystem looks balanced after ${TARGET_DAYS} days. (P:${p} H:${h} R:${r})`);
+    alert('Congratulations! Ecosystem balanced — try a harder challenge or change parameters.');
+  } else {
+    log(`❌ The ecosystem is not balanced. Try a different setup: (P:${p} H:${h} R:${r})`);
+    alert('Ecosystem not balanced. Try again with a different strategy!');
+  }
+}
+
+// Drag & drop logic
+let draggedType = null;
+
+document.querySelectorAll('.draggable').forEach(el=>{
+  el.addEventListener('dragstart', e=>{
+    draggedType = el.dataset.type; e.dataTransfer.setData('text/plain', draggedType);
+  });
+});
+
+world.addEventListener('dragover', e=>{ e.preventDefault(); });
+world.addEventListener('drop', e=>{
+  e.preventDefault();
+  const t = e.dataTransfer.getData('text/plain') || draggedType;
+  // Pass the drop coordinates
+  addSpeciesAt(t, e.clientX, e.clientY);
+});
+
+function addSpeciesAt(type, x, y){
+  const el = document.createElement('div');
+  el.className = 'entity';
+  const worldRect = world.getBoundingClientRect();
+  const rx = x - worldRect.left;
+  const ry = y - worldRect.top;
+
+  // Ensure drop is within world bounds and not too close to the edge (optional)
+  if (rx < 0 || ry < 0 || rx > worldRect.width || ry > worldRect.height) {
+    return;
+  }
+
+  el.style.position = 'absolute'; 
+  el.style.left = (rx-18)+'px'; // Center emoji visually on mouse
+  el.style.top = (ry-18)+'px';  // Center emoji visually on mouse
+  el.style.fontSize = '26px'; 
+  el.style.pointerEvents = 'none';
+
+  if(type==='plant'){ el.textContent='🌱'; state.plants += 25; log('Plant added (+25)'); }
+  else if(type==='herbivore'){ el.textContent='🐇'; state.herbivores += 6; log('Herbivore added (+6)'); }
+  else if(type==='predator'){ el.textContent='🦊'; state.predators += 2; log('Predator added (+2)'); }
+  else if(type==='human'){
+    // open small prompt to add/remove
+    const action = prompt('Human action: type "add plant 50" or "remove herb 3" (example)', 'add plant 50');
+    if(action){
+      const parts = action.split(' ');
+      if(parts.length===3){
+        const cmd = parts[0].toLowerCase(); // Case-insensitivity
+        const kind = parts[1].toLowerCase();
+        const amount = Number(parts[2]);
+        
+        let changeMade = false;
+        if(kind.startsWith('plant')){ 
+            if(cmd==='add') state.plants+=amount; 
+            else state.plants=Math.max(0,state.plants-amount);
+            changeMade = true;
+        } else if(kind.startsWith('herb')){ 
+            if(cmd==='add') state.herbivores+=amount; 
+            else state.herbivores=Math.max(0,state.herbivores-amount);
+            changeMade = true;
+        } else if(kind.startsWith('pred')){ 
+            if(cmd==='add') state.predators+=amount; 
+            else state.predators=Math.max(0,state.predators-amount);
+            changeMade = true;
+        }
+        
+        if (changeMade) {
+            log(`Human action: ${action}`);
+        } else {
+            log(`Human action ignored: Invalid command or species.`);
+        }
+        updateHUD();
+      } else {
+        log(`Human action ignored: Invalid format.`);
+      }
+    }
+    return; // Human action doesn't drop a visual entity
+  }
+  
+  // Only add the visual if it's not a human action
+  world.appendChild(el);
+  // fade out visual after a while
+  setTimeout(()=>{ if(el.parentNode) el.parentNode.removeChild(el); }, 3000);
+  updateHUD();
+}
+
+// Controls
+startBtn.addEventListener('click', ()=>{
+  if(state.running) return; 
+  if (state.day >= TARGET_DAYS) resetAll(); // If game is over, restart first
+  state.running=true; log('Simulation started');
+  timer = setInterval(step, 600); // each step ~0.6s
+  updateHUD();
+});
+pauseBtn.addEventListener('click', ()=>{
+  if(!state.running) return; 
+  state.running=false; clearInterval(timer); log('Simulation paused');
+  updateHUD();
+});
+
+function resetAll(){ 
+  clearInterval(timer); 
+  state = {day:0, plants:0, herbivores:0, predators:0, running:false}; 
+  updateHUD(); 
+  logEl.innerHTML=''; 
+  log('System reset. Drag and drop species to begin.'); 
+}
+
+document.getElementById('reset').addEventListener('click', ()=>{ if(confirm('Reset the game?')) resetAll(); });
+
+// initial sample
+resetAll();
+log('Drag and drop species to begin. Try starting with several plants.');
+</script>
+</body>
+</html>

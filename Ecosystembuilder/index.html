@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏗️ Ecosystem Architect: Web of Life</title>
+    <style>
+        /* --- 1. CSS STYLING --- */
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-color: #f0f8f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header h1 {
+            color: #2e8b57;
+            margin-bottom: 5px;
+        }
+
+        /* Stats Bar */
+        #stats-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #energy-container {
+            width: 200px;
+            height: 25px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        #energy-bar {
+            height: 100%;
+            width: 100%; /* Starts full */
+            background-color: #ff4500; /* Red-Orange */
+            transition: width 0.5s ease-out;
+        }
+
+        .stat-display {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        /* Game Container (The Ecosystem Grid) */
+        #game-area {
+            position: relative;
+            width: 90%;
+            height: 450px;
+            margin: 20px auto;
+            border: 3px solid #2e8b57;
+            background-color: #e6ffe6;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        /* Organism Cards */
+        .organism-card {
+            position: absolute; /* Allows dropping anywhere */
+            cursor: grab;
+            background-color: white;
+            border: 5px solid;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        /* Card Role Styling */
+        .card-producer { border-color: #70ad47; color: #70ad47; z-index: 10; } 
+        .card-primary { border-color: #ffc000; color: #ffc000; z-index: 20; }
+        .card-secondary { border-color: #e60000; color: #e60000; z-index: 30; }
+
+        .card-emoji {
+            font-size: 40px;
+            margin-bottom: 5px;
+        }
+        
+        /* Tray Styling */
+        #organism-tray {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .tray-card {
+            position: static;
+            cursor: pointer;
+            width: 80px;
+            height: 80px;
+            transition: transform 0.1s;
+        }
+        .tray-card:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🏗️ Ecosystem Architect: Web of Life</h1>
+        <p>Build a stable food web by placing organisms. Don't let the energy run out!</p>
+    </header>
+
+    <div id="stats-bar">
+        <div class="stat-display">Time Left: <span id="time-display">60</span>s</div>
+        <div class="stat-display">Energy: 
+            <div id="energy-container">
+                <div id="energy-bar"></div>
+            </div>
+        </div>
+        <div class="stat-display">Score: <span id="score-display">0</span></div>
+    </div>
+
+    <div id="game-area">
+        </div>
+
+    <div id="organism-tray">
+        <div class="organism-card tray-card card-producer" data-role="producer" data-name="Grass" data-emoji="🌱">🌱 Grass</div>
+        <div class="organism-card tray-card card-primary" data-role="primary" data-name="Rabbit" data-emoji="🐇">🐇 Rabbit</div>
+        <div class="organism-card tray-card card-secondary" data-role="secondary" data-name="Fox" data-emoji="🦊">🦊 Fox</div>
+    </div>
+
+    <div id="feedback-message" style="margin-top: 20px;">Click a card in the tray to place it in the ecosystem!</div>
+    
+    <script>
+        /* --- 2. JAVASCRIPT LOGIC (game.js) --- */
+        
+        // --- GAME STATE AND CONFIG ---
+        let gameState = {
+            isRunning: false,
+            time: 60,
+            energy: 100,
+            score: 0,
+            placedOrganisms: [], // Stores {id, role, name, position: {x, y}}
+            nextId: 1
+        };
+
+        const MAX_ENERGY = 100;
+        const ENERGY_COSTS = {
+            'producer': -0.5, // Producers have a negative cost (a gain)
+            'primary': 1,
+            'secondary': 2
+        };
+        const SCORE_VALUES = {
+            'producer': 5,
+            'primary': 15,
+            'secondary': 30
+        };
+
+        // --- DOM ELEMENTS AND INTERVALS ---
+        const gameArea = document.getElementById('game-area');
+        const energyBar = document.getElementById('energy-bar');
+        const timeDisplay = document.getElementById('time-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const trayCards = document.querySelectorAll('.tray-card');
+        
+        // Global interval variables to allow clearing them on game over
+        let gameLoopInterval = null; // Used for fast energy updates
+        let timeLoopInterval = null; // Used for slow time updates (FIXED)
+
+        // --- GAME LOOP AND STATS ---
+
+        function updateStats() {
+            // Update Energy
+            let totalEnergyChange = 0;
+            gameState.placedOrganisms.forEach(org => {
+                totalEnergyChange -= ENERGY_COSTS[org.role]; // Subtracting cost (or adding gain)
+            });
+            
+            gameState.energy = Math.min(MAX_ENERGY, gameState.energy + totalEnergyChange * 0.1); // Update 10 times per second
+
+            // Clamp energy between 0 and MAX
+            if (gameState.energy <= 0) {
+                gameState.energy = 0;
+                endGame("Ecosystem Collapse! Not enough producers to sustain the consumers.");
+            }
+            
+            energyBar.style.width = `${(gameState.energy / MAX_ENERGY) * 100}%`;
+        }
+
+        function updateTime() {
+            gameState.time -= 1;
+            timeDisplay.textContent = gameState.time;
+
+            if (gameState.time <= 0) {
+                endGame("Time's Up! See how stable your ecosystem was.");
+            }
+        }
+
+        function startGameLoop() {
+            if (gameState.isRunning) return;
+            gameState.isRunning = true;
+            
+            // Interval for updating energy and stability (fast update)
+            gameLoopInterval = setInterval(updateStats, 100); 
+            
+            // Interval for updating timer (slow update) - NOW SAVED AND CLEARED!
+            timeLoopInterval = setInterval(updateTime, 1000); 
+        }
+
+        function endGame(reason) {
+            gameState.isRunning = false;
+            // Clear BOTH intervals to stop the time and the energy updates
+            clearInterval(gameLoopInterval);
+            clearInterval(timeLoopInterval); 
+            gameLoopInterval = null;
+            timeLoopInterval = null;
+            
+            feedbackMessage.textContent = `GAME OVER: ${reason} Final Score: ${gameState.score}`;
+            
+            // Disable tray interactions
+            trayCards.forEach(card => card.style.pointerEvents = 'none');
+            // Disable dragging placed cards
+            document.querySelectorAll('.placed-card').forEach(card => card.draggable = false);
+        }
+
+        // --- DRAG AND DROP / PLACEMENT LOGIC ---
+
+        function createNewOrganismCard(templateCard, x, y) {
+            const newCard = templateCard.cloneNode(true);
+            newCard.classList.remove('tray-card');
+            newCard.classList.add('placed-card');
+            
+            // Assign unique ID and properties
+            const orgId = gameState.nextId++;
+            newCard.dataset.id = orgId;
+            newCard.style.left = `${x}px`;
+            newCard.style.top = `${y}px`;
+            newCard.style.position = 'absolute';
+            newCard.draggable = true;
+
+            // Add to the game state
+            gameState.placedOrganisms.push({
+                id: orgId,
+                role: newCard.dataset.role,
+                name: newCard.dataset.name,
+                position: { x: x, y: y }
+            });
+            
+            // Add scoring
+            gameState.score += SCORE_VALUES[newCard.dataset.role] || 0;
+            scoreDisplay.textContent = gameState.score;
+
+            // Re-setup drag listeners for the new card
+            newCard.addEventListener('dragstart', handleDragStart);
+            newCard.addEventListener('dragend', handleDragEnd);
+
+            gameArea.appendChild(newCard);
+            feedbackMessage.textContent = `Placed ${newCard.dataset.name}! Score +${SCORE_VALUES[newCard.dataset.role]}.`;
+
+            // Start the loop if this is the first item placed
+            if (gameState.placedOrganisms.length === 1 && !gameState.isRunning) {
+                startGameLoop();
+            }
+        }
+        
+        function handlePlacementClick(e) {
+            if (!gameState.isRunning && gameState.placedOrganisms.length > 0) return;
+
+            const templateCard = e.currentTarget;
+            
+            // Simple placement logic: place randomly in the game area, avoiding tray area
+            const gameRect = gameArea.getBoundingClientRect();
+            const x = Math.random() * (gameRect.width - 120) + 10;
+            const y = Math.random() * (gameRect.height - 120) + 10; 
+            
+            createNewOrganismCard(templateCard, x, y);
+        }
+
+        // --- Card Movement (Optional Dragging After Placement) ---
+        let dragOffsetX, dragOffsetY, currentDraggedId;
+        
+        function handleDragStart(e) {
+            const card = e.target;
+            if (!card.classList.contains('placed-card')) return;
+            
+            currentDraggedId = parseInt(card.dataset.id);
+            dragOffsetX = e.clientX - card.getBoundingClientRect().left;
+            dragOffsetY = e.clientY - card.getBoundingClientRect().top;
+            card.style.opacity = '0.7';
+        }
+
+        function handleDragEnd(e) {
+            const card = e.target;
+            if (!card.classList.contains('placed-card')) return;
+
+            card.style.opacity = '1';
+            
+            const gameRect = gameArea.getBoundingClientRect();
+            let newX = e.clientX - gameRect.left - dragOffsetX;
+            let newY = e.clientY - gameRect.top - dragOffsetY;
+
+            // Keep card within bounds
+            newX = Math.max(0, Math.min(newX, gameRect.width - card.offsetWidth));
+            newY = Math.max(0, Math.min(newY, gameRect.height - card.offsetHeight));
+
+            card.style.left = `${newX}px`;
+            card.style.top = `${newY}px`;
+            
+            // Update state
+            const org = gameState.placedOrganisms.find(o => o.id === currentDraggedId);
+            if (org) {
+                org.position.x = newX;
+                org.position.y = newY;
+            }
+            currentDraggedId = null;
+        }
+
+        // --- Initialization ---
+
+        function initGame() {
+            // Set initial stats display
+            timeDisplay.textContent = gameState.time;
+            scoreDisplay.textContent = gameState.score;
+            energyBar.style.width = '100%';
+
+            // Set up placement listeners on tray cards
+            trayCards.forEach(card => {
+                card.addEventListener('click', handlePlacementClick);
+            });
+        }
+
+        // Start the game setup when the page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+
+    </script>
+</body>
+</html>

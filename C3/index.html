@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Adventure: Fractions, Decimals & Percentages</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            margin: 20px 0;
+        }
+        
+        h1 {
+            color: #764ba2;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+        }
+        
+        .game-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .game-btn {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-btn.active {
+            background: linear-gradient(to right, #f093fb, #f5576c);
+        }
+        
+        .game-area {
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .game-title {
+            color: #764ba2;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .problem-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+        
+        .problem-display {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .fraction-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .fraction {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 2.5rem;
+            margin: 10px;
+        }
+        
+        .numerator, .denominator {
+            padding: 5px 15px;
+        }
+        
+        .fraction-line {
+            width: 100%;
+            height: 3px;
+            background-color: #333;
+            margin: 5px 0;
+        }
+        
+        .fraction-visual {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 20px 0;
+            max-width: 300px;
+        }
+        
+        .fraction-piece {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #764ba2;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .fraction-piece.selected {
+            background-color: #f093fb;
+            color: white;
+        }
+        
+        .fraction-piece.filled {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .decimal-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .decimal-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Added for centering */
+            margin: 20px 0;
+        }
+        
+        .place-value {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 10px;
+        }
+        
+        .place-value-label {
+            font-size: 0.9rem;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .place-value-box {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #764ba2;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .decimal-point {
+            font-size: 2rem;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        
+        .percentage-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .percentage-bar {
+            width: 300px;
+            height: 30px;
+            background-color: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+            position: relative;
+        }
+        
+        .percentage-fill {
+            height: 100%;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            border-radius: 15px;
+            transition: width 0.5s ease;
+        }
+        
+        .percentage-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .options-container {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .option-btn {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 100px;
+        }
+        
+        .option-btn:hover {
+            background: #e6f0ff;
+        }
+        
+        .option-btn.correct {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+        
+        .option-btn.incorrect {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+        
+        .input-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .number-input {
+            width: 80px;
+            height: 50px;
+            font-size: 1.5rem;
+            text-align: center;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+        }
+        
+        .conversion-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .conversion-box {
+            background: white;
+            border: 2px solid #764ba2;
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 120px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+        
+        .conversion-arrow {
+            font-size: 2rem;
+            color: #667eea;
+        }
+        
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .feedback.correct {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+        
+        .feedback.incorrect {
+            background: #ffebee;
+            color: #f44336;
+        }
+        
+        .action-btn {
+            background: linear-gradient(to right, #f093fb, #f5576c);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .game-btn {
+                padding: 10px 15px;
+                font-size: 1rem;
+            }
+            
+            .problem-display {
+                font-size: 1.5rem;
+            }
+            
+            .fraction {
+                font-size: 2rem;
+            }
+            
+            .conversion-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .conversion-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Math Adventure</h1>
+        <div class="subtitle">Fractions, Decimals & Percentages</div>
+        
+        <div class="score-container">
+            <div>Score: <span id="score">0</span></div>
+            <div>Level: <span id="level">1</span></div>
+            <div>Streak: <span id="streak">0</span></div>
+        </div>
+        
+        <div class="game-selector">
+            <button class="game-btn active" data-game="fractions">Fraction Fun</button>
+            <button class="game-btn" data-game="decimals">Decimal Discovery</button>
+            <button class="game-btn" data-game="percentages">Percentage Park</button>
+        </div>
+        
+        <div class="game-area">
+            <div id="fractionsGame" class="game-content">
+                <h2 class="game-title">Fraction Fun</h2>
+                <div class="problem-container">
+                    <div class="problem-display" id="fractionProblem">What fraction of the shape is colored?</div>
+                    
+                    <div class="fraction-visual" id="fractionVisual">
+                        </div>
+                    
+                    <div class="fraction-container">
+                        <div class="fraction">
+                            <div class="numerator">
+                                <input type="text" class="number-input" id="fractionNumerator" maxlength="2" placeholder="?">
+                            </div>
+                            <div class="fraction-line"></div>
+                            <div class="denominator">
+                                <input type="text" class="number-input" id="fractionDenominator" maxlength="2" placeholder="?">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="options-container" id="fractionOptions">
+                    </div>
+                
+                <div class="feedback" id="fractionFeedback">Identify the fraction shown in the visual!</div>
+                
+                <button class="action-btn" id="checkFraction">Check Answer</button>
+            </div>
+            
+            <div id="decimalsGame" class="game-content" style="display: none;">
+                <h2 class="game-title">Decimal Discovery</h2>
+                <div class="problem-container">
+                    <div class="problem-display" id="decimalProblem">What decimal number is shown?</div>
+                    
+                    <div class="decimal-visual">
+                        <div class="place-value">
+                            <div class="place-value-label">Ones</div>
+                            <div class="place-value-box" id="decimalOnes">0</div>
+                        </div>
+                        <div class="decimal-point">.</div>
+                        <div class="place-value">
+                            <div class="place-value-label">Tenths</div>
+                            <div class="place-value-box" id="decimalTenths">0</div>
+                        </div>
+                        <div class="place-value">
+                            <div class="place-value-label">Hundredths</div>
+                            <div class="place-value-box" id="decimalHundredths">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="decimal-container">
+                        <span style="font-size: 1.5rem; margin-right: 10px;">Decimal:</span>
+                        <input type="text" class="number-input" id="decimalInput" placeholder="0.00">
+                    </div>
+                </div>
+                
+                <div class="options-container" id="decimalOptions">
+                    </div>
+                
+                <div class="feedback" id="decimalFeedback">Identify the decimal shown in the visual!</div>
+                
+                <button class="action-btn" id="checkDecimal">Check Answer</button>
+            </div>
+            
+            <div id="percentagesGame" class="game-content" style="display: none;">
+                <h2 class="game-title">Percentage Park</h2>
+                <div class="problem-container">
+                    <div class="problem-display" id="percentageProblem">Convert between fractions, decimals, and percentages</div>
+                    
+                    <div class="conversion-container">
+                        <div class="conversion-box" id="conversionFrom">1/2</div>
+                        <div class="conversion-arrow">→</div>
+                        <div class="conversion-box" id="conversionTo">?</div>
+                    </div>
+                    
+                    <div class="percentage-container">
+                        <div class="percentage-bar">
+                            <div class="percentage-fill" id="percentageFill" style="width: 0%;"></div>
+                            <div class="percentage-text" id="percentageText">0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-container">
+                        <input type="text" class="number-input" id="percentageInput" placeholder="?">
+                    </div>
+                </div>
+                
+                <div class="options-container" id="percentageOptions">
+                    </div>
+                
+                <div class="feedback" id="percentageFeedback">Convert the value correctly!</div>
+                
+                <button class="action-btn" id="checkPercentage">Check Answer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let currentGame = 'fractions';
+        let score = 0;
+        let level = 1;
+        let streak = 0;
+        let currentProblem = {};
+
+        // DOM elements
+        const gameBtns = document.querySelectorAll('.game-btn');
+        const gameContents = document.querySelectorAll('.game-content');
+        const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+        const streakElement = document.getElementById('streak');
+
+        // Fractions Game Elements
+        const fractionProblem = document.getElementById('fractionProblem');
+        const fractionVisual = document.getElementById('fractionVisual');
+        const fractionNumerator = document.getElementById('fractionNumerator');
+        const fractionDenominator = document.getElementById('fractionDenominator');
+        const fractionOptions = document.getElementById('fractionOptions');
+        const fractionFeedback = document.getElementById('fractionFeedback');
+        const checkFractionBtn = document.getElementById('checkFraction');
+
+        // Decimals Game Elements
+        const decimalProblem = document.getElementById('decimalProblem');
+        const decimalOnes = document.getElementById('decimalOnes');
+        const decimalTenths = document.getElementById('decimalTenths');
+        const decimalHundredths = document.getElementById('decimalHundredths');
+        const decimalInput = document.getElementById('decimalInput');
+        const decimalOptions = document.getElementById('decimalOptions');
+        const decimalFeedback = document.getElementById('decimalFeedback');
+        const checkDecimalBtn = document.getElementById('checkDecimal');
+
+        // Percentages Game Elements
+        const percentageProblem = document.getElementById('percentageProblem');
+        const conversionFrom = document.getElementById('conversionFrom');
+        const conversionTo = document.getElementById('conversionTo');
+        const percentageFill = document.getElementById('percentageFill');
+        const percentageText = document.getElementById('percentageText');
+        const percentageInput = document.getElementById('percentageInput');
+        const percentageOptions = document.getElementById('percentageOptions');
+        const percentageFeedback = document.getElementById('percentageFeedback');
+        const checkPercentageBtn = document.getElementById('checkPercentage');
+
+        // --- Utility Functions (COMPLETED) ---
+
+        // Fisher-Yates (Knuth) Shuffle algorithm
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Update Score, Level, and Streak
+        function updateScore(isCorrect) {
+            if (isCorrect) {
+                score += 10 * level;
+                streak++;
+                if (streak % 5 === 0) {
+                    level++;
+                }
+            } else {
+                streak = 0;
+            }
+            scoreElement.textContent = score;
+            levelElement.textContent = level;
+            streakElement.textContent = streak;
+        }
+
+        // Function to find the Greatest Common Divisor (GCD) for simplifying fractions
+        function gcd(a, b) {
+            return b === 0 ? a : gcd(b, a % b);
+        }
+
+        // Function to simplify a fraction
+        function simplifyFraction(num, den) {
+            // Handle non-positive denominators
+            if (den <= 0) return 'Invalid';
+            
+            const common = gcd(num, den);
+            return `${num / common}/${den / common}`;
+        }
+
+        // --- Game Logic Functions (Existing & Completed) ---
+
+        // Initialize the game
+        function init() {
+            // Set up game selector buttons
+            gameBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const game = btn.getAttribute('data-game');
+                    switchGame(game);
+                    
+                    // Update active button
+                    gameBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+            
+            // Set up check answer buttons
+            checkFractionBtn.addEventListener('click', checkFraction);
+            checkDecimalBtn.addEventListener('click', checkDecimal);
+            checkPercentageBtn.addEventListener('click', checkPercentage);
+            
+            // Set up input fields to move to next on Enter
+            fractionNumerator.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') fractionDenominator.focus();
+            });
+            
+            fractionDenominator.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') checkFraction();
+            });
+            
+            decimalInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') checkDecimal();
+            });
+            
+            percentageInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') checkPercentage();
+            });
+            
+            // Initialize first game
+            switchGame('fractions');
+        }
+
+        // Switch between games
+        function switchGame(game) {
+            currentGame = game;
+            
+            // Hide all game contents
+            gameContents.forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Show selected game
+            document.getElementById(`${game}Game`).style.display = 'flex';
+            
+            // Reset feedback
+            document.querySelectorAll('.feedback').forEach(feedback => {
+                feedback.className = 'feedback';
+                if (game === 'fractions') {
+                    feedback.textContent = 'Identify the fraction shown in the visual!';
+                } else if (game === 'decimals') {
+                    feedback.textContent = 'Identify the decimal shown in the visual!';
+                } else {
+                    feedback.textContent = 'Convert the value correctly!';
+                }
+            });
+            
+            // Clear inputs
+            clearInputs();
+            
+            // Generate new problem
+            generateProblem();
+        }
+
+        // Clear all input fields
+        function clearInputs() {
+            fractionNumerator.value = '';
+            fractionDenominator.value = '';
+            decimalInput.value = '';
+            percentageInput.value = '';
+            
+            // Reset option buttons
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.className = 'option-btn';
+            });
+        }
+
+        // Generate a new problem based on current game and level
+        function generateProblem() {
+            if (currentGame === 'fractions') {
+                generateFractionProblem();
+            } else if (currentGame === 'decimals') {
+                generateDecimalProblem();
+            } else if (currentGame === 'percentages') {
+                generatePercentageProblem();
+            }
+        }
+
+        // Generate a fraction problem
+        function generateFractionProblem() {
+            // Clear previous visual
+            fractionVisual.innerHTML = '';
+            
+            // Generate random fraction
+            const denominator = Math.floor(Math.random() * 8) + 2; // 2 to 9
+            const numerator = Math.floor(Math.random() * denominator) + 1; // 1 to denominator
+            
+            currentProblem = {
+                type: 'fraction',
+                numerator: numerator,
+                denominator: denominator,
+                value: numerator / denominator
+            };
+            
+            // Display the problem
+            fractionProblem.textContent = `What fraction of the shape is colored?`;
+            
+            // Create visual representation
+            for (let i = 0; i < denominator; i++) {
+                const piece = document.createElement('div');
+                piece.className = `fraction-piece ${i < numerator ? 'filled' : ''}`;
+                piece.textContent = i + 1;
+                fractionVisual.appendChild(piece);
+            }
+            
+            // Generate multiple choice options
+            generateFractionOptions();
+            
+            // Set focus to numerator input
+            fractionNumerator.focus();
+        }
+
+        // Generate multiple choice options for fractions
+        function generateFractionOptions() {
+            fractionOptions.innerHTML = '';
+            
+            const simplifiedCorrectOption = simplifyFraction(currentProblem.numerator, currentProblem.denominator);
+            const options = [simplifiedCorrectOption];
+            
+            // Generate incorrect options
+            while (options.length < 4) {
+                let randomNum = Math.floor(Math.random() * currentProblem.denominator) + 1;
+                let randomDen = Math.floor(Math.random() * 8) + 2;
+                
+                // Ensure the fraction is different from correct one and not already in options
+                const option = simplifyFraction(randomNum, randomDen);
+                if (option !== simplifiedCorrectOption && option !== 'Invalid' && !options.includes(option)) {
+                    options.push(option);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create option buttons
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.addEventListener('click', () => {
+                    // Set the fraction inputs based on selection
+                    const parts = option.split('/');
+                    fractionNumerator.value = parts[0];
+                    fractionDenominator.value = parts[1];
+                    
+                    // Highlight selected option
+                    document.querySelectorAll('#fractionOptions .option-btn').forEach(b => {
+                        b.classList.remove('selected');
+                    });
+                    btn.classList.add('selected');
+                });
+                fractionOptions.appendChild(btn);
+            });
+        }
+
+        // Check the fraction answer
+        function checkFraction() {
+            const num = parseInt(fractionNumerator.value.trim());
+            const den = parseInt(fractionDenominator.value.trim());
+            
+            if (isNaN(num) || isNaN(den) || den <= 0) {
+                fractionFeedback.textContent = 'Please enter valid numbers (denominator must be > 0)!';
+                fractionFeedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            // Calculate user's value and simplify the answer
+            const userSimplified = simplifyFraction(num, den);
+            const correctSimplified = simplifyFraction(currentProblem.numerator, currentProblem.denominator);
+            
+            // Check if the input value matches the correct simplified fraction
+            const isCorrect = userSimplified === correctSimplified;
+            
+            if (isCorrect) {
+                fractionFeedback.textContent = `🎉 Correct! ${userSimplified} is the right fraction. Keep going!`;
+                fractionFeedback.className = 'feedback correct';
+                updateScore(true);
+            } else {
+                fractionFeedback.textContent = `❌ Try again! The simplified answer is ${correctSimplified}.`;
+                fractionFeedback.className = 'feedback incorrect';
+                updateScore(false);
+            }
+            
+            // Wait a moment before generating the next problem
+            setTimeout(() => {
+                clearInputs();
+                generateProblem();
+            }, 1500);
+        }
+
+
+        // Generate a decimal problem
+        function generateDecimalProblem() {
+            // Generate random decimal
+            const ones = Math.floor(Math.random() * 10); // 0 to 9
+            const tenths = Math.floor(Math.random() * 10); // 0 to 9
+            const hundredths = Math.floor(Math.random() * 10); // 0 to 9
+            
+            const decimalValue = ones + tenths/10 + hundredths/100;
+            
+            currentProblem = {
+                type: 'decimal',
+                ones: ones,
+                tenths: tenths,
+                hundredths: hundredths,
+                value: decimalValue
+            };
+            
+            // Display the problem
+            decimalProblem.textContent = `What decimal number is shown?`;
+            
+            // Update visual representation
+            decimalOnes.textContent = ones;
+            decimalTenths.textContent = tenths;
+            decimalHundredths.textContent = hundredths;
+            
+            // Generate multiple choice options
+            generateDecimalOptions();
+            
+            // Set focus to input
+            decimalInput.focus();
+        }
+
+        // Generate multiple choice options for decimals
+        function generateDecimalOptions() {
+            decimalOptions.innerHTML = '';
+            
+            const correctOption = currentProblem.value.toFixed(2).replace(/\.?0+$/, ''); // Clean trailing zeros
+            const options = [correctOption];
+            
+            // Generate incorrect options
+            while (options.length < 4) {
+                let randomValue;
+                
+                // Create plausible wrong answers by slightly modifying the correct value
+                let newTenths = currentProblem.tenths;
+                let newHundredths = currentProblem.hundredths;
+
+                if (Math.random() > 0.5) {
+                    // Change tenths
+                    newTenths = Math.floor(Math.random() * 10);
+                } else {
+                    // Change hundredths
+                    newHundredths = Math.floor(Math.random() * 10);
+                }
+                
+                randomValue = currentProblem.ones + newTenths/10 + newHundredths/100;
+
+                const option = randomValue.toFixed(2).replace(/\.?0+$/, '');
+                if (option !== correctOption && !options.includes(option)) {
+                    options.push(option);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create option buttons
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.addEventListener('click', () => {
+                    decimalInput.value = option;
+                    
+                    // Highlight selected option
+                    document.querySelectorAll('#decimalOptions .option-btn').forEach(b => {
+                        b.classList.remove('selected');
+                    });
+                    btn.classList.add('selected');
+                });
+                decimalOptions.appendChild(btn);
+            });
+        }
+
+        // Check the decimal answer
+        function checkDecimal() {
+            // Trim and normalize the user input (e.g., handles ".5" as "0.5")
+            let userInput = decimalInput.value.trim();
+            if (userInput.startsWith('.')) {
+                userInput = '0' + userInput;
+            }
+            const userValue = parseFloat(userInput);
+            const correctValue = currentProblem.value;
+
+            if (isNaN(userValue)) {
+                decimalFeedback.textContent = 'Please enter a valid decimal number!';
+                decimalFeedback.className = 'feedback incorrect';
+                return;
+            }
+
+            // Compare to 2 decimal places
+            const isCorrect = userValue.toFixed(2) === correctValue.toFixed(2);
+            
+            if (isCorrect) {
+                decimalFeedback.textContent = `🌟 Awesome! ${correctValue.toFixed(2).replace(/\.?0+$/, '')} is the right decimal.`;
+                decimalFeedback.className = 'feedback correct';
+                updateScore(true);
+            } else {
+                decimalFeedback.textContent = `❌ Not quite. The correct decimal is ${correctValue.toFixed(2).replace(/\.?0+$/, '')}.`;
+                decimalFeedback.className = 'feedback incorrect';
+                updateScore(false);
+            }
+            
+            // Wait a moment before generating the next problem
+            setTimeout(() => {
+                clearInputs();
+                generateProblem();
+            }, 1500);
+        }
+
+
+        // Generate a percentage problem (COMPLETED)
+        function generatePercentageProblem() {
+            // Determine conversion type
+            const conversionTypes = [
+                { from: 'fraction', to: 'percentage', problem: 'Convert the fraction to a percentage:' },
+                { from: 'fraction', to: 'decimal', problem: 'Convert the fraction to a decimal:' },
+                { from: 'decimal', to: 'percentage', problem: 'Convert the decimal to a percentage:' },
+                { from: 'decimal', to: 'fraction', problem: 'Convert the decimal to a fraction (simplified):' },
+                { from: 'percentage', to: 'fraction', problem: 'Convert the percentage to a fraction (simplified):' },
+                { from: 'percentage', to: 'decimal', problem: 'Convert the percentage to a decimal:' }
+            ];
+            
+            const conversionType = conversionTypes[Math.floor(Math.random() * conversionTypes.length)];
+            
+            // Common fractions for easier conversion (values rounded for display)
+            const commonFractions = [
+                { num: 1, den: 2, dec: 0.5, per: 50 },
+                { num: 1, den: 4, dec: 0.25, per: 25 },
+                { num: 3, den: 4, dec: 0.75, per: 75 },
+                { num: 1, den: 5, dec: 0.2, per: 20 },
+                { num: 2, den: 5, dec: 0.4, per: 40 },
+                { num: 3, den: 5, dec: 0.6, per: 60 },
+                { num: 4, den: 5, dec: 0.8, per: 80 },
+                { num: 1, den: 10, dec: 0.1, per: 10 },
+                { num: 3, den: 10, dec: 0.3, per: 30 },
+                { num: 7, den: 10, dec: 0.7, per: 70 },
+                { num: 1, den: 8, dec: 0.125, per: 12.5 },
+                { num: 1, den: 3, dec: 0.33, per: 33 } // Using rounded values for common non-terminating
+            ];
+            
+            const fraction = commonFractions[Math.floor(Math.random() * commonFractions.length)];
+            
+            let fromValue, toValue, correctValueForInput;
+            
+            if (conversionType.from === 'fraction') {
+                fromValue = `${fraction.num}/${fraction.den}`;
+                if (conversionType.to === 'percentage') {
+                    toValue = fraction.per + '%';
+                    correctValueForInput = fraction.per.toString();
+                } else { // to decimal
+                    toValue = fraction.dec.toString().replace(/\.?0+$/, '');
+                    correctValueForInput = toValue;
+                }
+            } else if (conversionType.from === 'decimal') {
+                fromValue = fraction.dec.toString().replace(/\.?0+$/, '');
+                if (conversionType.to === 'percentage') {
+                    toValue = fraction.per + '%';
+                    correctValueForInput = fraction.per.toString();
+                } else { // to fraction
+                    toValue = `${fraction.num}/${fraction.den}`;
+                    correctValueForInput = toValue;
+                }
+            } else { // from percentage
+                fromValue = fraction.per + '%';
+                if (conversionType.to === 'fraction') {
+                    toValue = `${fraction.num}/${fraction.den}`;
+                    correctValueForInput = toValue;
+                } else { // to decimal
+                    toValue = fraction.dec.toString().replace(/\.?0+$/, '');
+                    correctValueForInput = toValue;
+                }
+            }
+            
+            currentProblem = {
+                type: 'percentage',
+                conversionType: conversionType,
+                fromValue: fromValue,
+                toValue: toValue,
+                numericValue: fraction.dec,
+                correctInput: correctValueForInput
+            };
+            
+            // Display the problem
+            percentageProblem.textContent = conversionType.problem;
+            conversionFrom.textContent = fromValue;
+            conversionTo.textContent = '?';
+
+            // Update the visual bar based on the numeric value
+            const fillPercentage = Math.round(fraction.dec * 100);
+            percentageFill.style.width = fillPercentage + '%';
+            percentageText.textContent = fillPercentage + '%';
+            
+            // Generate multiple choice options
+            generatePercentageOptions();
+            
+            // Set focus to input
+            percentageInput.focus();
+        }
+
+        // Generate multiple choice options for conversions (COMPLETED)
+        function generatePercentageOptions() {
+            percentageOptions.innerHTML = '';
+            
+            const correctOption = currentProblem.toValue;
+            const options = [correctOption];
+            const { conversionType, numericValue } = currentProblem;
+            
+            while (options.length < 4) {
+                let wrongOption;
+                const randomModifier = Math.floor(Math.random() * 4) + 1; // 1, 2, 3, 4
+                
+                if (conversionType.to === 'percentage') {
+                    // Generate percentages near the correct one
+                    let wrongPer = Math.round(numericValue * 100) + (Math.random() > 0.5 ? randomModifier * 5 : -randomModifier * 5);
+                    if (wrongPer < 1 || wrongPer > 100) wrongPer = 50; // Keep in range
+                    wrongOption = wrongPer + '%';
+                } else if (conversionType.to === 'decimal') {
+                    // Generate decimals near the correct one
+                    let wrongDec = numericValue + (Math.random() > 0.5 ? randomModifier * 0.1 : -randomModifier * 0.1);
+                    wrongOption = wrongDec.toFixed(2).replace(/\.?0+$/, ''); // Clean trailing zeros
+                } else { // to fraction
+                    // Generate a wrong fraction (e.g., by changing numerator or denominator)
+                    const common = [
+                        { num: 1, den: 2 }, { num: 1, den: 4 }, { num: 3, den: 4 }, 
+                        { num: 1, den: 5 }, { num: 2, den: 5 }, { num: 3, den: 5 }, { num: 2, den: 3 }
+                    ];
+                    const wrongFraction = common[Math.floor(Math.random() * common.length)];
+                    wrongOption = simplifyFraction(wrongFraction.num, wrongFraction.den);
+                }
+                
+                if (!options.includes(wrongOption) && wrongOption !== correctOption && wrongOption !== 'Invalid') {
+                    options.push(wrongOption);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create option buttons
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.addEventListener('click', () => {
+                    // Set input value based on the option format (e.g. remove % for percentage input)
+                    if (conversionType.to === 'percentage') {
+                        percentageInput.value = option.replace('%', '');
+                    } else {
+                        percentageInput.value = option;
+                    }
+                    
+                    // Highlight selected option
+                    document.querySelectorAll('#percentageOptions .option-btn').forEach(b => {
+                        b.classList.remove('selected');
+                    });
+                    btn.classList.add('selected');
+                });
+                percentageOptions.appendChild(btn);
+            });
+        }
+
+        // Check the percentage/conversion answer (COMPLETED)
+        function checkPercentage() {
+            const userInput = percentageInput.value.trim();
+            const correctValue = currentProblem.toValue;
+            const correctInput = currentProblem.correctInput;
+            let isCorrect = false;
+
+            // Check against the expected output format
+            if (currentProblem.conversionType.to === 'fraction') {
+                // Normalize user input (simplify it)
+                const parts = userInput.split('/');
+                const num = parseInt(parts[0]);
+                const den = parseInt(parts[1]);
+
+                if (!isNaN(num) && !isNaN(den) && den > 0) {
+                    const userSimplified = simplifyFraction(num, den);
+                    isCorrect = userSimplified === correctValue;
+                }
+                
+            } else if (currentProblem.conversionType.to === 'decimal') {
+                // Check decimal values
+                let userDec = parseFloat(userInput);
+                let correctDec = parseFloat(correctInput);
+                
+                // If it's an approximated fraction (like 1/3) check with tolerance
+                if (correctValue.length > 4) { // Heuristic for approximations (0.33, 0.67, 0.125)
+                    isCorrect = Math.abs(userDec - correctDec) < 0.01; 
+                } else {
+                    // For terminating decimals, check to two decimal places
+                    isCorrect = userDec.toFixed(2) === correctDec.toFixed(2);
+                }
+
+                if (isNaN(userDec)) isCorrect = false;
+                
+            } else if (currentProblem.conversionType.to === 'percentage') {
+                // Check percentage values (remove '%' sign for comparison)
+                const userPer = parseFloat(userInput.replace('%', ''));
+                const correctPer = parseFloat(correctInput);
+                
+                // Check with tolerance for approximated percentages
+                if (correctPer % 5 !== 0) { // e.g., 33% or 12.5%
+                    isCorrect = Math.abs(userPer - correctPer) < 1; // Tolerance for 1% difference
+                } else {
+                    isCorrect = userPer === correctPer;
+                }
+                
+                if (isNaN(userPer)) isCorrect = false;
+            }
+
+            if (isCorrect) {
+                conversionTo.textContent = correctValue;
+                percentageFeedback.textContent = `✅ Brilliant! ${currentProblem.fromValue} is indeed ${correctValue}.`;
+                percentageFeedback.className = 'feedback correct';
+                updateScore(true);
+            } else {
+                percentageFeedback.textContent = `❌ Keep practicing! The correct conversion is ${correctValue}.`;
+                percentageFeedback.className = 'feedback incorrect';
+                updateScore(false);
+            }
+            
+            // Wait a moment before generating the next problem
+            setTimeout(() => {
+                clearInputs();
+                generateProblem();
+            }, 1500);
+        }
+
+        // Start the game!
+        init();
+    </script>
+</body>
+</html>

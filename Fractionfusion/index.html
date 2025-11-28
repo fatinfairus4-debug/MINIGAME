@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>📐 Fraction Fusion Minigame</title>
+    <style>
+        body {
+            font-family: 'Consolas', monospace;
+            text-align: center;
+            background-color: #f0ffff;
+            margin: 0;
+            padding: 20px;
+        }
+        header h1 {
+            color: #1e8449;
+            margin-bottom: 5px;
+        }
+        #game-container {
+            width: 350px;
+            height: 600px;
+            margin: 20px auto;
+            border: 5px solid #333;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        #stats-bar {
+            width: 360px;
+            margin: 0 auto 10px;
+            display: flex;
+            justify-content: space-between;
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .value-block {
+            position: absolute;
+            width: 80px;
+            height: 40px;
+            background-color: #5d9cec;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #3c78d8;
+            border-radius: 5px;
+            font-size: 1.2em;
+            font-weight: bold;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            user-select: none;
+        }
+        #player-paddle {
+            position: absolute;
+            bottom: 0;
+            left: 135px;
+            width: 80px;
+            height: 40px;
+            background-color: #ffb700;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #ffa000;
+            border-radius: 5px;
+            font-size: 1.2em;
+            font-weight: bold;
+            z-index: 20;
+            user-select: none;
+        }
+        #match-tray {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .match-option {
+            padding: 10px 15px;
+            background-color: #e0f2f1;
+            border: 2px solid #009688;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.1s, background-color 0.1s;
+        }
+        .match-option:hover {
+            transform: scale(1.05);
+            background-color: #b2dfdb;
+        }
+        #feedback {
+            margin-top: 15px;
+            font-size: 1.3em;
+            color: #333;
+            min-height: 25px;
+        }
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        #game-over-screen button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📐 Fraction Fusion</h1>
+        <p>Match the falling fraction with the correct decimal/percent equivalent!</p>
+    </header>
+
+    <div id="stats-bar">
+        <span>Score: <span id="score">0</span></span>
+        <span>Misses: <span id="misses">0</span>/3</span>
+        <span>Speed: <span id="speed">1.0</span>x</span>
+    </div>
+
+    <div id="game-container">
+        <div id="player-paddle"></div>
+
+        <div id="game-over-screen">
+            <h2>GAME OVER</h2>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <button onclick="startGame()">Play Again</button>
+        </div>
+    </div>
+
+    <div id="match-tray"></div>
+    <div id="feedback">Click a value in the tray to start the game!</div>
+
+    <script>
+        // CONFIG
+        const GAME_HEIGHT = 600;
+        const BLOCK_WIDTH = 80;
+        const BLOCK_HEIGHT = 40;
+        const PADDLE_HEIGHT = 40;
+        const MAX_MISSES = 3;
+        const BASE_SPEED = 1;
+        const SPEED_INCREASE_INTERVAL = 10;
+
+        const FRACTION_SETS = [
+            ['1/2', 0.5, '50%'],
+            ['1/4', 0.25, '25%'],
+            ['3/4', 0.75, '75%'],
+            ['1/10', 0.1, '10%'],
+            ['3/10', 0.3, '30%'],
+            ['9/10', 0.9, '90%'],
+            ['1/5', 0.2, '20%'],
+            ['2/5', 0.4, '40%'],
+            ['4/5', 0.8, '80%'],
+            ['1/8', 0.125, '12.5%'],
+            ['3/8', 0.375, '37.5%']
+        ];
+
+        // STATE
+        let state = {
+            score: 0,
+            misses: 0,
+            currentSpeed: BASE_SPEED,
+            isPlaying: false,
+            currentMatchValue: null,
+            currentFallingBlock: null,
+            currentFallingValue: null,
+            gameLoop: null,
+            spawnLoop: null,
+            paddleX: 135
+        };
+
+        // DOM
+        const gameContainer = document.getElementById('game-container');
+        const paddle = document.getElementById('player-paddle');
+        const scoreDisplay = document.getElementById('score');
+        const missesDisplay = document.getElementById('misses'); // only the number span
+        const speedDisplay = document.getElementById('speed');
+        const matchTray = document.getElementById('match-tray');
+        const feedback = document.getElementById('feedback');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        // START / END
+        function startGame() {
+            // Reset state
+            state.score = 0;
+            state.misses = 0;
+            state.currentSpeed = BASE_SPEED;
+            state.isPlaying = false; // wait for first selection to actually "play"
+            state.currentMatchValue = null;
+            state.currentFallingBlock = null;
+
+            // Clear previous blocks & timers
+            document.querySelectorAll('.value-block').forEach(b => b.remove());
+            clearInterval(state.gameLoop); state.gameLoop = null;
+            clearInterval(state.spawnLoop); state.spawnLoop = null;
+
+            // Reset displays
+            scoreDisplay.textContent = 0;
+            missesDisplay.textContent = 0; // only the number shown in HTML
+            speedDisplay.textContent = BASE_SPEED.toFixed(1);
+            paddle.style.display = 'flex';
+            gameOverScreen.style.display = 'none';
+            paddle.textContent = 'Select Match!';
+            feedback.textContent = 'Select a value to start!';
+
+            // Initialize paddle position (center)
+            paddle.style.left = `${(gameContainer.clientWidth / 2) - (BLOCK_WIDTH / 2)}px`;
+            state.paddleX = (gameContainer.clientWidth / 2) - (BLOCK_WIDTH / 2);
+
+            // Prepare tray
+            populateMatchTray();
+        }
+
+        function endGame() {
+            state.isPlaying = false;
+            if (state.gameLoop) { clearInterval(state.gameLoop); state.gameLoop = null; }
+            if (state.spawnLoop) { clearInterval(state.spawnLoop); state.spawnLoop = null; }
+            paddle.style.display = 'none';
+            finalScoreDisplay.textContent = state.score;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        // PADDLE MOVEMENT
+        document.addEventListener('keydown', (e) => {
+            if (!state.isPlaying) return;
+            const key = e.key.toLowerCase();
+            let moveAmount = 25;
+            if (key === 'arrowleft' || key === 'a') {
+                state.paddleX = Math.max(0, state.paddleX - moveAmount);
+            } else if (key === 'arrowright' || key === 'd') {
+                state.paddleX = Math.min(gameContainer.clientWidth - BLOCK_WIDTH, state.paddleX + moveAmount);
+            }
+            paddle.style.left = `${state.paddleX}px`;
+        });
+
+        // BLOCK MANAGEMENT
+        function spawnBlock() {
+            if (!state.isPlaying) return;
+            if (state.currentFallingBlock) return; // keep single falling block at a time
+
+            const [text, value, percent] = FRACTION_SETS[Math.floor(Math.random() * FRACTION_SETS.length)];
+            const newBlock = document.createElement('div');
+            newBlock.className = 'value-block';
+            newBlock.textContent = text;
+            newBlock.dataset.value = value;
+
+            const xPos = Math.random() * (gameContainer.clientWidth - BLOCK_WIDTH);
+            newBlock.style.left = `${xPos}px`;
+            newBlock.style.top = `0px`;
+
+            gameContainer.appendChild(newBlock);
+            state.currentFallingBlock = newBlock;
+            state.currentFallingValue = value;
+        }
+
+        function updateGame() {
+            if (!state.isPlaying || !state.currentFallingBlock) return;
+
+            const block = state.currentFallingBlock;
+            let y = parseFloat(block.style.top) || 0;
+            y += state.currentSpeed;
+            block.style.top = `${y}px`;
+
+            const blockBottom = y + BLOCK_HEIGHT;
+            const paddleTop = gameContainer.clientHeight - PADDLE_HEIGHT;
+
+            // When block reaches paddle vertical zone, check horizontal overlap
+            if (blockBottom >= paddleTop) {
+                checkCollision(blockBottom);
+            }
+
+            // If the block entirely leaves the container, count as miss
+            if (blockBottom > gameContainer.clientHeight) {
+                handleMiss();
+            }
+        }
+
+        function checkCollision(blockBottom) {
+            // if there's no falling block, bail
+            if (!state.currentFallingBlock) return;
+
+            const blockLeft = parseFloat(state.currentFallingBlock.style.left);
+            const blockRight = blockLeft + BLOCK_WIDTH;
+            const paddleLeft = state.paddleX;
+            const paddleRight = paddleLeft + BLOCK_WIDTH;
+
+            const horizontalOverlap = blockRight > paddleLeft && blockLeft < paddleRight;
+
+            if (horizontalOverlap) {
+                // Collision - check match
+                if (state.currentMatchValue !== null && Number(state.currentMatchValue) === Number(state.currentFallingValue)) {
+                    handleMatch();
+                } else {
+                    handleWrongMatch();
+                }
+            } else {
+                // No horizontal collision - let it keep falling until miss
+            }
+        }
+
+        function handleMatch() {
+            if (state.currentFallingBlock) state.currentFallingBlock.remove();
+            state.currentFallingBlock = null;
+            state.currentFallingValue = null;
+
+            state.score += 100;
+            scoreDisplay.textContent = state.score;
+            feedback.textContent = `SUCCESS! Match: ${paddle.textContent}`;
+
+            if (Math.floor(state.score / 100) % SPEED_INCREASE_INTERVAL === 0 && state.score !== 0) {
+                state.currentSpeed = +(state.currentSpeed + 0.2).toFixed(2);
+                speedDisplay.textContent = state.currentSpeed.toFixed(1);
+                feedback.textContent += ` - SPEED UP! (${state.currentSpeed.toFixed(1)}x)`;
+            }
+        }
+
+        function handleWrongMatch() {
+            if (state.currentFallingBlock) state.currentFallingBlock.remove();
+            state.currentFallingBlock = null;
+            state.currentFallingValue = null;
+
+            state.misses += 1;
+            missesDisplay.textContent = state.misses;
+            feedback.textContent = `WRONG! You chose ${paddle.textContent}.`;
+
+            if (state.misses >= MAX_MISSES) {
+                endGame();
+            }
+        }
+
+        function handleMiss() {
+            if (state.currentFallingBlock) state.currentFallingBlock.remove();
+            state.currentFallingBlock = null;
+            state.currentFallingValue = null;
+
+            state.misses += 1;
+            missesDisplay.textContent = state.misses;
+            feedback.textContent = `MISSED! Block passed by.`;
+
+            if (state.misses >= MAX_MISSES) {
+                endGame();
+            }
+        }
+
+        // TRAY / MATCH LOGIC
+        function populateMatchTray() {
+            matchTray.innerHTML = '';
+
+            const uniqueValues = [...new Set(FRACTION_SETS.map(f => f[1]))];
+            const shuffledValues = uniqueValues.sort(() => 0.5 - Math.random()).slice(0, 4);
+
+            shuffledValues.forEach(value => {
+                const [fraction, decimal, percent] = FRACTION_SETS.find(f => f[1] === value);
+
+                // show percent sometimes; if decimal has many digits, format it
+                const displayText = Math.random() < 0.5 ? percent : (Number(decimal) % 1 === 0 ? decimal.toString() : decimal.toString());
+
+                const option = document.createElement('div');
+                option.className = 'match-option';
+                option.textContent = displayText;
+                option.dataset.value = decimal;
+                option.addEventListener('click', handleMatchSelection);
+                matchTray.appendChild(option);
+            });
+        }
+
+        function handleMatchSelection(e) {
+            const wasPlaying = state.isPlaying;
+
+            // If game hasn't started yet, start loops now
+            if (!wasPlaying) {
+                state.isPlaying = true;
+                // start loops
+                state.gameLoop = setInterval(updateGame, 1000 / 60); // 60 FPS
+                state.spawnLoop = setInterval(spawnBlock, 2000); // new block every 2s
+                // spawn first block immediately
+                spawnBlock();
+                feedback.textContent = 'Game started! Move with A/D or Arrow Keys.';
+            }
+
+            const selectedValue = parseFloat(e.currentTarget.dataset.value);
+            const selectedText = e.currentTarget.textContent;
+
+            state.currentMatchValue = selectedValue;
+            paddle.textContent = selectedText;
+
+            // highlight
+            document.querySelectorAll('.match-option').forEach(opt => {
+                opt.style.backgroundColor = '#e0f2f1';
+                opt.style.borderColor = '#009688';
+                opt.style.color = '';
+            });
+            e.currentTarget.style.backgroundColor = '#009688';
+            e.currentTarget.style.borderColor = '#00564e';
+            e.currentTarget.style.color = 'white';
+        }
+
+        // init
+        startGame();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Math Adventure: Time Travel</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            margin: 20px 0;
+        }
+        h1 {
+            color: #764ba2;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        .subtitle {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+        }
+        .game-selector { 
+            display:flex; 
+            justify-content:center; 
+            gap:15px; 
+            margin-bottom:30px; 
+            flex-wrap:wrap;
+        }
+        .game-btn {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white; 
+            border: none; 
+            border-radius: 50px;
+            padding: 12px 25px; 
+            font-size: 1.1rem; 
+            cursor:pointer;
+            transition: all 0.3s ease; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .game-btn:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3); 
+        }
+        .game-btn.active { 
+            background: linear-gradient(to right, #f093fb, #f5576c); 
+        }
+        .game-btn.locked {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .game-area {
+            background-color: #f8f9fa; 
+            border-radius: 15px; 
+            padding: 25px;
+            min-height: 500px; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+        }
+        .game-title { 
+            color:#764ba2; 
+            margin-bottom:20px; 
+            text-align:center; 
+        }
+        .problem-container {
+            background: white; 
+            border-radius: 15px; 
+            padding: 25px;
+            width:100%; 
+            max-width:600px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom:25px;
+        }
+        .problem-display { 
+            font-size:1.8rem; 
+            text-align:center; 
+            margin-bottom:20px; 
+            color:#333; 
+            line-height:1.5; 
+        }
+        
+        /* Clock Styles */
+        .clock-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .analog-clock {
+            width: 200px;
+            height: 200px;
+            border: 8px solid #764ba2;
+            border-radius: 50%;
+            position: relative;
+            background: #f8f9fa;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .clock-center {
+            width: 12px;
+            height: 12px;
+            background: #f5576c;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        .hour-hand, .minute-hand, .second-hand {
+            position: absolute;
+            transform-origin: bottom center;
+            left: 50%;
+            bottom: 50%;
+            transform: translateX(-50%);
+            border-radius: 4px;
+        }
+        .hour-hand {
+            width: 6px;
+            height: 50px;
+            background: #333;
+            z-index: 2;
+        }
+        .minute-hand {
+            width: 4px;
+            height: 70px;
+            background: #667eea;
+            z-index: 3;
+        }
+        .second-hand {
+            width: 2px;
+            height: 80px;
+            background: #f5576c;
+            z-index: 4;
+        }
+        .clock-numbers {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        .clock-number {
+            position: absolute;
+            text-align: center;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+        }
+        .digital-clock {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #764ba2;
+            background: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+            margin: 10px 0;
+        }
+        
+        /* Time Input Styles */
+        .time-input-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .time-input {
+            width: 80px;
+            height: 50px;
+            font-size: 1.8rem;
+            text-align: center;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+        }
+        .time-separator {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        
+        /* Time Interval Styles */
+        .time-interval-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .time-box {
+            background: white;
+            border: 2px solid #764ba2;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            min-width: 120px;
+        }
+        .time-label {
+            font-size: 1rem;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .time-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        .time-arrow {
+            font-size: 2rem;
+            color: #667eea;
+        }
+        
+        /* Options and Controls */
+        .options-container {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 100px;
+        }
+        .option-btn:hover {
+            background: #e6f0ff;
+        }
+        .option-btn.correct {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+        .option-btn.incorrect {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+        
+        .clock-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .clock-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .clock-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        /* Feedback */
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 500px;
+        }
+        .feedback.correct {
+            background: #e8f5e9;
+            color: #4caf50;
+        }
+        .feedback.incorrect {
+            background: #ffebee;
+            color: #f44336;
+        }
+        
+        .action-btn {
+            background: linear-gradient(to right, #f093fb, #f5576c);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+        }
+        
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        
+        .timer-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .timer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #764ba2;
+            background: #f0f0f0;
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+        }
+        
+        .level-progress {
+            width: 100%;
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 20px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .level-progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .level-complete {
+            text-align: center;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 15px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .level-complete h3 {
+            color: #4caf50;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .game-btn {
+                padding: 10px 15px;
+                font-size: 1rem;
+            }
+            .problem-display {
+                font-size: 1.5rem;
+            }
+            .analog-clock {
+                width: 150px;
+                height: 150px;
+            }
+            .digital-clock {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Math Adventure</h1>
+        <div class="subtitle">Time Travel</div>
+
+        <div class="score-container">
+            <div>Score: <span id="score">0</span></div>
+            <div>Level: <span id="level">1</span></div>
+            <div>Time Master: <span id="timeMaster">0</span></div>
+            <div>Streak: <span id="streak">0</span></div>
+        </div>
+        
+        <div class="timer-container">
+            <div>Time: <span class="timer" id="timer">60</span>s</div>
+        </div>
+        
+        <div class="level-progress">
+            <div class="level-progress-bar" id="levelProgress" style="width: 0%"></div>
+        </div>
+
+        <div class="game-selector">
+            <button class="game-btn active" data-game="clock">Level 1: Clock Reader</button>
+            <button class="game-btn locked" data-game="calculator">Level 2: Time Calculator</button>
+            <button class="game-btn locked" data-game="problems">Level 3: Time Problems</button>
+        </div>
+        
+        <div class="level-complete" id="levelComplete">
+            <h3>Level Complete!</h3>
+            <p>Congratulations! You've completed this level.</p>
+            <p>You earned <span id="levelScore">0</span> points!</p>
+            <button class="action-btn" id="nextLevel">Next Level</button>
+        </div>
+
+        <div class="game-area">
+            <!-- Clock Reader Game -->
+            <div id="clockGame" class="game-content">
+                <h2 class="game-title">Clock Reader</h2>
+                <div class="problem-container">
+                    <div class="problem-display" id="clockProblem">What time is shown on the clock?</div>
+                    
+                    <div class="clock-container">
+                        <div class="analog-clock" id="analogClock">
+                            <div class="clock-center"></div>
+                            <div class="hour-hand" id="hourHand"></div>
+                            <div class="minute-hand" id="minuteHand"></div>
+                            <div class="second-hand" id="secondHand"></div>
+                            <!-- Clock numbers will be generated by JavaScript -->
+                        </div>
+                        <div class="digital-clock" id="digitalClock">00:00</div>
+                    </div>
+                    
+                    <div class="time-input-container">
+                        <input type="text" class="time-input" id="hoursInput" maxlength="2" placeholder="00">
+                        <span class="time-separator">:</span>
+                        <input type="text" class="time-input" id="minutesInput" maxlength="2" placeholder="00">
+                    </div>
+                </div>
+                
+                <div class="options-container" id="clockOptions">
+                    <!-- Options will be generated here -->
+                </div>
+                
+                <div class="feedback" id="clockFeedback">Read the time on the clock and enter it correctly!</div>
+                
+                <button class="action-btn" id="checkClock">Check Answer</button>
+            </div>
+            
+            <!-- Time Calculator Game -->
+            <div id="calculatorGame" class="game-content" style="display: none;">
+                <h2 class="game-title">Time Calculator</h2>
+                <div class="problem-container">
+                    <div class="problem-display" id="calculatorProblem">How much time has passed?</div>
+                    
+                    <div class="time-interval-container">
+                        <div class="time-box">
+                            <div class="time-label">Start Time</div>
+                            <div class="time-value" id="startTime">10:30</div>
+                        </div>
+                        <div class="time-arrow">→</div>
+                        <div class="time-box">
+                            <div class="time-label">End Time</div>
+                            <div class="time-value" id="endTime">11:45</div>
+                        </div>
+                    </div>
+                    
+                    <div class="time-input-container">
+                        <span>Duration:</span>
+                        <input type="text" class="time-input" id="durationHours" maxlength="2" placeholder="00">
+                        <span class="time-separator">:</span>
+                        <input type="text" class="time-input" id="durationMinutes" maxlength="2" placeholder="00">
+                    </div>
+                </div>
+                
+                <div class="options-container" id="calculatorOptions">
+                    <!-- Options will be generated here -->
+                </div>
+                
+                <div class="feedback" id="calculatorFeedback">Calculate the time difference between start and end times!</div>
+                
+                <button class="action-btn" id="checkCalculator">Check Answer</button>
+            </div>
+            
+            <!-- Time Problems Game -->
+            <div id="problemsGame" class="game-content" style="display: none;">
+                <h2 class="game-title">Time Problems</h2>
+                <div class="problem-container">
+                    <div class="problem-display" id="problemText">Sarah started her homework at 3:15 PM and finished at 4:45 PM. How long did she spend on her homework?</div>
+                    
+                    <div class="time-input-container">
+                        <input type="text" class="time-input" id="answerHours" maxlength="2" placeholder="00">
+                        <span class="time-separator">:</span>
+                        <input type="text" class="time-input" id="answerMinutes" maxlength="2" placeholder="00">
+                    </div>
+                </div>
+                
+                <div class="options-container" id="problemOptions">
+                    <!-- Options will be generated here -->
+                </div>
+                
+                <div class="feedback" id="problemFeedback">Solve the time word problem!</div>
+                
+                <button class="action-btn" id="checkProblem">Check Answer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let currentGame = 'clock';
+        let score = 0;
+        let level = 1;
+        let timeMaster = 0;
+        let streak = 0;
+        let currentProblem = {};
+        let timer;
+        let timeLeft = 60;
+        let problemsSolved = 0;
+        let problemsRequired = 5; // Number of problems to solve to complete a level
+        
+        // DOM elements
+        const gameBtns = document.querySelectorAll('.game-btn');
+        const gameContents = document.querySelectorAll('.game-content');
+        const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+        const timeMasterElement = document.getElementById('timeMaster');
+        const streakElement = document.getElementById('streak');
+        const timerElement = document.getElementById('timer');
+        const levelProgress = document.getElementById('levelProgress');
+        const levelComplete = document.getElementById('levelComplete');
+        const levelScore = document.getElementById('levelScore');
+        const nextLevelBtn = document.getElementById('nextLevel');
+        
+        // Clock Reader Game Elements
+        const clockProblem = document.getElementById('clockProblem');
+        const analogClock = document.getElementById('analogClock');
+        const hourHand = document.getElementById('hourHand');
+        const minuteHand = document.getElementById('minuteHand');
+        const secondHand = document.getElementById('secondHand');
+        const digitalClock = document.getElementById('digitalClock');
+        const hoursInput = document.getElementById('hoursInput');
+        const minutesInput = document.getElementById('minutesInput');
+        const clockOptions = document.getElementById('clockOptions');
+        const clockFeedback = document.getElementById('clockFeedback');
+        const checkClockBtn = document.getElementById('checkClock');
+        
+        // Time Calculator Game Elements
+        const calculatorProblem = document.getElementById('calculatorProblem');
+        const startTime = document.getElementById('startTime');
+        const endTime = document.getElementById('endTime');
+        const durationHours = document.getElementById('durationHours');
+        const durationMinutes = document.getElementById('durationMinutes');
+        const calculatorOptions = document.getElementById('calculatorOptions');
+        const calculatorFeedback = document.getElementById('calculatorFeedback');
+        const checkCalculatorBtn = document.getElementById('checkCalculator');
+        
+        // Time Problems Game Elements
+        const problemText = document.getElementById('problemText');
+        const answerHours = document.getElementById('answerHours');
+        const answerMinutes = document.getElementById('answerMinutes');
+        const problemOptions = document.getElementById('problemOptions');
+        const problemFeedback = document.getElementById('problemFeedback');
+        const checkProblemBtn = document.getElementById('checkProblem');
+        
+        // Initialize the game
+        function init() {
+            // Set up game selector buttons
+            gameBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const game = btn.getAttribute('data-game');
+                    if (btn.classList.contains('locked')) return;
+                    
+                    switchGame(game);
+                    
+                    // Update active button
+                    gameBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+            
+            // Set up check answer buttons
+            checkClockBtn.addEventListener('click', checkClock);
+            checkCalculatorBtn.addEventListener('click', checkCalculator);
+            checkProblemBtn.addEventListener('click', checkProblem);
+            
+            // Set up next level button
+            nextLevelBtn.addEventListener('click', goToNextLevel);
+            
+            // Set up input fields to move to next on Enter
+            hoursInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') minutesInput.focus();
+            });
+            
+            minutesInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') checkClock();
+            });
+            
+            durationHours.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') durationMinutes.focus();
+            });
+            
+            durationMinutes.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') checkCalculator();
+            });
+            
+            answerHours.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') answerMinutes.focus();
+            });
+            
+            answerMinutes.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') checkProblem();
+            });
+            
+            // Create clock numbers
+            createClockNumbers();
+            
+            // Initialize first game
+            switchGame('clock');
+            
+            // Start the timer
+            startTimer();
+        }
+        
+        // Create clock numbers for analog clock
+        function createClockNumbers() {
+            for (let i = 1; i <= 12; i++) {
+                const number = document.createElement('div');
+                number.className = 'clock-number';
+                number.textContent = i;
+                
+                // Position numbers around the clock
+                const angle = (i * 30 - 90) * (Math.PI / 180);
+                const radius = 80; // Distance from center
+                const x = 100 + radius * Math.cos(angle) - 15; // 100 is center, 15 is half width
+                const y = 100 + radius * Math.sin(angle) - 15;
+                
+                number.style.left = `${x}px`;
+                number.style.top = `${y}px`;
+                
+                analogClock.appendChild(number);
+            }
+        }
+        
+        // Switch between games
+        function switchGame(game) {
+            currentGame = game;
+            
+            // Hide all game contents
+            gameContents.forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Show selected game
+            document.getElementById(`${game}Game`).style.display = 'flex';
+            
+            // Reset feedback
+            document.querySelectorAll('.feedback').forEach(feedback => {
+                feedback.className = 'feedback';
+                if (game === 'clock') {
+                    feedback.textContent = 'Read the time on the clock and enter it correctly!';
+                } else if (game === 'calculator') {
+                    feedback.textContent = 'Calculate the time difference between start and end times!';
+                } else {
+                    feedback.textContent = 'Solve the time word problem!';
+                }
+            });
+            
+            // Clear inputs
+            clearInputs();
+            
+            // Generate new problem
+            generateProblem();
+        }
+        
+        // Clear all input fields
+        function clearInputs() {
+            hoursInput.value = '';
+            minutesInput.value = '';
+            durationHours.value = '';
+            durationMinutes.value = '';
+            answerHours.value = '';
+            answerMinutes.value = '';
+            
+            // Reset option buttons
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.className = 'option-btn';
+            });
+        }
+        
+        // Generate a new problem based on current game and level
+        function generateProblem() {
+            if (currentGame === 'clock') {
+                generateClockProblem();
+            } else if (currentGame === 'calculator') {
+                generateCalculatorProblem();
+            } else if (currentGame === 'problems') {
+                generateTimeProblem();
+            }
+        }
+        
+        // Generate a clock reading problem
+        function generateClockProblem() {
+            // Generate random time
+            let hours = Math.floor(Math.random() * 12) + 1; // 1-12
+            let minutes = Math.floor(Math.random() * 12) * 5; // 0, 5, 10, ... 55
+            
+            // For higher levels, include more challenging times
+            if (level >= 3) {
+                minutes = Math.floor(Math.random() * 60); // Any minute
+            }
+            
+            currentProblem = {
+                type: 'clock',
+                hours: hours,
+                minutes: minutes
+            };
+            
+            // Display the problem
+            clockProblem.textContent = 'What time is shown on the clock?';
+            
+            // Update the clock display
+            updateClockDisplay(hours, minutes);
+            
+            // Generate multiple choice options
+            generateClockOptions();
+            
+            // Set focus to hours input
+            hoursInput.focus();
+        }
+        
+        // Update the analog and digital clock display
+        function updateClockDisplay(hours, minutes) {
+            // Update analog clock hands
+            const hourAngle = (hours % 12) * 30 + minutes * 0.5; // 30 degrees per hour, 0.5 degrees per minute
+            const minuteAngle = minutes * 6; // 6 degrees per minute
+            const secondAngle = 0; // Static for now
+            
+            hourHand.style.transform = `translateX(-50%) rotate(${hourAngle}deg)`;
+            minuteHand.style.transform = `translateX(-50%) rotate(${minuteAngle}deg)`;
+            secondHand.style.transform = `translateX(-50%) rotate(${secondAngle}deg)`;
+            
+            // Update digital clock
+            const formattedHours = hours.toString().padStart(2, '0');
+            const formattedMinutes = minutes.toString().padStart(2, '0');
+            digitalClock.textContent = `${formattedHours}:${formattedMinutes}`;
+        }
+        
+        // Generate multiple choice options for clock reading
+        function generateClockOptions() {
+            clockOptions.innerHTML = '';
+            
+            const correctOption = `${currentProblem.hours.toString().padStart(2, '0')}:${currentProblem.minutes.toString().padStart(2, '0')}`;
+            const options = [correctOption];
+            
+            // Generate incorrect options
+            while (options.length < 4) {
+                let wrongHours, wrongMinutes;
+                
+                // Create plausible wrong answers
+                if (Math.random() > 0.5) {
+                    // Wrong hour
+                    wrongHours = (currentProblem.hours + (Math.random() > 0.5 ? 1 : -1) + 12) % 12 || 12;
+                    wrongMinutes = currentProblem.minutes;
+                } else {
+                    // Wrong minutes
+                    wrongHours = currentProblem.hours;
+                    let minuteDiff = Math.floor(Math.random() * 10) + 5;
+                    wrongMinutes = (currentProblem.minutes + (Math.random() > 0.5 ? minuteDiff : -minuteDiff) + 60) % 60;
+                }
+                
+                const option = `${wrongHours.toString().padStart(2, '0')}:${wrongMinutes.toString().padStart(2, '0')}`;
+                
+                if (option !== correctOption && !options.includes(option)) {
+                    options.push(option);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create option buttons
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.addEventListener('click', () => {
+                    const [hours, minutes] = option.split(':');
+                    hoursInput.value = hours;
+                    minutesInput.value = minutes;
+                    
+                    // Highlight selected option
+                    document.querySelectorAll('#clockOptions .option-btn').forEach(b => {
+                        b.classList.remove('selected');
+                    });
+                    btn.classList.add('selected');
+                });
+                clockOptions.appendChild(btn);
+            });
+        }
+        
+        // Generate a time calculation problem
+        function generateCalculatorProblem() {
+            // Generate random start time
+            let startHours = Math.floor(Math.random() * 12) + 1;
+            let startMinutes = Math.floor(Math.random() * 12) * 5; // 0, 5, 10, ... 55
+            
+            // Generate random duration (30 minutes to 3 hours)
+            let durationMinutesTotal = Math.floor(Math.random() * 150) + 30;
+            let durationHours = Math.floor(durationMinutesTotal / 60);
+            let durationMinutes = durationMinutesTotal % 60;
+            
+            // Calculate end time
+            let endHours = startHours + durationHours;
+            let endMinutes = startMinutes + durationMinutes;
+            
+            // Handle minute overflow
+            if (endMinutes >= 60) {
+                endHours += Math.floor(endMinutes / 60);
+                endMinutes = endMinutes % 60;
+            }
+            
+            // Handle hour overflow (12-hour clock)
+            endHours = (endHours - 1) % 12 + 1;
+            
+            currentProblem = {
+                type: 'calculator',
+                startHours: startHours,
+                startMinutes: startMinutes,
+                endHours: endHours,
+                endMinutes: endMinutes,
+                durationHours: durationHours,
+                durationMinutes: durationMinutes
+            };
+            
+            // Display the problem
+            calculatorProblem.textContent = 'How much time has passed?';
+            
+            // Update time displays
+            startTime.textContent = `${startHours.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')}`;
+            endTime.textContent = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+            
+            // Generate multiple choice options
+            generateCalculatorOptions();
+            
+            // Set focus to duration hours input
+            durationHours.focus();
+        }
+        
+        // Generate multiple choice options for time calculation
+        function generateCalculatorOptions() {
+            calculatorOptions.innerHTML = '';
+            
+            const correctOption = `${currentProblem.durationHours.toString().padStart(2, '0')}:${currentProblem.durationMinutes.toString().padStart(2, '0')}`;
+            const options = [correctOption];
+            
+            // Generate incorrect options
+            while (options.length < 4) {
+                let wrongHours, wrongMinutes;
+                
+                // Create plausible wrong answers
+                if (Math.random() > 0.5) {
+                    // Wrong hour
+                    wrongHours = Math.max(0, currentProblem.durationHours + (Math.random() > 0.5 ? 1 : -1));
+                    wrongMinutes = currentProblem.durationMinutes;
+                } else {
+                    // Wrong minutes
+                    wrongHours = currentProblem.durationHours;
+                    let minuteDiff = Math.floor(Math.random() * 15) + 5;
+                    wrongMinutes = Math.max(0, (currentProblem.durationMinutes + (Math.random() > 0.5 ? minuteDiff : -minuteDiff)) % 60);
+                }
+                
+                const option = `${wrongHours.toString().padStart(2, '0')}:${wrongMinutes.toString().padStart(2, '0')}`;
+                
+                if (option !== correctOption && !options.includes(option)) {
+                    options.push(option);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create option buttons
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.addEventListener('click', () => {
+                    const [hours, minutes] = option.split(':');
+                    durationHours.value = hours;
+                    durationMinutes.value = minutes;
+                    
+                    // Highlight selected option
+                    document.querySelectorAll('#calculatorOptions .option-btn').forEach(b => {
+                        b.classList.remove('selected');
+                    });
+                    btn.classList.add('selected');
+                });
+                calculatorOptions.appendChild(btn);
+            });
+        }
+        
+        // Generate a time word problem
+        function generateTimeProblem() {
+            // Problem types
+            const problemTypes = ['duration', 'endTime', 'startTime'];
+            const problemType = problemTypes[Math.floor(Math.random() * problemTypes.length)];
+            let problem, answerHours, answerMinutes;
+            
+            // Generate problem based on type
+            switch (problemType) {
+                case 'duration':
+                    const startHours = Math.floor(Math.random() * 12) + 1;
+                    const startMinutes = Math.floor(Math.random() * 12) * 5;
+                    const durationMinutesTotal = Math.floor(Math.random() * 120) + 30;
+                    
+                    let durHours = Math.floor(durationMinutesTotal / 60);
+                    let durMinutes = durationMinutesTotal % 60;
+                    
+                    // Calculate end time
+                    let endH = startHours + durHours;
+                    let endM = startMinutes + durMinutes;
+                    
+                    // Handle minute overflow
+                    if (endM >= 60) {
+                        endH += Math.floor(endM / 60);
+                        endM = endM % 60;
+                    }
+                    
+                    // Handle hour overflow (12-hour clock)
+                    endH = (endH - 1) % 12 + 1;
+                    
+                    problem = `Sarah started her homework at ${startHours}:${startMinutes.toString().padStart(2, '0')} and finished at ${endH}:${endM.toString().padStart(2, '0')}. How long did she spend on her homework?`;
+                    answerHours = durHours;
+                    answerMinutes = durMinutes;
+                    break;
+                    
+                case 'endTime':
+                    const stHours = Math.floor(Math.random() * 12) + 1;
+                    const stMinutes = Math.floor(Math.random() * 12) * 5;
+                    const durMinTotal = Math.floor(Math.random() * 120) + 30;
+                    
+                    let dHours = Math.floor(durMinTotal / 60);
+                    let dMinutes = durMinTotal % 60;
+                    
+                    // Calculate end time
+                    let eHours = stHours + dHours;
+                    let eMinutes = stMinutes + dMinutes;
+                    
+                    // Handle minute overflow
+                    if (eMinutes >= 60) {
+                        eHours += Math.floor(eMinutes / 60);
+                        eMinutes = eMinutes % 60;
+                    }
+                    
+                    // Handle hour overflow (12-hour clock)
+                    eHours = (eHours - 1) % 12 + 1;
+                    
+                    problem = `A movie starts at ${stHours}:${stMinutes.toString().padStart(2, '0')} and lasts for ${dHours} hours and ${dMinutes} minutes. What time does it end?`;
+                    answerHours = eHours;
+                    answerMinutes = eMinutes;
+                    break;
+                    
+                case 'startTime':
+                    const enHours = Math.floor(Math.random() * 12) + 1;
+                    const enMinutes = Math.floor(Math.random() * 12) * 5;
+                    const duMinTotal = Math.floor(Math.random() * 120) + 30;
+                    
+                    let dh = Math.floor(duMinTotal / 60);
+                    let dm = duMinTotal % 60;
+                    
+                    // Calculate start time
+                    let sHours = enHours - dh;
+                    let sMinutes = enMinutes - dm;
+                    
+                    // Handle minute underflow
+                    if (sMinutes < 0) {
+                        sHours -= 1;
+                        sMinutes += 60;
+                    }
+                    
+                    // Handle hour underflow (12-hour clock)
+                    sHours = (sHours + 11) % 12 + 1;
+                    
+                    problem = `John finished his soccer practice at ${enHours}:${enMinutes.toString().padStart(2, '0')}. It lasted for ${dh} hours and ${dm} minutes. What time did it start?`;
+                    answerHours = sHours;
+                    answerMinutes = sMinutes;
+                    break;
+            }
+            
+            currentProblem = {
+                type: 'problem',
+                problem: problem,
+                answerHours: answerHours,
+                answerMinutes: answerMinutes
+            };
+            
+            // Display the problem
+            problemText.textContent = problem;
+            
+            // Generate multiple choice options
+            generateProblemOptions();
+            
+            // Set focus to answer hours input
+            answerHours.focus();
+        }
+        
+        // Generate multiple choice options for time problems
+        function generateProblemOptions() {
+            problemOptions.innerHTML = '';
+            
+            const correctOption = `${currentProblem.answerHours.toString().padStart(2, '0')}:${currentProblem.answerMinutes.toString().padStart(2, '0')}`;
+            const options = [correctOption];
+            
+            // Generate incorrect options
+            while (options.length < 4) {
+                let wrongHours, wrongMinutes;
+                
+                // Create plausible wrong answers
+                if (Math.random() > 0.5) {
+                    // Wrong hour
+                    wrongHours = Math.max(1, currentProblem.answerHours + (Math.random() > 0.5 ? 1 : -1));
+                    wrongMinutes = currentProblem.answerMinutes;
+                } else {
+                    // Wrong minutes
+                    wrongHours = currentProblem.answerHours;
+                    let minuteDiff = Math.floor(Math.random() * 15) + 5;
+                    wrongMinutes = Math.max(0, (currentProblem.answerMinutes + (Math.random() > 0.5 ? minuteDiff : -minuteDiff)) % 60);
+                }
+                
+                const option = `${wrongHours.toString().padStart(2, '0')}:${wrongMinutes.toString().padStart(2, '0')}`;
+                
+                if (option !== correctOption && !options.includes(option)) {
+                    options.push(option);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create option buttons
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.addEventListener('click', () => {
+                    const [hours, minutes] = option.split(':');
+                    answerHours.value = hours;
+                    answerMinutes.value = minutes;
+                    
+                    // Highlight selected option
+                    document.querySelectorAll('#problemOptions .option-btn').forEach(b => {
+                        b.classList.remove('selected');
+                    });
+                    btn.classList.add('selected');
+                });
+                problemOptions.appendChild(btn);
+            });
+        }
+        
+        // Check clock reading answer
+        function checkClock() {
+            const userHours = parseInt(hoursInput.value) || 0;
+            const userMinutes = parseInt(minutesInput.value) || 0;
+            
+            // Check if answer is correct
+            const isCorrect = userHours === currentProblem.hours && userMinutes === currentProblem.minutes;
+            
+            // Provide feedback
+            if (isCorrect) {
+                clockFeedback.textContent = `Correct! The time is ${currentProblem.hours.toString().padStart(2, '0')}:${currentProblem.minutes.toString().padStart(2, '0')}.`;
+                clockFeedback.className = 'feedback correct';
+                updateScore(10);
+                addToTimeMaster(1);
+                increaseStreak();
+                problemsSolved++;
+                updateLevelProgress();
+                
+                // Check if level is complete
+                if (problemsSolved >= problemsRequired) {
+                    completeLevel();
+                    return;
+                }
+            } else {
+                clockFeedback.textContent = `Not quite. The correct time is ${currentProblem.hours.toString().padStart(2, '0')}:${currentProblem.minutes.toString().padStart(2, '0')}. Try again!`;
+                clockFeedback.className = 'feedback incorrect';
+                resetStreak();
+            }
+            
+            // Generate new problem after a short delay
+            setTimeout(() => {
+                if (isCorrect) {
+                    generateClockProblem();
+                    clearInputs();
+                }
+            }, 1200);
+        }
+        
+        // Check time calculation answer
+        function checkCalculator() {
+            const userHours = parseInt(durationHours.value) || 0;
+            const userMinutes = parseInt(durationMinutes.value) || 0;
+            
+            // Check if answer is correct
+            const isCorrect = userHours === currentProblem.durationHours && userMinutes === currentProblem.durationMinutes;
+            
+            // Provide feedback
+            if (isCorrect) {
+                calculatorFeedback.textContent = `Correct! The duration is ${currentProblem.durationHours} hours and ${currentProblem.durationMinutes} minutes.`;
+                calculatorFeedback.className = 'feedback correct';
+                updateScore(15);
+                addToTimeMaster(2);
+                increaseStreak();
+                problemsSolved++;
+                updateLevelProgress();
+                
+                // Check if level is complete
+                if (problemsSolved >= problemsRequired) {
+                    completeLevel();
+                    return;
+                }
+            } else {
+                calculatorFeedback.textContent = `Not quite. The correct duration is ${currentProblem.durationHours} hours and ${currentProblem.durationMinutes} minutes. Try again!`;
+                calculatorFeedback.className = 'feedback incorrect';
+                resetStreak();
+            }
+            
+            // Generate new problem after a short delay
+            setTimeout(() => {
+                if (isCorrect) {
+                    generateCalculatorProblem();
+                    clearInputs();
+                }
+            }, 1200);
+        }
+        
+        // Check time problem answer
+        function checkProblem() {
+            const userHours = parseInt(answerHours.value) || 0;
+            const userMinutes = parseInt(answerMinutes.value) || 0;
+            
+            // Check if answer is correct
+            const isCorrect = userHours === currentProblem.answerHours && userMinutes === currentProblem.answerMinutes;
+            
+            // Provide feedback
+            if (isCorrect) {
+                problemFeedback.textContent = `Correct! The answer is ${currentProblem.answerHours} hours and ${currentProblem.answerMinutes} minutes.`;
+                problemFeedback.className = 'feedback correct';
+                updateScore(15);
+                addToTimeMaster(2);
+                increaseStreak();
+                problemsSolved++;
+                updateLevelProgress();
+                
+                // Check if level is complete
+                if (problemsSolved >= problemsRequired) {
+                    completeLevel();
+                    return;
+                }
+            } else {
+                problemFeedback.textContent = `Not quite. The correct answer is ${currentProblem.answerHours} hours and ${currentProblem.answerMinutes} minutes. Try again!`;
+                problemFeedback.className = 'feedback incorrect';
+                resetStreak();
+            }
+            
+            // Generate new problem after a short delay
+            setTimeout(() => {
+                if (isCorrect) {
+                    generateTimeProblem();
+                    clearInputs();
+                }
+            }, 1200);
+        }
+        
+        // Helper function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Score and time master management
+        function updateScore(points) {
+            score += points;
+            scoreElement.textContent = score;
+        }
+        
+        function addToTimeMaster(points) {
+            timeMaster += points;
+            timeMasterElement.textContent = timeMaster;
+        }
+        
+        function increaseStreak() {
+            streak++;
+            streakElement.textContent = streak;
+            
+            // Bonus points for streaks
+            if (streak % 5 === 0) {
+                updateScore(10);
+                const feedback = document.querySelector(`#${currentGame}Game .feedback`);
+                feedback.textContent += ` ${streak} in a row! +10 bonus points!`;
+            }
+        }
+        
+        function resetStreak() {
+            streak = 0;
+            streakElement.textContent = streak;
+        }
+        
+        // Timer functions
+        function startTimer() {
+            clearInterval(timer);
+            timeLeft = 60;
+            timerElement.textContent = timeLeft;
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timeUp();
+                }
+            }, 1000);
+        }
+        
+        function timeUp() {
+            const feedback = document.querySelector(`#${currentGame}Game .feedback`);
+            feedback.textContent = "Time's up! Let's try a new problem.";
+            feedback.className = 'feedback incorrect';
+            
+            resetStreak();
+            
+            setTimeout(() => {
+                generateProblem();
+                clearInputs();
+                startTimer();
+            }, 1500);
+        }
+        
+        // Level progress functions
+        function updateLevelProgress() {
+            const progress = (problemsSolved / problemsRequired) * 100;
+            levelProgress.style.width = `${progress}%`;
+        }
+        
+        function completeLevel() {
+            clearInterval(timer);
+            
+            // Calculate level score
+            const levelScoreValue = 50 + (streak * 5);
+            updateScore(levelScoreValue);
+            levelScore.textContent = levelScoreValue;
+            
+            // Show level complete screen
+            levelComplete.style.display = 'block';
+            document.querySelector(`#${currentGame}Game`).style.display = 'none';
+        }
+        
+        function goToNextLevel() {
+            levelComplete.style.display = 'none';
+            
+            // Reset level progress
+            problemsSolved = 0;
+            updateLevelProgress();
+            
+            // Unlock next level
+            if (currentGame === 'clock') {
+                currentGame = 'calculator';
+                gameBtns[1].classList.remove('locked');
+                gameBtns[1].classList.add('active');
+                gameBtns[0].classList.remove('active');
+                level = 2;
+            } else if (currentGame === 'calculator') {
+                currentGame = 'problems';
+                gameBtns[2].classList.remove('locked');
+                gameBtns[2].classList.add('active');
+                gameBtns[1].classList.remove('active');
+                level = 3;
+            } else {
+                // Game completed
+                alert('Congratulations! You have completed all levels!');
+                resetGame();
+                return;
+            }
+            
+            levelElement.textContent = level;
+            switchGame(currentGame);
+            startTimer();
+        }
+        
+        function resetGame() {
+            score = 0;
+            level = 1;
+            timeMaster = 0;
+            streak = 0;
+            problemsSolved = 0;
+            
+            scoreElement.textContent = score;
+            levelElement.textContent = level;
+            timeMasterElement.textContent = timeMaster;
+            streakElement.textContent = streak;
+            
+            // Reset game buttons
+            gameBtns.forEach((btn, index) => {
+                if (index > 0) {
+                    btn.classList.add('locked');
+                    btn.classList.remove('active');
+                }
+            });
+            gameBtns[0].classList.add('active');
+            
+            currentGame = 'clock';
+            switchGame(currentGame);
+            startTimer();
+        }
+        
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

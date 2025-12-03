@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Math Adventure — Complete All 3 Levels!</title>
+<style>
+  :root{
+    --bg-grad: linear-gradient(135deg,#fffae6 0%, #d7f8ff 100%);
+    --card:#ffffff;
+    --accent:#FF6B6B;
+    --accent2:#4ECAD4;
+    --accent3:#FFD166;
+    --ok:#4caf50;
+    --bad:#f44336;
+    --shadow: 0 8px 20px rgba(10,20,40,0.12);
+    --radius: 14px;
+    --length: #FF6B6B;
+    --mass: #4ECAD4;
+    --volume: #FFD166;
+    --locked: #cccccc;
+  }
+  html,body{height:100%;margin:0;font-family: "Comic Sans MS", "Poppins", Arial, sans-serif;background:var(--bg-grad);display:flex;align-items:center;justify-content:center}
+  .wrap{width:980px;max-width:96%;padding:22px}
+  header{display:flex;align-items:center;gap:16px;margin-bottom:12px}
+  header .logo{width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,var(--accent),#ff8e53);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:28px;box-shadow:var(--shadow)}
+  header h1{margin:0;color:#1b3b4a;font-size:28px}
+  .top-row{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;display:flex;align-items:center;gap:12px}
+  .stats{display:flex;gap:8px;align-items:center}
+  .stat{background:linear-gradient(90deg,#fff,#f6f6f6);padding:8px 12px;border-radius:10px;min-width:110px;text-align:center}
+  .stat .label{font-size:12px;color:#666}
+  .stat .val{font-size:20px;font-weight:700;color:#1b3b4a}
+  .controls{display:flex;gap:8px;align-items:center}
+  .topic-btn{padding:10px 14px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent2),#7de0c6);color:#063;cursor:pointer;font-weight:700;box-shadow:0 6px 14px rgba(0,0,0,0.08)}
+  .topic-btn.active{outline:4px solid rgba(255,123,98,0.12);transform:translateY(-4px)}
+  .game-area{margin-top:16px;background:var(--card);border-radius:18px;padding:20px;box-shadow:var(--shadow);display:flex;gap:18px;align-items:flex-start}
+  .left{flex:1;min-width:300px}
+  .right{width:320px}
+  .card{background:linear-gradient(180deg,#ffffff,#fbfbfd);border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+  .question {font-size:22px;font-weight:800;color:#123; margin:8px 0 14px}
+  .visual {height:130px;display:flex;align-items:center;justify-content:center;gap:12px}
+  /* options */
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .opt{background:#f2fbff;border-radius:10px;padding:12px;font-size:18px;font-weight:700;color:#083545;cursor:pointer;display:flex;align-items:center;justify-content:center;border:3px solid transparent;transition:all .22s}
+  .opt:hover{transform:translateY(-4px);box-shadow:0 8px 18px rgba(2,18,28,0.06)}
+  .opt.correct{background:linear-gradient(90deg,#dff7dd,#b6f7b0);border-color:rgba(76,175,80,0.22)}
+  .opt.wrong{background:linear-gradient(90deg,#ffddd7,#ffb3b3);border-color:rgba(244,67,54,0.18)}
+  /* lives / timer */
+  .small{font-size:13px;color:#666}
+  .lives{display:flex;gap:6px;align-items:center}
+  .heart{width:28px;height:28px;border-radius:8px;background:linear-gradient(180deg,#ff7e92,#ff4b6b);display:inline-flex;align-items:center;justify-content:center;color:white;font-weight:800;box-shadow:0 6px 12px rgba(255,80,120,0.18)}
+  .timerbar{height:10px;background:#e6f7ff;border-radius:8px;overflow:hidden;margin-top:8px}
+  .timerfill{height:100%;background:linear-gradient(90deg,#FFD166,#FF6B6B);width:100%}
+  /* right column */
+  .score-large{font-size:26px;font-weight:900;color:#063}
+  .play-btn{margin-top:10px;padding:12px 18px;border-radius:12px;border:none;background:linear-gradient(90deg,#FF6B6B,#fe8e53);color:white;font-weight:900;cursor:pointer;box-shadow:0 12px 30px rgba(255,100,100,0.12)}
+  .play-btn.secondary{background:linear-gradient(90deg,#4ECAD4,#60e0d8);color:#053}
+  .feedback{height:56px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px}
+  .feedback.ok{background:linear-gradient(90deg,#dff7dd,#b6f7b0);color:#2a6b2a}
+  .feedback.bad{background:linear-gradient(90deg,#ffdede,#ffb3b3);color:#9a2b2b}
+  /* game over modal */
+  .overlay{position:fixed;inset:0;background:rgba(3,18,28,0.45);display:flex;align-items:center;justify-content:center;z-index:1000;visibility:hidden;opacity:0;transition:all .2s}
+  .overlay.show{visibility:visible;opacity:1}
+  .modal{background:white;padding:24px;border-radius:14px;max-width:420px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.4)}
+  .confetti-canvas{position:fixed;left:0;top:0;pointer-events:none;z-index:2000}
+  /* level indicator */
+  .level-indicator{display:flex;gap:6px;margin-bottom:12px}
+  .level-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:white}
+  .level-dot.active{transform:scale(1.2);box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+  .level-dot.completed{opacity:1}
+  .level-dot.locked{opacity:0.5;background:var(--locked)!important}
+  /* responsive */
+  @media (max-width:880px){ .game-area{flex-direction:column} .right{width:100%} .options{grid-template-columns:1fr} header{flex-direction:column;align-items:flex-start} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">MA</div>
+    <div>
+      <h1>Math Adventure</h1>
+      <div style="color:#446;color:rgba(0,0,0,0.45)">Complete All 3 Levels: Length → Mass → Volume</div>
+    </div>
+  </header>
+
+  <div class="level-indicator">
+    <div class="level-dot" id="level1" style="background:var(--length)">1</div>
+    <div style="flex:1;height:4px;background:#ddd;align-self:center;margin:0 4px"></div>
+    <div class="level-dot" id="level2" style="background:var(--mass)">2</div>
+    <div style="flex:1;height:4px;background:#ddd;align-self:center;margin:0 4px"></div>
+    <div class="level-dot" id="level3" style="background:var(--volume)">3</div>
+  </div>
+
+  <div class="top-row">
+    <div class="panel stats">
+      <div class="stat"><div class="label">Score</div><div id="score" class="val">0</div></div>
+      <div class="stat"><div class="label">Lives</div><div id="lives" class="val">3</div></div>
+      <div class="stat"><div class="label">Level</div><div id="levelLabel" class="val">1</div></div>
+      <div class="stat"><div class="label">Progress</div><div id="progress" class="val">0/5</div></div>
+    </div>
+
+    <div class="panel controls">
+      <label style="margin-left:10px;font-size:13px;color:#444" title="Toggle a 20s timer per question">
+        <input type="checkbox" id="toggleTimer" checked> Timer
+      </label>
+    </div>
+  </div>
+
+  <div class="game-area">
+    <div class="left">
+      <div class="card">
+        <div class="question" id="questionText">Welcome to Math Adventure! Complete all 3 levels to win.</div>
+        <div class="visual" id="visualArea">
+          <div style="font-size:64px;opacity:.9">🎯</div>
+        </div>
+
+        <div class="options" id="optionsWrap">
+          <!-- options injected here -->
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+          <div>
+            <div class="small">Time</div>
+            <div class="timerbar" id="timerBar"><div class="timerfill" id="timerFill"></div></div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="text-align:right">
+            <div class="small">Feedback</div>
+            <div id="feedback" class="feedback" style="background:#fff">Ready!</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="right">
+      <div class="card" style="text-align:center">
+        <div style="font-size:14px;color:#666">Current Level</div>
+        <div id="topicBig" style="font-size:20px;font-weight:900;margin:6px 0;color:var(--accent)">Length</div>
+        <div style="margin-top:8px"><button id="playBtn" class="play-btn">Start Level 1</button></div>
+        <div style="margin-top:12px;color:#666;font-size:13px">
+          • Complete 5 questions per level<br>
+          • +10 points for correct answers<br>
+          • Wrong = -1 life, Skip = -1 life<br>
+          • Complete all 3 levels to win!
+        </div>
+        <div style="margin-top:14px">
+          <div style="font-size:13px;color:#666">Quick Controls</div>
+          <button id="skipBtn" class="play-btn secondary" style="margin-top:8px">Skip (-1 life)</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;text-align:center">
+        <div style="font-size:13px;color:#666">Scoreboard</div>
+        <div style="font-size:28px;font-weight:900;color:#064;margin-top:8px" id="scoreDisplay">0</div>
+        <div style="margin-top:10px">
+          <button id="restartBtn" class="play-btn secondary">Restart Game</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Level Complete Modal -->
+<div id="levelCompleteOverlay" class="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">Level Complete!</h2>
+    <p id="modalText" style="font-weight:700;font-size:20px;margin:12px 0"></p>
+    <div style="margin:16px 0;font-size:16px;color:#444">
+      <div>Level Score: <span id="levelScore">0</span></div>
+      <div>Total Score: <span id="totalScore">0</span></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
+      <button id="nextLevel" class="play-btn">Next Level</button>
+      <button id="toMenu" class="play-btn secondary">Back to Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Game Over Modal -->
+<div id="gameOverOverlay" class="overlay">
+  <div class="modal">
+    <h2 id="gameOverTitle">Game Over</h2>
+    <p id="gameOverText" style="font-weight:700;font-size:20px;margin:12px 0"></p>
+    <div style="margin:16px 0;font-size:16px;color:#444">
+      <div style="font-size:24px;font-weight:bold;color:#FF6B6B" id="finalScore">0</div>
+      <div style="margin-top:10px;font-size:14px" id="gameOverDetails"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
+      <button id="restartFromOverlay" class="play-btn">Play Again</button>
+      <button id="toMainMenu" class="play-btn secondary">Back to Menu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Game Complete Modal (All 3 Levels) -->
+<div id="gameCompleteOverlay" class="overlay">
+  <div class="modal">
+    <h2 style="color:#4ECAD4">🏆 Game Complete! 🏆</h2>
+    <p style="font-weight:700;font-size:20px;margin:12px 0">You mastered all 3 levels!</p>
+    <div style="margin:16px 0;font-size:16px;color:#444">
+      <div style="font-size:32px;font-weight:bold;color:#FF6B6B" id="totalFinalScore">0</div>
+      <div style="margin-top:10px;font-size:14px">
+        Perfect score: <span id="maxPossible">150</span> points<br>
+        <span style="font-size:12px;color:#666">(5 questions × 3 levels × 10 points)</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
+      <button id="playAgainComplete" class="play-btn">Play Again</button>
+      <button id="toMenuComplete" class="play-btn secondary">Back to Menu</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="confetti" class="confetti-canvas"></canvas>
+
+<script>
+/* ---------- Game State ---------- */
+let state = {
+  currentLevel: 1, // 1=length, 2=mass, 3=volume
+  unlockedLevels: [1], // Which levels are unlocked
+  completedLevels: [], // Which levels are completed
+  questionsAnsweredInLevel: 0,
+  questionsNeededPerLevel: 5,
+  score: 0,
+  levelScore: 0,
+  lives: 3,
+  timerOn: true,
+  timeLeft: 20,
+  currentAnswer: null,
+  busy: false,
+  inProgress: false,
+  allLevelsCompleted: false
+};
+
+/* ---------- Helpers ---------- */
+const $ = (id)=>document.getElementById(id);
+const rand = (min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+const shuffle = arr => arr.sort(()=>Math.random()-0.5);
+
+/* ---------- UI Elements ---------- */
+const playBtn = $('playBtn'), skipBtn = $('skipBtn'), restartBtn = $('restartBtn');
+const questionText = $('questionText'), visualArea = $('visualArea'), optionsWrap = $('optionsWrap');
+const feedback = $('feedback'), scoreEl = $('score'), livesEl = $('lives'), levelLabel = $('levelLabel'), topicBig = $('topicBig');
+const levelCompleteOverlay = $('levelCompleteOverlay'), gameOverOverlay = $('gameOverOverlay'), gameCompleteOverlay = $('gameCompleteOverlay');
+const modalTitle = $('modalTitle'), modalText = $('modalText'), gameOverTitle = $('gameOverTitle'), gameOverText = $('gameOverText');
+const toggleTimer = $('toggleTimer'), timerBar = $('timerBar'), timerFill = $('timerFill');
+const scoreDisplay = $('scoreDisplay'), toMainMenu = $('toMainMenu'), restartFromOverlay = $('restartFromOverlay');
+const nextLevelBtn = $('nextLevel'), toMenu = $('toMenu');
+const progressEl = $('progress');
+const level1 = $('level1'), level2 = $('level2'), level3 = $('level3');
+const levelScoreEl = $('levelScore'), totalScoreEl = $('totalScore');
+const finalScoreEl = $('finalScore'), gameOverDetails = $('gameOverDetails');
+const totalFinalScore = $('totalFinalScore'), maxPossible = $('maxPossible');
+const playAgainComplete = $('playAgainComplete'), toMenuComplete = $('toMenuComplete');
+
+let timerInterval = null;
+
+/* ---------- Restart Game ---------- */
+function restartGame() {
+  state = {
+    currentLevel: 1,
+    unlockedLevels: [1],
+    completedLevels: [],
+    questionsAnsweredInLevel: 0,
+    questionsNeededPerLevel: 5,
+    score: 0,
+    levelScore: 0,
+    lives: 3,
+    timerOn: toggleTimer.checked,
+    timeLeft: 20,
+    currentAnswer: null,
+    busy: false,
+    inProgress: false,
+    allLevelsCompleted: false
+  };
+  
+  // Hide all modals
+  levelCompleteOverlay.classList.remove('show');
+  gameOverOverlay.classList.remove('show');
+  gameCompleteOverlay.classList.remove('show');
+  
+  resetToMenu();
+}
+
+/* ---------- Update Level Indicators ---------- */
+function updateLevelIndicators() {
+  // Reset all
+  [level1, level2, level3].forEach(dot => {
+    dot.className = 'level-dot';
+  });
+  
+  // Set current level
+  const currentDot = $(`level${state.currentLevel}`);
+  currentDot.classList.add('active');
+  
+  // Set completed levels
+  state.completedLevels.forEach(level => {
+    const dot = $(`level${level}`);
+    dot.classList.add('completed');
+  });
+  
+  // Lock future levels
+  for (let i = 1; i <= 3; i++) {
+    const dot = $(`level${i}`);
+    if (!state.unlockedLevels.includes(i)) {
+      dot.classList.add('locked');
+    }
+  }
+}
+
+/* ---------- Confetti ---------- */
+const confettiCanvas = $('confetti');
+const confettiCtx = confettiCanvas.getContext('2d');
+let confettis = [];
+function resizeCanvas(){ confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; }
+window.addEventListener('resize',resizeCanvas); resizeCanvas();
+function spawnConfetti(count=120){
+  confettis = [];
+  for(let i=0;i<count;i++){
+    confettis.push({
+      x: Math.random()*confettiCanvas.width,
+      y: Math.random()*-confettiCanvas.height,
+      vx: (Math.random()-0.5)*6,
+      vy: Math.random()*6+2,
+      r: Math.random()*6+4,
+      color: ['#FF6B6B','#FFD166','#4ECAD4','#8ec5ff'][Math.floor(Math.random()*4)]
+    });
+  }
+  let frames=0;
+  function frame(){
+    frames++; confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+    confettis.forEach(c=>{
+      c.x += c.vx; c.y += c.vy; c.vy += 0.06;
+      confettiCtx.fillStyle = c.color; confettiCtx.fillRect(c.x,c.y,c.r, c.r*0.6);
+    });
+    if(frames<200) requestAnimationFrame(frame);
+    else confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  }
+  frame();
+}
+
+/* ---------- Event Listeners ---------- */
+toggleTimer.addEventListener('change', ()=>{
+  state.timerOn = toggleTimer.checked;
+  timerBar.style.display = state.timerOn ? 'block' : 'none';
+});
+
+playBtn.addEventListener('click', ()=>startLevel());
+skipBtn.addEventListener('click', ()=>{ loseLife(); nextQuestion(); });
+restartBtn.addEventListener('click', ()=>restartGame());
+nextLevelBtn.addEventListener('click', ()=>goToNextLevel());
+toMenu.addEventListener('click', ()=>{ levelCompleteOverlay.classList.remove('show'); resetToMenu(); });
+restartFromOverlay.addEventListener('click', ()=>{ gameOverOverlay.classList.remove('show'); restartGame(); });
+toMainMenu.addEventListener('click', ()=>{ gameOverOverlay.classList.remove('show'); resetToMenu(); });
+playAgainComplete.addEventListener('click', ()=>{ gameCompleteOverlay.classList.remove('show'); restartGame(); });
+toMenuComplete.addEventListener('click', ()=>{ gameCompleteOverlay.classList.remove('show'); resetToMenu(); });
+
+/* ---------- Start Level ---------- */
+function startLevel() {
+  state.inProgress = true;
+  state.questionsAnsweredInLevel = 0;
+  state.levelScore = 0;
+  state.lives = 3;
+  state.busy = false;
+  
+  // Set level-specific colors
+  const colors = {
+    1: 'var(--length)',
+    2: 'var(--mass)', 
+    3: 'var(--volume)'
+  };
+  topicBig.style.color = colors[state.currentLevel];
+  
+  const levelNames = {1: 'Length', 2: 'Mass', 3: 'Volume'};
+  topicBig.innerText = `Level ${state.currentLevel}: ${levelNames[state.currentLevel]}`;
+  playBtn.innerText = `Playing Level ${state.currentLevel}`;
+  playBtn.disabled = true;
+  skipBtn.disabled = false;
+  
+  updateUI();
+  nextQuestion();
+}
+
+/* ---------- Go to Next Level ---------- */
+function goToNextLevel() {
+  levelCompleteOverlay.classList.remove('show');
+  
+  // Mark current level as completed
+  if (!state.completedLevels.includes(state.currentLevel)) {
+    state.completedLevels.push(state.currentLevel);
+  }
+  
+  if (state.currentLevel < 3) {
+    // Go to next level
+    state.currentLevel++;
+    if (!state.unlockedLevels.includes(state.currentLevel)) {
+      state.unlockedLevels.push(state.currentLevel);
+    }
+    updateLevelIndicators();
+    resetToMenu();
+  } else {
+    // All 3 levels completed!
+    state.allLevelsCompleted = true;
+    showGameComplete();
+  }
+}
+
+/* ---------- Show Game Complete (All 3 Levels) ---------- */
+function showGameComplete() {
+  stopTimer();
+  state.inProgress = false;
+  
+  totalFinalScore.innerText = state.score;
+  maxPossible.innerText = state.questionsNeededPerLevel * 3 * 10; // 5 questions × 3 levels × 10 points
+  
+  // Big celebration confetti
+  spawnConfetti(200);
+  
+  gameCompleteOverlay.classList.add('show');
+}
+
+/* ---------- Reset to Menu ---------- */
+function resetToMenu() {
+  state.inProgress = false;
+  state.busy = false;
+  stopTimer();
+  
+  const levelNames = {1: 'Length', 2: 'Mass', 3: 'Volume'};
+  const levelColors = {1: 'var(--length)', 2: 'var(--mass)', 3: 'var(--volume)'};
+  
+  if (state.allLevelsCompleted) {
+    topicBig.innerText = 'All Levels Complete!';
+    topicBig.style.color = '#4ECAD4';
+    playBtn.innerText = 'Restart Game';
+    playBtn.disabled = false;
+    questionText.innerText = 'Congratulations! You completed all 3 levels!';
+  } else {
+    topicBig.innerText = state.unlockedLevels.includes(state.currentLevel) 
+      ? `Level ${state.currentLevel}: ${levelNames[state.currentLevel]}`
+      : 'Complete previous level first';
+    topicBig.style.color = levelColors[state.currentLevel];
+    
+    playBtn.innerText = state.unlockedLevels.includes(state.currentLevel)
+      ? `Start Level ${state.currentLevel}`
+      : 'Level Locked';
+    playBtn.disabled = !state.unlockedLevels.includes(state.currentLevel);
+    
+    questionText.innerText = state.unlockedLevels.includes(state.currentLevel)
+      ? `Ready for Level ${state.currentLevel}: ${levelNames[state.currentLevel]}? Press Start!`
+      : 'Complete the previous level first!';
+  }
+  
+  skipBtn.disabled = true;
+  visualArea.innerHTML = '<div style="font-size:64px">🎯</div>';
+  optionsWrap.innerHTML = '';
+  feedback.innerText = 'Select level and press Start';
+  feedback.className = 'feedback';
+  
+  updateLevelIndicators();
+  updateUI();
+}
+
+/* ---------- Timer ---------- */
+function startTimer(seconds){
+  stopTimer();
+  if(!state.timerOn) return;
+  state.timeLeft = seconds;
+  timerBar.style.display = 'block';
+  timerFill.style.width = '100%';
+  timerInterval = setInterval(()=>{
+    state.timeLeft--;
+    const pct = Math.max(0, state.timeLeft/seconds)*100;
+    timerFill.style.width = pct + '%';
+    timerFill.style.background = state.timeLeft < 5 
+      ? 'linear-gradient(90deg,#ff4444,#ff8888)'
+      : 'linear-gradient(90deg,#FFD166,#FF6B6B)';
+    if(state.timeLeft<=0){ 
+      stopTimer(); 
+      feedbackBad('Time up! -1 life'); 
+      loseLife(); 
+      setTimeout(()=>nextQuestion(),800);
+    }
+  },1000);
+}
+function stopTimer(){ 
+  if(timerInterval){ 
+    clearInterval(timerInterval); 
+    timerInterval=null; 
+  } 
+  timerBar.style.display = state.timerOn ? 'block' : 'none'; 
+  timerFill.style.width='100%';
+  timerFill.style.background = 'linear-gradient(90deg,#FFD166,#FF6B6B)';
+}
+
+/* ---------- UI update ---------- */
+function updateUI(){
+  scoreEl.innerText = state.score;
+  livesEl.innerText = state.lives;
+  scoreDisplay.innerText = state.score;
+  levelLabel.innerText = state.currentLevel;
+  progressEl.innerText = `${state.questionsAnsweredInLevel}/${state.questionsNeededPerLevel}`;
+}
+
+/* ---------- Show Feedback ---------- */
+function feedbackOk(msg){
+  feedback.innerText = msg; feedback.className = 'feedback ok';
+}
+function feedbackBad(msg){
+  feedback.innerText = msg; feedback.className = 'feedback bad';
+}
+
+/* ---------- Generate Questions Based on Level ---------- */
+function nextQuestion(){
+  if(state.lives<=0){ gameOver(); return; }
+  
+  // Check if level is complete
+  if(state.questionsAnsweredInLevel >= state.questionsNeededPerLevel){
+    levelComplete();
+    return;
+  }
+  
+  state.busy = false;
+  stopTimer();
+  
+  // Generate question based on current level
+  if(state.currentLevel === 1) generateLength();
+  else if(state.currentLevel === 2) generateMass();
+  else if(state.currentLevel === 3) generateVolume();
+}
+
+/* ---------- Level 1: Length ---------- */
+function generateLength(){
+  const cm = rand(20,240);
+  const correct = (cm/100).toFixed(2);
+  const opts = new Set([correct]);
+  while(opts.size<4){
+    const offset = [0.10,0.20,-0.10,-0.20,0.05,-0.05][rand(0,5)];
+    const val = (parseFloat(correct)+offset).toFixed(2);
+    // Ensure value is positive and reasonable
+    if(parseFloat(val) > 0 && parseFloat(val) < 3) {
+      opts.add(val);
+    }
+  }
+  // Ensure we have exactly 4 options
+  while(opts.size < 4) {
+    const val = (rand(5, 250)/100).toFixed(2);
+    opts.add(val);
+  }
+  showQuestion(`${cm} cm = ? m`, createRulerVisual(cm,'cm'), Array.from(shuffle(Array.from(opts))), correct, 20);
+}
+
+/* ---------- Level 2: Mass ---------- */
+function generateMass(){
+  const g = rand(120,980);
+  const correct = (g/1000).toFixed(3);
+  const opts = new Set([correct]);
+  while(opts.size<4){
+    const offset = [0.100,0.200,-0.100,0.050,-0.050][rand(0,4)];
+    const val = (parseFloat(correct)+offset).toFixed(3);
+    // Ensure value is positive and reasonable
+    if(parseFloat(val) > 0 && parseFloat(val) < 1.5) {
+      opts.add(val);
+    }
+  }
+  // Ensure we have exactly 4 options
+  while(opts.size < 4) {
+    const val = (rand(50, 1500)/1000).toFixed(3);
+    opts.add(val);
+  }
+  showQuestion(`${g} g = ? kg`, createMassVisual(g), Array.from(shuffle(Array.from(opts))), correct, 18);
+}
+
+/* ---------- Level 3: Volume ---------- */
+function generateVolume(){
+  const ml = rand(150,950);
+  const correct = (ml/1000).toFixed(3);
+  const opts = new Set([correct]);
+  
+  // Generate unique wrong answers
+  while(opts.size < 4) {
+    let val;
+    if(opts.size === 1) {
+      // First wrong answer: correct ± 0.100
+      val = (parseFloat(correct) + (Math.random() > 0.5 ? 0.100 : -0.100)).toFixed(3);
+    } else if(opts.size === 2) {
+      // Second wrong answer: correct ± 0.200
+      val = (parseFloat(correct) + (Math.random() > 0.5 ? 0.200 : -0.200)).toFixed(3);
+    } else {
+      // Third wrong answer: random reasonable value
+      val = (rand(50, 1500)/1000).toFixed(3);
+    }
+    
+    // Ensure value is positive and reasonable (0.050 to 1.500)
+    const numVal = parseFloat(val);
+    if(numVal > 0.049 && numVal < 1.501 && numVal !== parseFloat(correct)) {
+      opts.add(val);
+    }
+  }
+  
+  showQuestion(`${ml} ml = ? L`, createBeakerVisual(ml), Array.from(shuffle(Array.from(opts))), correct, 16);
+}
+
+/* ---------- Visual helpers ---------- */
+function createRulerVisual(cm, unit){
+  const pxPerCm = 1.6;
+  const width = Math.min(420, Math.round(cm * pxPerCm + 60));
+  const outer = document.createElement('div');
+  outer.style.width = width + 'px';
+  outer.style.padding = '10px';
+  outer.style.borderRadius = '10px';
+  outer.style.background = 'linear-gradient(90deg,#fff7e6,#fff)';
+  outer.style.display='flex'; outer.style.flexDirection='column'; outer.style.alignItems='center';
+  const bar = document.createElement('div');
+  bar.style.width = '100%'; bar.style.height = '18px'; bar.style.background = '#eee'; bar.style.borderRadius='8px';
+  bar.style.position='relative';
+  const tickCount = Math.min(30, Math.ceil(cm/1));
+  for(let i=0;i<=tickCount;i+= Math.max(1, Math.round(tickCount/10))){
+    const mark = document.createElement('div');
+    mark.style.position='absolute'; mark.style.left = (i/tickCount*100) + '%'; mark.style.top='-8px'; mark.style.transform='translateX(-50%)';
+    mark.style.fontSize='12px'; mark.style.color='#444'; mark.innerText = Math.round(i*(cm/tickCount));
+    bar.appendChild(mark);
+  }
+  const obj = document.createElement('div'); obj.style.marginTop='12px'; obj.style.fontSize='20px'; obj.innerText = `${cm} ${unit}`;
+  outer.appendChild(bar); outer.appendChild(obj);
+  return outer;
+}
+function createMassVisual(g){
+  const outer = document.createElement('div');
+  outer.style.display='flex'; outer.style.alignItems='center'; outer.style.flexDirection='column';
+  outer.innerHTML = `<div style="font-size:48px">⚖️</div><div style="margin-top:6px;font-weight:800">${g} g</div>`;
+  return outer;
+}
+function createBeakerVisual(ml){
+  const outer = document.createElement('div');
+  outer.style.display='flex'; outer.style.alignItems='center'; outer.style.flexDirection='column';
+  const heightPct = Math.round((ml/1000)*100);
+  const beaker = document.createElement('div');
+  beaker.style.width='72px'; beaker.style.height='120px'; beaker.style.border='3px solid #cde'; beaker.style.borderRadius='6px';
+  beaker.style.position='relative'; beaker.style.overflow='hidden'; beaker.style.background='#fff';
+  const liquid = document.createElement('div');
+  liquid.style.position='absolute'; liquid.style.left='0'; liquid.style.right='0'; liquid.style.bottom='0';
+  liquid.style.height = Math.min(100,Math.max(8,heightPct)) + '%'; 
+  liquid.style.background = 'linear-gradient(180deg,#FFD166,#ffb347)';
+  beaker.appendChild(liquid);
+  outer.appendChild(beaker);
+  outer.appendChild(Object.assign(document.createElement('div'),{
+    innerText: ml+' ml', 
+    style:'margin-top:8px;font-weight:800;font-size:18px;color:#333'
+  }));
+  return outer;
+}
+
+/* ---------- Display question ---------- */
+function showQuestion(qText, visualEl, options, correct, questionSeconds=20){
+  questionText.innerText = qText;
+  visualArea.innerHTML = ''; 
+  visualArea.appendChild(visualEl);
+  optionsWrap.innerHTML = '';
+  state.currentAnswer = correct;
+  state.busy = false;
+  
+  // Clear any existing click handlers first
+  const newOptions = [];
+  options.forEach(opt=>{
+    const b = document.createElement('div');
+    b.className = 'opt'; 
+    b.innerText = opt;
+    b.onclick = ()=>{ if(state.busy) return; handleChoice(b,opt); };
+    optionsWrap.appendChild(b);
+    newOptions.push(b);
+  });
+  
+  feedback.innerText = 'Choose an answer!';
+  feedback.className = 'feedback';
+  updateUI();
+  if(state.timerOn) startTimer(questionSeconds);
+  else stopTimer();
+}
+
+/* ---------- Handle Choice ---------- */
+function handleChoice(buttonElem, chosen){
+  if(state.busy) return;
+  state.busy = true;
+  stopTimer();
+  state.questionsAnsweredInLevel++;
+  
+  if(chosen === state.currentAnswer){
+    buttonElem.classList.add('correct');
+    state.score += 10;
+    state.levelScore += 10;
+    updateUI();
+    feedbackOk(['Great!','Awesome!','Well done!','Nice!'][rand(0,3)]);
+    spawnConfetti(80);
+    setTimeout(()=> nextQuestion(), 900);
+  } else {
+    buttonElem.classList.add('wrong');
+    // highlight correct
+    Array.from(document.querySelectorAll('.opt')).forEach(o=>{
+      if(o.innerText === state.currentAnswer) o.classList.add('correct');
+    });
+    feedbackBad('Oops! -1 life');
+    loseLife();
+    setTimeout(()=> nextQuestion(), 900);
+  }
+}
+
+/* ---------- Lose life ---------- */
+function loseLife(){
+  state.lives = Math.max(0, state.lives-1);
+  updateUI();
+  if(state.lives<=0){ 
+    setTimeout(()=>gameOver(), 700); 
+  }
+}
+
+/* ---------- Level Complete ---------- */
+function levelComplete(){
+  stopTimer();
+  const levelNames = {1: 'Length', 2: 'Mass', 3: 'Volume'};
+  modalTitle.innerText = `Level ${state.currentLevel} Complete!`;
+  modalText.innerText = `You mastered ${levelNames[state.currentLevel]}!`;
+  levelScoreEl.innerText = state.levelScore;
+  totalScoreEl.innerText = state.score;
+  
+  // Mark level as completed
+  if (!state.completedLevels.includes(state.currentLevel)) {
+    state.completedLevels.push(state.currentLevel);
+  }
+  
+  levelCompleteOverlay.classList.add('show');
+}
+
+/* ---------- Game Over ---------- */
+function gameOver(){
+  stopTimer();
+  state.inProgress = false;
+  
+  finalScoreEl.innerText = state.score;
+  gameOverTitle.innerText = 'Game Over';
+  
+  const levelNames = {1: 'Length', 2: 'Mass', 3: 'Volume'};
+  if (state.completedLevels.length === 0) {
+    gameOverText.innerText = 'Try again from Level 1!';
+    gameOverDetails.innerText = `You reached Level ${state.currentLevel}: ${levelNames[state.currentLevel]}`;
+  } else {
+    gameOverText.innerText = `You completed ${state.completedLevels.length} level${state.completedLevels.length > 1 ? 's' : ''}!`;
+    gameOverDetails.innerText = `Completed: Level ${state.completedLevels.join(', ')}`;
+  }
+  
+  gameOverOverlay.classList.add('show');
+}
+
+/* ---------- Initialize ---------- */
+restartBtn.addEventListener('click', restartGame);
+updateLevelIndicators();
+resetToMenu();
+
+/* ---------- keyboard shortcuts ---------- */
+document.addEventListener('keydown',(e)=>{
+  if(e.key===' ') { if(!playBtn.disabled) playBtn.click(); }
+  if(e.key==='s' || e.key==='S') { if(!skipBtn.disabled) skipBtn.click(); }
+  if(e.key==='r' || e.key==='R') { restartGame(); }
+  if(e.key==='1') { if(state.unlockedLevels.includes(1)) { state.currentLevel = 1; updateLevelIndicators(); resetToMenu(); } }
+  if(e.key==='2') { if(state.unlockedLevels.includes(2)) { state.currentLevel = 2; updateLevelIndicators(); resetToMenu(); } }
+  if(e.key==='3') { if(state.unlockedLevels.includes(3)) { state.currentLevel = 3; updateLevelIndicators(); resetToMenu(); } }
+});
+</script>
+</body>
+</html>

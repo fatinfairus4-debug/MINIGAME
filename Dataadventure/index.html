@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Adventure: The Math Explorer</title>
+<style>
+    * {margin:0; padding:0; box-sizing:border-box; font-family:'Comic Sans MS', cursive, sans-serif;}
+    body {background:linear-gradient(135deg,#6a11cb 0%,#2575fc 100%); min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px;}
+    .game-container {width:100%; max-width:800px; background:white; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.3); overflow:hidden;}
+    .game-header {background:linear-gradient(90deg,#ff7e5f,#feb47b); color:white; padding:20px; text-align:center;}
+    .game-title {font-size:2.5rem; text-shadow:2px 2px 4px rgba(0,0,0,0.2); margin-bottom:10px;}
+    .game-subtitle {font-size:1.2rem; opacity:0.9;}
+    .game-content {padding:20px; display:flex; flex-direction:column; align-items:center;}
+    .screen {width:100%; display:none;}
+    .active {display:block;}
+    .welcome-screen {text-align:center; padding:30px 20px;}
+    .character {width:150px; height:150px; margin:0 auto 20px; background:#ffcc00; border-radius:50%; position:relative; overflow:hidden; box-shadow:0 5px 15px rgba(0,0,0,0.2);}
+    .character::before, .character::after {content:''; position:absolute; background:#333; border-radius:50%;}
+    .character::before {width:30px; height:30px; top:40px; left:40px;}
+    .character::after {width:30px; height:30px; top:40px; right:40px;}
+    .character-mouth {position:absolute; width:60px; height:20px; background:#333; bottom:40px; left:50%; transform:translateX(-50%); border-radius:0 0 30px 30px;}
+    .welcome-text {font-size:1.5rem; margin-bottom:30px; color:#333;}
+    .btn {background:linear-gradient(90deg,#36d1dc,#5b86e5); color:white; border:none; padding:12px 30px; font-size:1.2rem; border-radius:50px; cursor:pointer; transition:all 0.3s; box-shadow:0 4px 10px rgba(0,0,0,0.2); margin:10px;}
+    .btn:hover {transform:translateY(-3px); box-shadow:0 6px 15px rgba(0,0,0,0.3);}
+    .btn:active {transform:translateY(1px);}
+    .game-area {width:100%; margin:20px 0;}
+    .data-collection {background:#f0f8ff; border-radius:15px; padding:20px; margin-bottom:20px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+    .collection-title {font-size:1.5rem; color:#333; margin-bottom:15px; text-align:center;}
+    .collection-items {display:flex; justify-content:space-around; flex-wrap:wrap; gap:10px; margin-bottom:20px;}
+    .collection-item {width:80px; height:80px; border-radius:10px; display:flex; justify-content:center; align-items:center; font-size:2rem; cursor:pointer; transition:all 0.3s; box-shadow:0 3px 8px rgba(0,0,0,0.2);}
+    .collection-item:hover {transform:scale(1.1);}
+    .collection-item.selected {transform:scale(1.1); box-shadow:0 0 0 3px #ff7e5f;}
+    .chart-container {background:white; border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.1); margin-bottom:20px;}
+    .chart {height:200px; display:flex; align-items:flex-end; justify-content:space-around; margin-top:20px;}
+    .bar {width:50px; border-radius:5px 5px 0 0; position:relative; transition:height 0.5s;}
+    .bar-label {position:absolute; bottom:-25px; left:0; width:100%; text-align:center; font-weight:bold;}
+    .bar-value {position:absolute; top:-25px; left:0; width:100%; text-align:center; font-weight:bold;}
+    .question-container {background:#f9f9f9; border-radius:15px; padding:20px; margin-bottom:20px; box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+    .question {font-size:1.3rem; margin-bottom:15px; color:#333;}
+    .options {display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .option {background:#e6f7ff; border:2px solid #b3e0ff; border-radius:10px; padding:10px; text-align:center; cursor:pointer; transition:all 0.3s;}
+    .option:hover {background:#cceeff;}
+    .option.correct {background:#ccffcc; border-color:#33cc33;}
+    .option.incorrect {background:#ffcccc; border-color:#ff3333;}
+    .game-stats {display:flex; justify-content:space-between; width:100%; margin-bottom:20px;}
+    .stat {background:linear-gradient(90deg,#ff7e5f,#feb47b); color:white; padding:10px 20px; border-radius:50px; font-weight:bold; box-shadow:0 3px 8px rgba(0,0,0,0.2);}
+    .feedback {text-align:center; font-size:1.2rem; margin:10px 0; min-height:30px; font-weight:bold;}
+    .positive-feedback {color:#33cc33;}
+    .negative-feedback {color:#ff3333;}
+    .results-screen {text-align:center; padding:30px 20px;}
+    .trophy {font-size:5rem; margin:20px 0; color:gold; text-shadow:0 0 10px rgba(255,215,0,0.5);}
+    .results-text {font-size:1.5rem; margin-bottom:20px; color:#333;}
+    .score-display {font-size:3rem; color:#ff7e5f; margin:20px 0;}
+    @media(max-width:600px){.game-title{font-size:2rem}.options{grid-template-columns:1fr}.collection-item{width:60px;height:60px;font-size:1.5rem;}}
+</style>
+</head>
+<body>
+<div class="game-container">
+    <div class="game-header">
+        <h1 class="game-title">Data Adventure</h1>
+        <p class="game-subtitle">The Math Explorer</p>
+    </div>
+    <div class="game-content">
+        <div id="welcome-screen" class="screen active">
+            <div class="welcome-screen">
+                <div class="character"><div class="character-mouth"></div></div>
+                <h2 class="welcome-text">Welcome to Data Adventure!</h2>
+                <p>Help our explorer collect data and create charts to solve math mysteries!</p>
+                <button id="start-btn" class="btn">Start Adventure</button>
+            </div>
+        </div>
+        <div id="game-screen" class="screen">
+            <div class="game-stats">
+                <div class="stat">Level: <span id="level">1</span></div>
+                <div class="stat">Score: <span id="score">0</span></div>
+            </div>
+            <div class="game-area">
+                <div class="data-collection">
+                    <h3 class="collection-title">Collect Data: Favorite Fruits</h3>
+                    <p>Click on fruits to collect data from your friends!</p>
+                    <div class="collection-items">
+                        <div class="collection-item" data-value="apple" style="background-color: #ff9999;">🍎</div>
+                        <div class="collection-item" data-value="banana" style="background-color: #ffff99;">🍌</div>
+                        <div class="collection-item" data-value="orange" style="background-color: #ffcc99;">🍊</div>
+                        <div class="collection-item" data-value="grape" style="background-color: #cc99ff;">🍇</div>
+                        <div class="collection-item" data-value="strawberry" style="background-color: #ff6666;">🍓</div>
+                    </div>
+                    <button id="collect-btn" class="btn">Collect Data</button>
+                </div>
+                <div class="chart-container">
+                    <h3>Data Chart</h3>
+                    <div class="chart" id="chart"></div>
+                </div>
+                <div class="question-container">
+                    <div class="question" id="question"></div>
+                    <div class="options" id="options"></div>
+                </div>
+                <div class="feedback" id="feedback"></div>
+                <button id="next-btn" class="btn">Next Challenge</button>
+            </div>
+        </div>
+        <div id="results-screen" class="screen">
+            <div class="results-screen">
+                <div class="trophy">🏆</div>
+                <h2 class="results-text">Congratulations!</h2>
+                <p>You've completed the Data Adventure!</p>
+                <div class="score-display">Score: <span id="final-score">0</span></div>
+                <button id="play-again-btn" class="btn">Play Again</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const gameState = {
+    currentScreen: 'welcome',
+    level:1,
+    score:0,
+    data:{apple:0, banana:0, orange:0, grape:0, strawberry:0},
+    currentQuestion:0,
+    questions:[
+        {question:"Which fruit is the most popular?", options:["Apple","Banana","Orange","Grape","Strawberry"], correctAnswer:null},
+        {question:"How many more people like apples than grapes?", options:["1","2","3","4","5"], correctAnswer:null},
+        {question:"Which fruit is the least popular?", options:["Apple","Banana","Orange","Grape","Strawberry"], correctAnswer:null},
+        {question:"How many people were surveyed in total?", options:["5","10","15","20","25"], correctAnswer:null}
+    ]
+};
+
+const screens = {welcome: document.getElementById('welcome-screen'), game: document.getElementById('game-screen'), results: document.getElementById('results-screen')};
+const startBtn = document.getElementById('start-btn');
+const nextBtn = document.getElementById('next-btn');
+const playAgainBtn = document.getElementById('play-again-btn');
+const collectBtn = document.getElementById('collect-btn');
+const levelDisplay = document.getElementById('level');
+const scoreDisplay = document.getElementById('score');
+const finalScoreDisplay = document.getElementById('final-score');
+const questionDisplay = document.getElementById('question');
+const optionsDisplay = document.getElementById('options');
+const feedbackDisplay = document.getElementById('feedback');
+const chartDisplay = document.getElementById('chart');
+const collectionItems = document.querySelectorAll('.collection-item');
+
+startBtn.addEventListener('click', startGame);
+nextBtn.addEventListener('click', nextQuestion);
+playAgainBtn.addEventListener('click', resetGame);
+collectBtn.addEventListener('click', collectData);
+collectionItems.forEach(item=>{item.addEventListener('click',()=>{item.classList.toggle('selected');});});
+
+function showScreen(name){Object.values(screens).forEach(s=>s.classList.remove('active')); screens[name].classList.add('active'); gameState.currentScreen=name;}
+
+function resetData(){gameState.data={apple:0,banana:0,orange:0,grape:0,strawberry:0}; collectionItems.forEach(i=>i.classList.remove('selected'));}
+
+function collectData(){
+    const selected=document.querySelectorAll('.collection-item.selected');
+    if(selected.length===0){showFeedback("Please select at least one fruit!", false); return;}
+    selected.forEach(i=>{gameState.data[i.dataset.value]++;});
+    collectionItems.forEach(i=>i.classList.remove('selected'));
+    updateChart();
+    showFeedback("Data collected successfully!", true);
+}
+
+function updateChart(){
+    chartDisplay.innerHTML='';
+    const fruits=['apple','banana','orange','grape','strawberry'];
+    const colors=['#ff9999','#ffff99','#ffcc99','#cc99ff','#ff6666'];
+    const values=fruits.map(f=>gameState.data[f]);
+    const maxHeight=Math.max(...values,1);
+    fruits.forEach((f,i)=>{
+        const bar=document.createElement('div'); bar.className='bar'; bar.style.height=`${(gameState.data[f]/maxHeight)*150}px`; bar.style.backgroundColor=colors[i];
+        const valLabel=document.createElement('div'); valLabel.className='bar-value'; valLabel.textContent=gameState.data[f];
+        const nameLabel=document.createElement('div'); nameLabel.className='bar-label'; nameLabel.textContent=f.charAt(0).toUpperCase()+f.slice(1);
+        bar.appendChild(valLabel); bar.appendChild(nameLabel); chartDisplay.appendChild(bar);
+    });
+}
+
+function generateQuestion(){
+    const q=gameState.questions[gameState.currentQuestion];
+    const values=Object.values(gameState.data);
+    const fruits=Object.keys(gameState.data);
+    switch(gameState.currentQuestion){
+        case 0: q.correctAnswer=fruits[values.indexOf(Math.max(...values))]; break;
+        case 1: q.correctAnswer=(Math.abs(gameState.data.apple-gameState.data.grape)).toString(); break;
+        case 2: q.correctAnswer=fruits[values.indexOf(Math.min(...values))]; break;
+        case 3: q.correctAnswer=(values.reduce((a,b)=>a+b,0)).toString(); break;
+    }
+    questionDisplay.textContent=q.question;
+    optionsDisplay.innerHTML='';
+    q.options.forEach(opt=>{
+        const optDiv=document.createElement('div'); optDiv.className='option'; optDiv.textContent=opt;
+        optDiv.addEventListener('click',()=>checkAnswer(opt,q.correctAnswer));
+        optionsDisplay.appendChild(optDiv);
+    });
+    feedbackDisplay.textContent=''; feedbackDisplay.className='feedback';
+    nextBtn.disabled=true;
+}
+
+function checkAnswer(selected, correct){
+    const options=document.querySelectorAll('.option');
+    options.forEach(o=>o.style.pointerEvents='none');
+    options.forEach(o=>{
+        if(o.textContent.toLowerCase()===selected.toLowerCase()){
+            if(selected.toLowerCase()===correct.toLowerCase()){o.classList.add('correct'); gameState.score+=10; scoreDisplay.textContent=gameState.score; showFeedback("Correct! Well done!", true);}
+            else{o.classList.add('incorrect'); showFeedback(`Incorrect. The correct answer is ${correct}.`, false);}
+        }
+        if(o.textContent.toLowerCase()===correct.toLowerCase()){o.classList.add('correct');}
+    });
+    nextBtn.disabled=false;
+}
+
+function nextQuestion(){
+    gameState.currentQuestion++;
+    if(gameState.currentQuestion>=gameState.questions.length){finalScoreDisplay.textContent=gameState.score; showScreen('results');}
+    else{generateQuestion(); collectionItems.forEach(i=>i.classList.remove('selected')); const opts=document.querySelectorAll('.option'); opts.forEach(o=>{o.style.pointerEvents='auto'; o.classList.remove('correct','incorrect');});}
+}
+
+function startGame(){showScreen('game'); resetData(); generateQuestion(); updateChart();}
+function resetGame(){gameState.level=1; gameState.score=0; gameState.currentQuestion=0; levelDisplay.textContent=gameState.level; scoreDisplay.textContent=gameState.score; startGame();}
+function showFeedback(msg, positive){feedbackDisplay.textContent=msg; feedbackDisplay.className=`feedback ${positive?'positive-feedback':'negative-feedback'}`;}
+</script>
+</body>
+</html>

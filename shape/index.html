@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Math Adventure: Shape Explorer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 {
+            color: #00d4ff;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 3rem;
+            font-weight: 800;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            letter-spacing: 2px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #ff6b6b;
+            margin-bottom: 30px;
+            font-size: 1.3rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        
+        /* Game Info Bar */
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 25px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .info-value {
+            font-size: 1.8rem;
+            color: #ff6b6b;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
+            margin-top: 5px;
+        }
+        
+        /* Level Progress */
+        .level-progress {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+        .level-step {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.5rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .level-step.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: #667eea;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
+        }
+        .level-step.completed {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            border-color: #4caf50;
+        }
+        .level-step.locked {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .game-area {
+            background: rgba(255, 255, 255, 0.05); 
+            border-radius: 20px; 
+            padding: 30px;
+            min-height: 500px; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .game-title { 
+            color:#00d4ff; 
+            margin-bottom:25px; 
+            text-align:center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+        .problem-container {
+            background: rgba(255, 255, 255, 0.08); 
+            border-radius: 20px; 
+            padding: 30px;
+            width:100%; 
+            max-width:600px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            margin-bottom:30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .problem-display { 
+            font-size:1.8rem; 
+            text-align:center; 
+            margin-bottom:25px; 
+            color:#fff; 
+            line-height:1.5;
+            font-weight: 500;
+        }
+        
+        /* Level Requirements */
+        .level-requirements {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .requirement-text {
+            color: #00d4ff;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        .requirement-score {
+            color: #ff6b6b;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        /* Shape Display Styles - Modern Geometric */
+        .shape-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 25px 0;
+            position: relative;
+        }
+        .shape-display {
+            width: 220px;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 25px 0;
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        .shape {
+            transition: all 0.4s ease;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
+        }
+        .circle {
+            width: 160px;
+            height: 160px;
+            background: conic-gradient(from 0deg, #ff6b6b, #ff8e53, #f093fb, #667eea, #4ecdc4, #ff6b6b);
+            border-radius: 50%;
+            animation: rotate 8s linear infinite;
+        }
+        .square {
+            width: 160px;
+            height: 160px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            position: relative;
+        }
+        .square::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        .triangle {
+            width: 0;
+            height: 0;
+            border-left: 80px solid transparent;
+            border-right: 80px solid transparent;
+            border-bottom: 160px solid #f093fb;
+            background: transparent;
+            position: relative;
+        }
+        .triangle::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: -60px;
+            border-left: 60px solid transparent;
+            border-right: 60px solid transparent;
+            border-bottom: 120px solid rgba(255,255,255,0.1);
+        }
+        .rectangle {
+            width: 200px;
+            height: 120px;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .rectangle::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+        .pentagon {
+            width: 160px;
+            height: 160px;
+            background: linear-gradient(135deg, #ffd89b, #19547b);
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+            position: relative;
+        }
+        .pentagon::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: rgba(255,255,255,0.1);
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+        }
+        .hexagon {
+            width: 160px;
+            height: 160px;
+            background: linear-gradient(135deg, #a8ff78, #78ffd6);
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            position: relative;
+        }
+        .hexagon::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: rgba(255,255,255,0.1);
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+        .oval {
+            width: 180px;
+            height: 120px;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+        .oval::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+        .star {
+            width: 160px;
+            height: 160px;
+            background: linear-gradient(135deg, #ffe259, #ffa751);
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            position: relative;
+        }
+        .star::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            background: rgba(255,255,255,0.1);
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        }
+        
+        /* Shape Properties Styles */
+        .properties-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+            margin: 25px 0;
+        }
+        .property-box {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            min-width: 140px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        .property-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .property-label {
+            font-size: 1.1rem;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .property-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
+        }
+        
+        /* Pattern Styles - FIXED */
+        .pattern-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .pattern-shape {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+        }
+        .pattern-circle {
+            width: 70px;
+            height: 70px;
+            background: conic-gradient(from 0deg, #ff6b6b, #ff8e53);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .pattern-square {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+        .pattern-triangle {
+            width: 0;
+            height: 0;
+            border-left: 35px solid transparent;
+            border-right: 35px solid transparent;
+            border-bottom: 70px solid #f093fb;
+            background: transparent;
+        }
+        .pattern-rectangle {
+            width: 80px;
+            height: 50px;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            border-radius: 10px;
+        }
+        .pattern-pentagon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #ffd89b, #19547b);
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+        }
+        .pattern-question {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed #00d4ff;
+            border-radius: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00d4ff;
+            animation: glow 2s infinite;
+        }
+        
+        /* Shape Selection Styles */
+        .shape-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 25px 0;
+        }
+        .shape-option {
+            width: 90px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+        }
+        .shape-option:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .shape-option.selected {
+            transform: scale(1.15);
+            box-shadow: 0 0 20px #ff6b6b;
+            border-color: #ff6b6b;
+        }
+        .shape-option.correct {
+            box-shadow: 0 0 20px #4caf50;
+            border-color: #4caf50;
+        }
+        .shape-option.incorrect {
+            box-shadow: 0 0 20px #f44336;
+            border-color: #f44336;
+        }
+        
+        /* Options and Controls */
+        .options-container {
+            display: flex;
+            gap: 20px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .option-btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 15px 25px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            color: white;
+            font-weight: 500;
+        }
+        .option-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+        }
+        .option-btn.selected {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        .option-btn.correct {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            border-color: #4caf50;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+        .option-btn.incorrect {
+            background: linear-gradient(135deg, #f44336, #da190b);
+            border-color: #f44336;
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+        }
+        
+        /* Feedback */
+        .feedback {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .feedback.correct {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+            border-color: #4caf50;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+        .feedback.incorrect {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            border-color: #f44336;
+            text-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+        }
+        
+        .action-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 35px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+            letter-spacing: 1px;
+        }
+        .action-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(255, 107, 107, 0.4);
+        }
+        .action-btn.next-level {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .action-btn.restart {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+        }
+        .action-btn.retry {
+            background: linear-gradient(135deg, #ff9800, #ff5722);
+        }
+        
+        /* Level Complete Screen */
+        .level-complete {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+        .level-complete-title {
+            color: #00d4ff;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+        .level-score-container {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px auto;
+            max-width: 500px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .level-score-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            font-size: 1.3rem;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .level-score-label {
+            color: #00d4ff;
+        }
+        .level-score-value {
+            color: #ff6b6b;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        .level-total-score {
+            font-size: 2.5rem;
+            color: #ffd700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            margin: 25px 0;
+        }
+        
+        /* Game Complete Screen */
+        .game-complete {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+        .complete-title {
+            color: #00d4ff;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+        .final-score-container {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px auto;
+            max-width: 500px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .final-score-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            font-size: 1.3rem;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .final-score-label {
+            color: #00d4ff;
+        }
+        .final-score-value {
+            color: #ff6b6b;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        .total-score {
+            font-size: 2.5rem;
+            color: #ffd700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            margin: 25px 0;
+        }
+        
+        /* Timer */
+        .timer-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 25px;
+        }
+        .timer-circle {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        .timer-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 8;
+        }
+        .timer-progress {
+            fill: none;
+            stroke: #ff6b6b;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 314;
+            stroke-dashoffset: 314;
+            transition: stroke-dashoffset 1s linear;
+        }
+        .timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+        
+        /* Animations */
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px #00d4ff; }
+            50% { box-shadow: 0 0 20px #00d4ff; }
+            100% { box-shadow: 0 0 5px #00d4ff; }
+        }
+        
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 2.2rem;
+            }
+            .problem-display {
+                font-size: 1.5rem;
+            }
+            .shape-display {
+                width: 180px;
+                height: 180px;
+            }
+            .circle, .square, .pentagon, .hexagon, .star {
+                width: 130px;
+                height: 130px;
+            }
+            .triangle {
+                border-left: 65px solid transparent;
+                border-right: 65px solid transparent;
+                border-bottom: 130px solid #f093fb;
+            }
+            .rectangle {
+                width: 160px;
+                height: 100px;
+            }
+            .oval {
+                width: 150px;
+                height: 100px;
+            }
+            .level-progress {
+                gap: 10px;
+            }
+            .level-step {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SHAPE EXPLORER</h1>
+        <div class="subtitle">Discover the World of Geometry</div>
+
+        <div class="game-info">
+            <div class="info-item">
+                <div>SCORE</div>
+                <div class="info-value" id="score">0</div>
+            </div>
+            <div class="info-item">
+                <div>LEVEL</div>
+                <div class="info-value" id="level">1</div>
+            </div>
+            <div class="info-item">
+                <div>QUESTIONS</div>
+                <div class="info-value" id="questions">0/5</div>
+            </div>
+            <div class="info-item">
+                <div>TIME</div>
+                <div class="info-value" id="time">60s</div>
+            </div>
+        </div>
+
+        <div class="level-progress">
+            <div class="level-step active" id="level1Step">1</div>
+            <div class="level-step locked" id="level2Step">2</div>
+            <div class="level-step locked" id="level3Step">3</div>
+        </div>
+
+        <div class="game-area">
+            <!-- Level Requirements -->
+            <div class="level-requirements" id="levelRequirements">
+                <div class="requirement-text">Score Requirement to Complete Level:</div>
+                <div class="requirement-score" id="requirementScore">20 points</div>
+                <div class="requirement-text">(2 correct answers needed)</div>
+            </div>
+            
+            <!-- Level 1: Shape Identifier -->
+            <div id="level1Game" class="game-content">
+                <h2 class="game-title">LEVEL 1: SHAPE IDENTIFIER</h2>
+                <div class="problem-container">
+                    <div class="problem-display" id="identifierProblem">What shape is this?</div>
+                    
+                    <div class="shape-container">
+                        <div class="shape-display">
+                            <div class="shape circle" id="displayShape"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="options-container" id="identifierOptions">
+                    <!-- Options will be generated here -->
+                </div>
+                
+                <div class="feedback" id="identifierFeedback">Identify the shape shown above!</div>
+                
+                <button class="action-btn" id="checkIdentifier">CHECK ANSWER</button>
+            </div>
+            
+            <!-- Level 2: Shape Properties -->
+            <div id="level2Game" class="game-content" style="display: none;">
+                <h2 class="game-title">LEVEL 2: SHAPE PROPERTIES</h2>
+                <div class="problem-container">
+                    <div class="problem-display" id="propertiesProblem">How many sides and corners does this shape have?</div>
+                    
+                    <div class="shape-container">
+                        <div class="shape-display">
+                            <div class="shape square" id="propertiesShape"></div>
+                        </div>
+                        
+                        <div class="properties-container">
+                            <div class="property-box">
+                                <div class="property-label">SIDES</div>
+                                <div class="property-value" id="sidesValue">?</div>
+                            </div>
+                            <div class="property-box">
+                                <div class="property-label">CORNERS</div>
+                                <div class="property-value" id="cornersValue">?</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="options-container" id="propertiesOptions">
+                    <!-- Options will be generated here -->
+                </div>
+                
+                <div class="feedback" id="propertiesFeedback">Count the sides and corners of the shape!</div>
+                
+                <button class="action-btn" id="checkProperties">CHECK ANSWER</button>
+            </div>
+            
+            <!-- Level 3: Shape Patterns -->
+            <div id="level3Game" class="game-content" style="display: none;">
+                <h2 class="game-title">LEVEL 3: SHAPE PATTERNS</h2>
+                
+                <div class="timer-container">
+                    <svg class="timer-circle" viewBox="0 0 120 120">
+                        <circle class="timer-bg" cx="60" cy="60" r="50"></circle>
+                        <circle class="timer-progress" cx="60" cy="60" r="50"></circle>
+                    </svg>
+                    <div class="timer-text" id="timerText">60s</div>
+                </div>
+                
+                <div class="problem-container">
+                    <div class="problem-display" id="patternsProblem">What shape comes next in the pattern?</div>
+                    
+                    <div class="pattern-container" id="patternContainer">
+                        <!-- Pattern shapes will be inserted here -->
+                    </div>
+                </div>
+                
+                <div class="shape-options" id="patternOptions">
+                    <!-- Shape options will be generated here -->
+                </div>
+                
+                <div class="feedback" id="patternsFeedback">Complete the pattern by selecting the correct shape!</div>
+                
+                <button class="action-btn" id="checkPattern">CHECK ANSWER</button>
+            </div>
+            
+            <!-- Level Complete Screen -->
+            <div id="levelComplete" class="level-complete">
+                <h2 class="level-complete-title">LEVEL COMPLETE!</h2>
+                <p style="font-size: 1.5rem; margin-bottom: 30px;" id="levelCompleteMessage"></p>
+                
+                <div class="level-score-container">
+                    <div class="level-score-item">
+                        <span class="level-score-label">Your Score:</span>
+                        <span class="level-score-value" id="levelScoreDisplay">0</span>
+                    </div>
+                    <div class="level-score-item">
+                        <span class="level-score-label">Required Score:</span>
+                        <span class="level-score-value" id="requiredScoreDisplay">20</span>
+                    </div>
+                    <div class="level-score-item">
+                        <span class="level-score-label">Status:</span>
+                        <span class="level-score-value" id="levelStatus">Not Enough</span>
+                    </div>
+                </div>
+                
+                <div id="levelCompleteButtons">
+                    <!-- Buttons will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- Game Complete Screen -->
+            <div id="gameComplete" class="game-complete">
+                <h2 class="complete-title">GAME COMPLETE!</h2>
+                <p style="font-size: 1.5rem; margin-bottom: 30px;">Congratulations, Shape Explorer!</p>
+                
+                <div class="final-score-container">
+                    <div class="final-score-item">
+                        <span class="final-score-label">Level 1 Score:</span>
+                        <span class="final-score-value" id="finalScore1">0</span>
+                    </div>
+                    <div class="final-score-item">
+                        <span class="final-score-label">Level 2 Score:</span>
+                        <span class="final-score-value" id="finalScore2">0</span>
+                    </div>
+                    <div class="final-score-item">
+                        <span class="final-score-label">Level 3 Score:</span>
+                        <span class="final-score-value" id="finalScore3">0</span>
+                    </div>
+                    <div class="final-score-item">
+                        <span class="final-score-label">Time Bonus:</span>
+                        <span class="final-score-value" id="timeBonus">0</span>
+                    </div>
+                    
+                    <div class="total-score">
+                        TOTAL: <span id="totalFinalScore">0</span>
+                    </div>
+                </div>
+                
+                <button class="action-btn restart" id="restartGame">PLAY AGAIN</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let currentLevel = 1;
+        let score = 0;
+        let level1Score = 0;
+        let level2Score = 0;
+        let level3Score = 0;
+        let questionsAnswered = 0;
+        let questionsCorrect = 0;
+        let totalQuestionsPerLevel = 5;
+        let gameTimer = 60; // 60 seconds per level
+        let timerInterval;
+        let gameActive = true;
+        let selectedShape = null;
+        let currentProblem = {};
+        
+        // Level requirements (minimum score to pass each level)
+        const levelRequirements = {
+            1: 20, // Need at least 2 correct answers (10 points each)
+            2: 30, // Need at least 2 correct answers (15 points each)
+            3: 30  // Need at least 2 correct answers (15 points each)
+        };
+        
+        // DOM elements
+        const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+        const questionsElement = document.getElementById('questions');
+        const timeElement = document.getElementById('time');
+        const levelRequirementsElement = document.getElementById('levelRequirements');
+        const requirementScoreElement = document.getElementById('requirementScore');
+        const timerContainer = document.querySelector('.timer-container');
+        const timerProgress = document.querySelector('.timer-progress');
+        const timerText = document.getElementById('timerText');
+        
+        // Level progress elements
+        const level1Step = document.getElementById('level1Step');
+        const level2Step = document.getElementById('level2Step');
+        const level3Step = document.getElementById('level3Step');
+        
+        // Game content elements
+        const level1Game = document.getElementById('level1Game');
+        const level2Game = document.getElementById('level2Game');
+        const level3Game = document.getElementById('level3Game');
+        const levelComplete = document.getElementById('levelComplete');
+        const levelCompleteButtons = document.getElementById('levelCompleteButtons');
+        const levelScoreDisplay = document.getElementById('levelScoreDisplay');
+        const requiredScoreDisplay = document.getElementById('requiredScoreDisplay');
+        const levelStatus = document.getElementById('levelStatus');
+        const levelCompleteMessage = document.getElementById('levelCompleteMessage');
+        const gameComplete = document.getElementById('gameComplete');
+        const restartGameBtn = document.getElementById('restartGame');
+        const patternContainer = document.getElementById('patternContainer');
+        
+        // Level 1: Shape Identifier Game Elements
+        const identifierProblem = document.getElementById('identifierProblem');
+        const displayShape = document.getElementById('displayShape');
+        const identifierOptions = document.getElementById('identifierOptions');
+        const identifierFeedback = document.getElementById('identifierFeedback');
+        const checkIdentifierBtn = document.getElementById('checkIdentifier');
+        
+        // Level 2: Shape Properties Game Elements
+        const propertiesProblem = document.getElementById('propertiesProblem');
+        const propertiesShape = document.getElementById('propertiesShape');
+        const sidesValue = document.getElementById('sidesValue');
+        const cornersValue = document.getElementById('cornersValue');
+        const propertiesOptions = document.getElementById('propertiesOptions');
+        const propertiesFeedback = document.getElementById('propertiesFeedback');
+        const checkPropertiesBtn = document.getElementById('checkProperties');
+        
+        // Level 3: Shape Patterns Game Elements
+        const patternsProblem = document.getElementById('patternsProblem');
+        const patternOptions = document.getElementById('patternOptions');
+        const patternsFeedback = document.getElementById('patternsFeedback');
+        const checkPatternBtn = document.getElementById('checkPattern');
+        
+        // Final score elements
+        const finalScore1 = document.getElementById('finalScore1');
+        const finalScore2 = document.getElementById('finalScore2');
+        const finalScore3 = document.getElementById('finalScore3');
+        const timeBonus = document.getElementById('timeBonus');
+        const totalFinalScore = document.getElementById('totalFinalScore');
+        
+        // Shape definitions
+        const shapes = {
+            circle: { name: 'Circle', sides: 0, corners: 0, className: 'circle', patternClass: 'pattern-circle' },
+            square: { name: 'Square', sides: 4, corners: 4, className: 'square', patternClass: 'pattern-square' },
+            triangle: { name: 'Triangle', sides: 3, corners: 3, className: 'triangle', patternClass: 'pattern-triangle' },
+            rectangle: { name: 'Rectangle', sides: 4, corners: 4, className: 'rectangle', patternClass: 'pattern-rectangle' },
+            pentagon: { name: 'Pentagon', sides: 5, corners: 5, className: 'pentagon', patternClass: 'pattern-pentagon' }
+        };
+        
+        // Initialize the game
+        function init() {
+            // Set up check answer buttons
+            checkIdentifierBtn.addEventListener('click', checkIdentifier);
+            checkPropertiesBtn.addEventListener('click', checkProperties);
+            checkPatternBtn.addEventListener('click', checkPattern);
+            
+            // Set up restart button
+            restartGameBtn.addEventListener('click', restartGame);
+            
+            // Initialize first level
+            startLevel(1);
+        }
+        
+        // Start a level
+        function startLevel(level) {
+            currentLevel = level;
+            questionsAnswered = 0;
+            questionsCorrect = 0;
+            gameTimer = 60;
+            gameActive = true;
+            
+            // Update UI
+            levelElement.textContent = level;
+            updateQuestionsDisplay();
+            updateTimerDisplay();
+            updateLevelRequirements();
+            
+            // Show/hide timer based on level
+            if (level === 3) {
+                timerContainer.style.display = 'block';
+                startTimer();
+            } else {
+                timerContainer.style.display = 'none';
+            }
+            
+            // Update level progress
+            updateLevelProgress();
+            
+            // Hide all game content
+            level1Game.style.display = 'none';
+            level2Game.style.display = 'none';
+            level3Game.style.display = 'none';
+            levelComplete.style.display = 'none';
+            gameComplete.style.display = 'none';
+            
+            // Show current level
+            document.getElementById(`level${level}Game`).style.display = 'flex';
+            
+            // Show level requirements
+            levelRequirementsElement.style.display = 'block';
+            
+            // Generate first problem
+            generateProblem();
+        }
+        
+        // Update level progress display
+        function updateLevelProgress() {
+            // Reset all steps
+            level1Step.className = 'level-step';
+            level2Step.className = 'level-step locked';
+            level3Step.className = 'level-step locked';
+            
+            // Update based on current level
+            if (currentLevel >= 1) {
+                level1Step.className = 'level-step completed';
+                if (currentLevel === 1) level1Step.className = 'level-step active';
+            }
+            
+            if (currentLevel >= 2) {
+                level2Step.className = 'level-step completed';
+                if (currentLevel === 2) level2Step.className = 'level-step active';
+            } else if (currentLevel === 1) {
+                level2Step.className = 'level-step locked';
+            }
+            
+            if (currentLevel >= 3) {
+                level3Step.className = 'level-step completed';
+                if (currentLevel === 3) level3Step.className = 'level-step active';
+            } else if (currentLevel <= 2) {
+                level3Step.className = 'level-step locked';
+            }
+        }
+        
+        // Update level requirements display
+        function updateLevelRequirements() {
+            const requiredScore = levelRequirements[currentLevel];
+            const pointsPerQuestion = currentLevel === 1 ? 10 : 15;
+            const questionsNeeded = Math.ceil(requiredScore / pointsPerQuestion);
+            
+            requirementScoreElement.textContent = `${requiredScore} points`;
+            requirementScoreElement.nextElementSibling.textContent = 
+                `(${questionsNeeded} correct answer${questionsNeeded > 1 ? 's' : ''} needed)`;
+        }
+        
+        // Start the timer
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            // Update timer progress circle
+            const circumference = 314; // 2 * π * r (r=50)
+            
+            timerInterval = setInterval(() => {
+                if (gameActive && gameTimer > 0) {
+                    gameTimer--;
+                    updateTimerDisplay();
+                    
+                    // Update progress circle
+                    const offset = circumference - (gameTimer / 60) * circumference;
+                    timerProgress.style.strokeDashoffset = offset;
+                    
+                    // Change color when time is running out
+                    if (gameTimer <= 10) {
+                        timerProgress.style.stroke = '#ff4444';
+                        timerText.style.color = '#ff4444';
+                    }
+                } else if (gameTimer <= 0) {
+                    clearInterval(timerInterval);
+                    timeUp();
+                }
+            }, 1000);
+        }
+        
+        // Update timer display
+        function updateTimerDisplay() {
+            timeElement.textContent = `${gameTimer}s`;
+            timerText.textContent = `${gameTimer}s`;
+        }
+        
+        // Time's up handler
+        function timeUp() {
+            gameActive = false;
+            patternsFeedback.textContent = "Time's up! Let's check your score.";
+            patternsFeedback.className = 'feedback incorrect';
+            
+            setTimeout(() => {
+                levelCompleteHandler();
+            }, 2000);
+        }
+        
+        // Update questions display
+        function updateQuestionsDisplay() {
+            questionsElement.textContent = `${questionsAnswered}/${totalQuestionsPerLevel}`;
+        }
+        
+        // Clear all selections
+        function clearSelections() {
+            selectedShape = null;
+            
+            // Reset option buttons
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.className = 'option-btn';
+            });
+            
+            // Reset shape options
+            document.querySelectorAll('.shape-option').forEach(option => {
+                option.classList.remove('selected', 'correct', 'incorrect');
+            });
+        }
+        
+        // Generate a new problem based on current level
+        function generateProblem() {
+            clearSelections();
+            
+            if (currentLevel === 1) {
+                generateIdentifierProblem();
+            } else if (currentLevel === 2) {
+                generatePropertiesProblem();
+            } else if (currentLevel === 3) {
+                generatePatternsProblem();
+            }
+        }
+        
+        // Generate a shape identification problem (Level 1)
+        function generateIdentifierProblem() {
+            // Get random shape
+            const shapeKeys = Object.keys(shapes);
+            const randomShapeKey = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
+            const shape = shapes[randomShapeKey];
+            
+            currentProblem = {
+                type: 'identifier',
+                shape: shape,
+                correctAnswer: shape.name
+            };
+            
+            // Display the problem
+            identifierProblem.textContent = `Question ${questionsAnswered + 1}: What shape is this?`;
+            
+            // Update the shape display
+            displayShape.className = `shape ${shape.className}`;
+            
+            // Generate multiple choice options
+            generateIdentifierOptions();
+        }
+        
+        // Generate multiple choice options for shape identification
+        function generateIdentifierOptions() {
+            identifierOptions.innerHTML = '';
+            
+            const correctOption = currentProblem.correctAnswer;
+            const options = [correctOption];
+            
+            // Get other random shapes for wrong options
+            const shapeKeys = Object.keys(shapes);
+            while (options.length < 4) {
+                const randomShapeKey = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
+                const option = shapes[randomShapeKey].name;
+                
+                if (option !== correctOption && !options.includes(option)) {
+                    options.push(option);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create option buttons
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.addEventListener('click', function() {
+                    // Highlight selected option
+                    document.querySelectorAll('#identifierOptions .option-btn').forEach(b => {
+                        b.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                });
+                identifierOptions.appendChild(btn);
+            });
+        }
+        
+        // Generate a shape properties problem (Level 2)
+        function generatePropertiesProblem() {
+            // Get random shape (excluding circle for properties)
+            const shapeKeys = Object.keys(shapes).filter(key => key !== 'circle');
+            const randomShapeKey = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
+            const shape = shapes[randomShapeKey];
+            
+            currentProblem = {
+                type: 'properties',
+                shape: shape,
+                sides: shape.sides,
+                corners: shape.corners
+            };
+            
+            // Display the problem
+            propertiesProblem.textContent = `Question ${questionsAnswered + 1}: How many sides and corners does this shape have?`;
+            
+            // Update the shape display
+            propertiesShape.className = `shape ${shape.className}`;
+            
+            // Reset property values
+            sidesValue.textContent = '?';
+            cornersValue.textContent = '?';
+            
+            // Generate multiple choice options
+            generatePropertiesOptions();
+        }
+        
+        // Generate multiple choice options for shape properties
+        function generatePropertiesOptions() {
+            propertiesOptions.innerHTML = '';
+            
+            const correctOption = `${currentProblem.sides} sides, ${currentProblem.corners} corners`;
+            const options = [correctOption];
+            
+            // Generate incorrect options
+            while (options.length < 4) {
+                let wrongSides, wrongCorners;
+                
+                // Create plausible wrong answers
+                if (Math.random() > 0.5) {
+                    // Wrong sides
+                    wrongSides = Math.max(0, currentProblem.sides + (Math.random() > 0.5 ? 1 : -1));
+                    wrongCorners = currentProblem.corners;
+                } else {
+                    // Wrong corners
+                    wrongSides = currentProblem.sides;
+                    wrongCorners = Math.max(0, currentProblem.corners + (Math.random() > 0.5 ? 1 : -1));
+                }
+                
+                const option = `${wrongSides} sides, ${wrongCorners} corners`;
+                
+                if (option !== correctOption && !options.includes(option)) {
+                    options.push(option);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create option buttons
+            options.forEach(option => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.addEventListener('click', function() {
+                    // Highlight selected option
+                    document.querySelectorAll('#propertiesOptions .option-btn').forEach(b => {
+                        b.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                });
+                propertiesOptions.appendChild(btn);
+            });
+        }
+        
+        // Generate a shape patterns problem (Level 3) - FIXED
+        function generatePatternsProblem() {
+            patternContainer.innerHTML = '';
+            
+            // Create patterns with more variety
+            const patternTypes = [
+                { type: 'ABAB', length: 6 }, // Circle, Square, Circle, Square, Circle, ?
+                { type: 'AABBAABB', length: 6 }, // Circle, Circle, Square, Square, Circle, ?
+                { type: 'ABCABC', length: 6 }, // Circle, Square, Triangle, Circle, Square, ?
+                { type: 'AABBCC', length: 6 }, // Circle, Circle, Square, Square, Triangle, ?
+                { type: 'ABBABB', length: 6 }  // Circle, Square, Square, Circle, Square, ?
+            ];
+            
+            const selectedPattern = patternTypes[Math.floor(Math.random() * patternTypes.length)];
+            const shapeKeys = ['circle', 'square', 'triangle', 'rectangle', 'pentagon'];
+            
+            let pattern = [];
+            let correctAnswer;
+            
+            // Generate pattern based on type
+            switch (selectedPattern.type) {
+                case 'ABAB':
+                    // Circle, Square, Circle, Square, Circle, Square
+                    pattern = ['circle', 'square', 'circle', 'square', 'circle'];
+                    correctAnswer = 'square';
+                    break;
+                    
+                case 'AABBAABB':
+                    // Circle, Circle, Square, Square, Circle, Circle
+                    pattern = ['circle', 'circle', 'square', 'square', 'circle'];
+                    correctAnswer = 'circle';
+                    break;
+                    
+                case 'ABCABC':
+                    // Circle, Square, Triangle, Circle, Square, Triangle
+                    pattern = ['circle', 'square', 'triangle', 'circle', 'square'];
+                    correctAnswer = 'triangle';
+                    break;
+                    
+                case 'AABBCC':
+                    // Circle, Circle, Square, Square, Triangle, Triangle
+                    pattern = ['circle', 'circle', 'square', 'square', 'triangle'];
+                    correctAnswer = 'triangle';
+                    break;
+                    
+                case 'ABBABB':
+                    // Circle, Square, Square, Circle, Square, Square
+                    pattern = ['circle', 'square', 'square', 'circle', 'square'];
+                    correctAnswer = 'square';
+                    break;
+            }
+            
+            currentProblem = {
+                type: 'patterns',
+                pattern: pattern,
+                correctAnswer: correctAnswer,
+                patternType: selectedPattern.type
+            };
+            
+            // Display the problem
+            patternsProblem.textContent = `Question ${questionsAnswered + 1}: What shape comes next in the pattern?`;
+            
+            // Create pattern display
+            for (let i = 0; i < pattern.length; i++) {
+                const shapeDiv = document.createElement('div');
+                shapeDiv.className = `pattern-shape ${shapes[pattern[i]].patternClass}`;
+                patternContainer.appendChild(shapeDiv);
+            }
+            
+            // Add question mark for the missing shape
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'pattern-shape pattern-question';
+            questionDiv.innerHTML = '?';
+            patternContainer.appendChild(questionDiv);
+            
+            // Generate shape options
+            generatePatternOptions();
+        }
+        
+        // Generate shape options for patterns
+        function generatePatternOptions() {
+            patternOptions.innerHTML = '';
+            
+            const correctAnswer = currentProblem.correctAnswer;
+            const options = [correctAnswer];
+            
+            // Get other random shapes for wrong options (different from the pattern shapes)
+            const shapeKeys = Object.keys(shapes);
+            const usedShapes = [...new Set(currentProblem.pattern)];
+            
+            while (options.length < 4) {
+                const randomShape = shapeKeys[Math.floor(Math.random() * shapeKeys.length)];
+                
+                if (randomShape !== correctAnswer && !options.includes(randomShape)) {
+                    // Make sure the wrong option is somewhat plausible
+                    if (Math.random() > 0.3 || usedShapes.includes(randomShape)) {
+                        options.push(randomShape);
+                    }
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create shape options
+            options.forEach(option => {
+                const div = document.createElement('div');
+                div.className = `shape-option pattern-shape ${shapes[option].patternClass}`;
+                div.setAttribute('data-shape', option);
+                div.addEventListener('click', function() {
+                    selectedShape = this.getAttribute('data-shape');
+                    
+                    // Highlight selected option
+                    document.querySelectorAll('#patternOptions .shape-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                });
+                patternOptions.appendChild(div);
+            });
+        }
+        
+        // Check shape identification answer (Level 1)
+        function checkIdentifier() {
+            const selectedOption = document.querySelector('#identifierOptions .option-btn.selected');
+            
+            if (!selectedOption) {
+                identifierFeedback.textContent = 'Please select a shape!';
+                identifierFeedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            const userAnswer = selectedOption.textContent;
+            const isCorrect = userAnswer === currentProblem.correctAnswer;
+            
+            questionsAnswered++;
+            updateQuestionsDisplay();
+            
+            // Provide feedback
+            if (isCorrect) {
+                identifierFeedback.textContent = `Correct! This is a ${currentProblem.correctAnswer}.`;
+                identifierFeedback.className = 'feedback correct';
+                
+                // Update score
+                const points = 10;
+                score += points;
+                level1Score += points;
+                questionsCorrect++;
+                
+                scoreElement.textContent = score;
+                
+                // Highlight correct answer
+                selectedOption.classList.add('correct');
+            } else {
+                identifierFeedback.textContent = `Not quite. This is a ${currentProblem.correctAnswer}.`;
+                identifierFeedback.className = 'feedback incorrect';
+                
+                // Highlight correct option
+                document.querySelectorAll('#identifierOptions .option-btn').forEach(btn => {
+                    if (btn.textContent === currentProblem.correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+                selectedOption.classList.add('incorrect');
+            }
+            
+            // Check if level is complete
+            setTimeout(() => {
+                if (questionsAnswered >= totalQuestionsPerLevel) {
+                    levelCompleteHandler();
+                } else {
+                    generateIdentifierProblem();
+                }
+            }, 1500);
+        }
+        
+        // Check shape properties answer (Level 2)
+        function checkProperties() {
+            const selectedOption = document.querySelector('#propertiesOptions .option-btn.selected');
+            
+            if (!selectedOption) {
+                propertiesFeedback.textContent = 'Please select an answer!';
+                propertiesFeedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            const userAnswer = selectedOption.textContent;
+            const correctAnswer = `${currentProblem.sides} sides, ${currentProblem.corners} corners`;
+            const isCorrect = userAnswer === correctAnswer;
+            
+            questionsAnswered++;
+            updateQuestionsDisplay();
+            
+            // Provide feedback
+            if (isCorrect) {
+                propertiesFeedback.textContent = `Correct! A ${currentProblem.shape.name} has ${currentProblem.sides} sides and ${currentProblem.corners} corners.`;
+                propertiesFeedback.className = 'feedback correct';
+                
+                // Update score
+                const points = 15;
+                score += points;
+                level2Score += points;
+                questionsCorrect++;
+                
+                scoreElement.textContent = score;
+                
+                // Update property values
+                sidesValue.textContent = currentProblem.sides;
+                cornersValue.textContent = currentProblem.corners;
+                
+                // Highlight correct answer
+                selectedOption.classList.add('correct');
+            } else {
+                propertiesFeedback.textContent = `Not quite. A ${currentProblem.shape.name} has ${currentProblem.sides} sides and ${currentProblem.corners} corners.`;
+                propertiesFeedback.className = 'feedback incorrect';
+                
+                // Highlight correct option
+                document.querySelectorAll('#propertiesOptions .option-btn').forEach(btn => {
+                    if (btn.textContent === correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+                selectedOption.classList.add('incorrect');
+            }
+            
+            // Check if level is complete
+            setTimeout(() => {
+                if (questionsAnswered >= totalQuestionsPerLevel) {
+                    levelCompleteHandler();
+                } else {
+                    generatePropertiesProblem();
+                }
+            }, 1500);
+        }
+        
+        // Check shape patterns answer (Level 3)
+        function checkPattern() {
+            if (!selectedShape) {
+                patternsFeedback.textContent = 'Please select a shape!';
+                patternsFeedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            const isCorrect = selectedShape === currentProblem.correctAnswer;
+            
+            questionsAnswered++;
+            updateQuestionsDisplay();
+            
+            // Provide feedback
+            if (isCorrect) {
+                patternsFeedback.textContent = `Correct! The pattern continues with ${shapes[currentProblem.correctAnswer].name}.`;
+                patternsFeedback.className = 'feedback correct';
+                
+                // Update score
+                const points = 15;
+                score += points;
+                level3Score += points;
+                questionsCorrect++;
+                
+                scoreElement.textContent = score;
+                
+                // Highlight selected option
+                document.querySelector(`.shape-option[data-shape="${selectedShape}"]`).classList.add('selected', 'correct');
+                
+                // Update pattern display
+                const questionMark = patternContainer.lastChild;
+                questionMark.className = `pattern-shape ${shapes[selectedShape].patternClass}`;
+                questionMark.innerHTML = '';
+            } else {
+                patternsFeedback.textContent = `Not quite. The pattern should continue with ${shapes[currentProblem.correctAnswer].name}.`;
+                patternsFeedback.className = 'feedback incorrect';
+                
+                // Highlight correct option
+                document.querySelector(`.shape-option[data-shape="${currentProblem.correctAnswer}"]`).classList.add('correct');
+                document.querySelector(`.shape-option[data-shape="${selectedShape}"]`).classList.add('incorrect');
+            }
+            
+            // Check if level is complete
+            setTimeout(() => {
+                if (questionsAnswered >= totalQuestionsPerLevel) {
+                    levelCompleteHandler();
+                } else {
+                    generatePatternsProblem();
+                }
+            }, 1500);
+        }
+        
+        // Level complete handler
+        function levelCompleteHandler() {
+            gameActive = false;
+            if (timerInterval) clearInterval(timerInterval);
+            
+            // Hide level requirements
+            levelRequirementsElement.style.display = 'none';
+            
+            // Calculate level score
+            const levelScore = currentLevel === 1 ? level1Score : 
+                              currentLevel === 2 ? level2Score : level3Score;
+            
+            const requiredScore = levelRequirements[currentLevel];
+            const passed = levelScore >= requiredScore;
+            
+            // Update level complete screen
+            levelScoreDisplay.textContent = levelScore;
+            requiredScoreDisplay.textContent = requiredScore;
+            
+            if (passed) {
+                levelStatus.textContent = "PASSED!";
+                levelStatus.style.color = "#4caf50";
+                levelCompleteMessage.textContent = `Great job! You passed Level ${currentLevel}!`;
+            } else {
+                levelStatus.textContent = "NOT ENOUGH";
+                levelStatus.style.color = "#f44336";
+                levelCompleteMessage.textContent = `You need at least ${requiredScore} points to pass Level ${currentLevel}.`;
+            }
+            
+            // Create buttons for level complete screen
+            levelCompleteButtons.innerHTML = '';
+            
+            if (passed && currentLevel < 3) {
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'action-btn next-level';
+                nextBtn.textContent = `NEXT LEVEL →`;
+                nextBtn.addEventListener('click', () => {
+                    startLevel(currentLevel + 1);
+                });
+                levelCompleteButtons.appendChild(nextBtn);
+            } else if (!passed) {
+                const retryBtn = document.createElement('button');
+                retryBtn.className = 'action-btn retry';
+                retryBtn.textContent = `RETRY LEVEL ${currentLevel}`;
+                retryBtn.addEventListener('click', () => {
+                    // Reset level score
+                    if (currentLevel === 1) {
+                        score -= level1Score;
+                        level1Score = 0;
+                    } else if (currentLevel === 2) {
+                        score -= level2Score;
+                        level2Score = 0;
+                    } else {
+                        score -= level3Score;
+                        level3Score = 0;
+                    }
+                    scoreElement.textContent = score;
+                    
+                    startLevel(currentLevel);
+                });
+                levelCompleteButtons.appendChild(retryBtn);
+            } else if (passed && currentLevel === 3) {
+                const finalBtn = document.createElement('button');
+                finalBtn.className = 'action-btn next-level';
+                finalBtn.textContent = `SEE FINAL SCORE`;
+                finalBtn.addEventListener('click', completeGame);
+                levelCompleteButtons.appendChild(finalBtn);
+            }
+            
+            // Show level complete screen
+            level1Game.style.display = 'none';
+            level2Game.style.display = 'none';
+            level3Game.style.display = 'none';
+            levelComplete.style.display = 'block';
+        }
+        
+        // Complete the game and show final score
+        function completeGame() {
+            // Stop timer if running
+            if (timerInterval) clearInterval(timerInterval);
+            
+            // Calculate time bonus for level 3
+            const timeLeftBonus = gameTimer * 2; // 2 points per second left
+            
+            // Calculate final score
+            const finalScore = score + timeLeftBonus;
+            
+            // Update final score display
+            finalScore1.textContent = level1Score;
+            finalScore2.textContent = level2Score;
+            finalScore3.textContent = level3Score;
+            timeBonus.textContent = timeLeftBonus;
+            totalFinalScore.textContent = finalScore;
+            
+            // Hide game content and show complete screen
+            levelComplete.style.display = 'none';
+            gameComplete.style.display = 'block';
+            
+            // Create confetti effect
+            createConfetti();
+        }
+        
+        // Restart the game
+        function restartGame() {
+            // Reset all scores and state
+            score = 0;
+            level1Score = 0;
+            level2Score = 0;
+            level3Score = 0;
+            questionsAnswered = 0;
+            questionsCorrect = 0;
+            
+            // Update UI
+            scoreElement.textContent = score;
+            
+            // Start from level 1
+            startLevel(1);
+        }
+        
+        // Helper function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Create confetti effect for game completion
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffd166', '#06d6a0', '#118ab2', '#ef476f'];
+            
+            for (let i = 0; i < 150; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.position = 'fixed';
+                confetti.style.width = '10px';
+                confetti.style.height = '10px';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.top = '-20px';
+                confetti.style.opacity = '0.8';
+                confetti.style.zIndex = '9999';
+                
+                // Random animation
+                const animation = confetti.animate([
+                    { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translateY(100vh) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+                ], {
+                    duration: Math.random() * 3000 + 2000,
+                    easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)'
+                });
+                
+                document.body.appendChild(confetti);
+                
+                // Remove confetti after animation completes
+                animation.onfinish = () => confetti.remove();
+            }
+        }
+        
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

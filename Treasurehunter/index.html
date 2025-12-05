@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Treasure Hunt</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e5799 0%, #7db9e8 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            color: #333;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        h1 {
+            color: #ff6b6b;
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0 #ffd166;
+        }
+        
+        .subtitle {
+            color: #1a535c;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background-color: #4ecdc4;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-box {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #1a535c;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        .treasure-map {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        
+        .island {
+            aspect-ratio: 1;
+            background-color: #ffd166;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 4px solid #ff9e6d;
+            position: relative;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .island:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .island.current {
+            border-color: #ff6b6b;
+            background-color: #ff9e6d;
+        }
+        
+        .island.cleared {
+            background-color: #06d6a0;
+            border-color: #06d6a0;
+        }
+        
+        .island.locked {
+            background-color: #b8b8b8;
+            border-color: #999;
+            cursor: not-allowed;
+        }
+        
+        .island.locked:hover {
+            transform: none;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .player {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: #ff6b6b;
+        }
+        
+        .challenge-box {
+            background-color: #1a535c;
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .challenge-text {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #ffd166;
+        }
+        
+        .challenge-equation {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 20px 0;
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            display: inline-block;
+            min-width: 200px;
+        }
+        
+        .answers {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .answer-btn {
+            padding: 18px;
+            font-size: 1.3rem;
+            background-color: #4ecdc4;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+        }
+        
+        .answer-btn:hover {
+            background-color: #06d6a0;
+            transform: translateY(-3px);
+        }
+        
+        .answer-btn.correct {
+            background-color: #06d6a0;
+            color: white;
+        }
+        
+        .answer-btn.wrong {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        
+        .treasure-chest {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        
+        .treasure-item {
+            background-color: #ffd166;
+            color: #1a535c;
+            padding: 10px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 3px solid #ff9e6d;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #ff5252;
+            transform: translateY(-3px);
+        }
+        
+        .btn-secondary {
+            background-color: #4ecdc4;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #06d6a0;
+            transform: translateY(-3px);
+        }
+        
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            z-index: 100;
+            display: none;
+            max-width: 500px;
+            width: 90%;
+            border: 8px solid #ffd166;
+        }
+        
+        .message-title {
+            color: #ff6b6b;
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+        }
+        
+        .message-text {
+            color: #1a535c;
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .message-btn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #4ecdc4;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .message-btn:hover {
+            background-color: #06d6a0;
+        }
+        
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            color: #1a535c;
+        }
+        
+        .instructions h3 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .treasure-map {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .answers {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .treasure-map {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .challenge-equation {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Math Treasure Hunt</h1>
+            <p class="subtitle">Sail to islands, solve math problems, and collect treasure!</p>
+        </header>
+        
+        <div class="game-area">
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="score">0</div>
+                    <div class="stat-label">Score</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="lives">3</div>
+                    <div class="stat-label">Lives</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="treasures">0</div>
+                    <div class="stat-label">Treasures</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="level">1</div>
+                    <div class="stat-label">Level</div>
+                </div>
+            </div>
+            
+            <div class="challenge-box">
+                <div class="challenge-text" id="challengeText">Welcome! Click on an island to start your adventure!</div>
+                <div class="challenge-equation" id="challengeEquation">?</div>
+                <div class="answers" id="answers">
+                    <!-- Answer buttons will appear here -->
+                </div>
+            </div>
+            
+            <div class="treasure-map" id="treasureMap">
+                <!-- Islands will be generated here -->
+            </div>
+            
+            <div class="treasure-chest" id="treasureChest">
+                <!-- Collected treasures will appear here -->
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="hintBtn">
+                    <span>💡</span> Get Hint
+                </button>
+                <button class="btn btn-secondary" id="newGameBtn">
+                    <span>🔄</span> New Game
+                </button>
+            </div>
+            
+            <div class="instructions">
+                <h3>How to Play</h3>
+                <ul>
+                    <li>Click on an island to visit it</li>
+                    <li>Solve the math problem to collect treasure</li>
+                    <li>Each correct answer gives you 10 points</li>
+                    <li>Wrong answers cost you 1 life</li>
+                    <li>Collect all 5 treasures to win!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="message-box" id="messageBox">
+        <div class="message-title" id="messageTitle">Great Job!</div>
+        <div class="message-text" id="messageText">You solved the problem and found treasure!</div>
+        <button class="message-btn" id="messageBtn">Continue</button>
+    </div>
+
+    <script>
+        // Simple game state
+        const gameState = {
+            score: 0,
+            lives: 3,
+            treasures: 0,
+            level: 1,
+            currentIsland: null,
+            clearedIslands: [],
+            treasureItems: [
+                "Gold Coin", "Silver Cup", "Ruby Ring", 
+                "Emerald Necklace", "Diamond Crown"
+            ]
+        };
+        
+        // DOM elements
+        const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives');
+        const treasuresElement = document.getElementById('treasures');
+        const levelElement = document.getElementById('level');
+        const challengeText = document.getElementById('challengeText');
+        const challengeEquation = document.getElementById('challengeEquation');
+        const answersContainer = document.getElementById('answers');
+        const treasureMap = document.getElementById('treasureMap');
+        const treasureChest = document.getElementById('treasureChest');
+        const hintBtn = document.getElementById('hintBtn');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const messageBox = document.getElementById('messageBox');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const messageBtn = document.getElementById('messageBtn');
+        
+        // Current math problem
+        let currentProblem = null;
+        
+        // Initialize the game
+        function initGame() {
+            createIslands();
+            updateStats();
+            updateTreasureChest();
+            
+            // Set up event listeners
+            hintBtn.addEventListener('click', giveHint);
+            newGameBtn.addEventListener('click', resetGame);
+            messageBtn.addEventListener('click', () => {
+                messageBox.style.display = 'none';
+            });
+        }
+        
+        // Create the island map
+        function createIslands() {
+            treasureMap.innerHTML = '';
+            
+            for (let i = 0; i < 10; i++) {
+                const island = document.createElement('div');
+                island.className = 'island';
+                island.dataset.id = i;
+                
+                // First island is always unlocked
+                if (i === 0) {
+                    island.classList.add('current');
+                    gameState.currentIsland = 0;
+                } else {
+                    island.classList.add('locked');
+                }
+                
+                // Add emoji based on island type
+                let emoji = '🏝️';
+                if (i === 0) emoji = '🚢';
+                if (i === 9) emoji = '🏆';
+                if ([2, 4, 6, 8].includes(i)) emoji = '💰';
+                
+                island.innerHTML = `
+                    ${emoji}
+                    ${i === gameState.currentIsland ? '<div class="player">🧑‍✈️</div>' : ''}
+                `;
+                
+                // Add click event if not locked
+                if (i === 0 || gameState.clearedIslands.includes(i-1)) {
+                    island.classList.remove('locked');
+                    island.addEventListener('click', () => visitIsland(i));
+                }
+                
+                // Mark cleared islands
+                if (gameState.clearedIslands.includes(i)) {
+                    island.classList.add('cleared');
+                    island.classList.remove('locked');
+                }
+                
+                treasureMap.appendChild(island);
+            }
+        }
+        
+        // Visit an island
+        function visitIsland(islandId) {
+            // Update current island
+            document.querySelectorAll('.island').forEach(island => {
+                island.classList.remove('current');
+                island.querySelector('.player')?.remove();
+            });
+            
+            const currentIsland = document.querySelector(`.island[data-id="${islandId}"]`);
+            currentIsland.classList.add('current');
+            currentIsland.innerHTML += '<div class="player">🧑‍✈️</div>';
+            
+            gameState.currentIsland = islandId;
+            
+            // Generate a math problem
+            generateProblem(islandId);
+        }
+        
+        // Generate a math problem based on island
+        function generateProblem(islandId) {
+            let problem;
+            
+            // Make problems easier for lower islands
+            if (islandId < 3) {
+                problem = generateEasyProblem();
+            } else if (islandId < 6) {
+                problem = generateMediumProblem();
+            } else {
+                problem = generateHardProblem();
+            }
+            
+            currentProblem = problem;
+            displayProblem(problem);
+        }
+        
+        // Generate easy problem (addition/subtraction under 20)
+        function generateEasyProblem() {
+            const type = Math.random() > 0.5 ? '+' : '-';
+            let num1, num2, answer;
+            
+            if (type === '+') {
+                num1 = Math.floor(Math.random() * 10) + 1;
+                num2 = Math.floor(Math.random() * 10) + 1;
+                answer = num1 + num2;
+            } else {
+                num1 = Math.floor(Math.random() * 15) + 5;
+                num2 = Math.floor(Math.random() * 5) + 1;
+                answer = num1 - num2;
+            }
+            
+            return {
+                text: `Solve this problem:`,
+                equation: `${num1} ${type} ${num2}`,
+                answer: answer,
+                answers: generateAnswers(answer)
+            };
+        }
+        
+        // Generate medium problem (multiplication/division)
+        function generateMediumProblem() {
+            const type = Math.random() > 0.5 ? '×' : '÷';
+            let num1, num2, answer;
+            
+            if (type === '×') {
+                num1 = Math.floor(Math.random() * 5) + 1;
+                num2 = Math.floor(Math.random() * 5) + 1;
+                answer = num1 * num2;
+            } else {
+                answer = Math.floor(Math.random() * 5) + 1;
+                num2 = Math.floor(Math.random() * 5) + 1;
+                num1 = answer * num2;
+            }
+            
+            return {
+                text: `Can you solve this?`,
+                equation: `${num1} ${type} ${num2}`,
+                answer: answer,
+                answers: generateAnswers(answer)
+            };
+        }
+        
+        // Generate hard problem (two-step or larger numbers)
+        function generateHardProblem() {
+            // 50% chance of two-step problem, 50% chance of larger numbers
+            if (Math.random() > 0.5) {
+                // Two-step problem
+                const num1 = Math.floor(Math.random() * 10) + 1;
+                const num2 = Math.floor(Math.random() * 10) + 1;
+                const num3 = Math.floor(Math.random() * 5) + 1;
+                const answer = num1 + num2 - num3;
+                
+                return {
+                    text: `Solve this two-step problem:`,
+                    equation: `${num1} + ${num2} - ${num3}`,
+                    answer: answer,
+                    answers: generateAnswers(answer)
+                };
+            } else {
+                // Larger numbers
+                const num1 = Math.floor(Math.random() * 50) + 10;
+                const num2 = Math.floor(Math.random() * 20) + 5;
+                const answer = num1 + num2;
+                
+                return {
+                    text: `Add these numbers:`,
+                    equation: `${num1} + ${num2}`,
+                    answer: answer,
+                    answers: generateAnswers(answer)
+                };
+            }
+        }
+        
+        // Generate answer options
+        function generateAnswers(correctAnswer) {
+            const answers = [correctAnswer];
+            
+            // Add 3 wrong answers
+            for (let i = 0; i < 3; i++) {
+                let wrongAnswer;
+                
+                // Make wrong answers close to the correct one
+                const offset = Math.floor(Math.random() * 5) + 1;
+                if (Math.random() > 0.5) {
+                    wrongAnswer = correctAnswer + offset;
+                } else {
+                    wrongAnswer = correctAnswer - offset;
+                }
+                
+                // Make sure it's not the same as correct answer
+                if (wrongAnswer === correctAnswer || answers.includes(wrongAnswer)) {
+                    wrongAnswer += 2;
+                }
+                
+                // Make sure it's not negative
+                if (wrongAnswer < 0) wrongAnswer = Math.abs(wrongAnswer) + 1;
+                
+                answers.push(wrongAnswer);
+            }
+            
+            // Shuffle the answers
+            return shuffleArray(answers);
+        }
+        
+        // Display the problem
+        function displayProblem(problem) {
+            challengeText.textContent = problem.text;
+            challengeEquation.textContent = problem.equation + " = ?";
+            
+            // Clear previous answers
+            answersContainer.innerHTML = '';
+            
+            // Create answer buttons
+            problem.answers.forEach(answer => {
+                const button = document.createElement('button');
+                button.className = 'answer-btn';
+                button.textContent = answer;
+                button.addEventListener('click', () => checkAnswer(answer, problem.answer));
+                answersContainer.appendChild(button);
+            });
+        }
+        
+        // Check the answer
+        function checkAnswer(selectedAnswer, correctAnswer) {
+            const buttons = document.querySelectorAll('.answer-btn');
+            
+            // Disable all buttons
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.cursor = 'default';
+                
+                // Mark correct and wrong answers
+                if (parseInt(btn.textContent) === correctAnswer) {
+                    btn.classList.add('correct');
+                } else if (parseInt(btn.textContent) === selectedAnswer) {
+                    btn.classList.add('wrong');
+                }
+            });
+            
+            if (parseInt(selectedAnswer) === correctAnswer) {
+                // Correct answer
+                handleCorrectAnswer();
+            } else {
+                // Wrong answer
+                handleWrongAnswer();
+            }
+        }
+        
+        // Handle correct answer
+        function handleCorrectAnswer() {
+            // Update score
+            gameState.score += 10;
+            
+            // Mark island as cleared
+            if (!gameState.clearedIslands.includes(gameState.currentIsland)) {
+                gameState.clearedIslands.push(gameState.currentIsland);
+                
+                // Check if this island has treasure
+                if ([2, 4, 6, 8].includes(gameState.currentIsland) && gameState.treasures < 5) {
+                    gameState.treasures++;
+                    showMessage(
+                        "Treasure Found!",
+                        `You found ${gameState.treasureItems[gameState.treasures-1]}!`,
+                        "success"
+                    );
+                } else {
+                    showMessage(
+                        "Correct!",
+                        "Great job! You solved the math problem.",
+                        "success"
+                    );
+                }
+                
+                // Unlock next island
+                if (gameState.currentIsland < 9) {
+                    const nextIsland = document.querySelector(`.island[data-id="${gameState.currentIsland + 1}"]`);
+                    if (nextIsland) {
+                        nextIsland.classList.remove('locked');
+                        nextIsland.addEventListener('click', () => visitIsland(gameState.currentIsland + 1));
+                    }
+                }
+            }
+            
+            // Check if player won
+            if (gameState.treasures >= 5) {
+                setTimeout(() => {
+                    showMessage(
+                        "You Win!",
+                        `Congratulations! You collected all treasures! Final score: ${gameState.score}`,
+                        "victory"
+                    );
+                }, 800);
+            }
+            
+            updateStats();
+            createIslands(); // Refresh islands to show cleared status
+        }
+        
+        // Handle wrong answer
+        function handleWrongAnswer() {
+            // Lose a life
+            gameState.lives--;
+            
+            if (gameState.lives <= 0) {
+                // Game over
+                gameState.lives = 0;
+                setTimeout(() => {
+                    showMessage(
+                        "Game Over",
+                        "You ran out of lives! Try again.",
+                        "gameover"
+                    );
+                }, 800);
+            } else {
+                showMessage(
+                    "Oops!",
+                    `That's not correct. The right answer was ${currentProblem.answer}. You have ${gameState.lives} lives left.`,
+                    "error"
+                );
+            }
+            
+            updateStats();
+        }
+        
+        // Give a hint
+        function giveHint() {
+            if (!currentProblem) return;
+            
+            let hint = "";
+            const answer = currentProblem.answer;
+            
+            if (answer > 10) {
+                hint = `Hint: The answer is greater than 10.`;
+            } else if (answer < 10) {
+                hint = `Hint: The answer is less than 10.`;
+            } else {
+                hint = `Hint: The answer is exactly 10.`;
+            }
+            
+            // For multiplication problems
+            if (currentProblem.equation.includes('×')) {
+                hint = `Hint: Try counting by ${currentProblem.equation.split('×')[0].trim()}s.`;
+            }
+            
+            showMessage("Hint", hint, "hint");
+        }
+        
+        // Show message popup
+        function showMessage(title, text, type) {
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            
+            // Set message color based on type
+            if (type === 'success') {
+                messageBox.style.borderColor = '#06d6a0';
+            } else if (type === 'error' || type === 'gameover') {
+                messageBox.style.borderColor = '#ff6b6b';
+            } else if (type === 'victory') {
+                messageBox.style.borderColor = '#ffd166';
+            } else {
+                messageBox.style.borderColor = '#4ecdc4';
+            }
+            
+            messageBox.style.display = 'block';
+        }
+        
+        // Update game stats display
+        function updateStats() {
+            scoreElement.textContent = gameState.score;
+            livesElement.textContent = gameState.lives;
+            treasuresElement.textContent = gameState.treasures;
+            levelElement.textContent = gameState.level;
+        }
+        
+        // Update treasure chest display
+        function updateTreasureChest() {
+            treasureChest.innerHTML = '';
+            
+            if (gameState.treasures === 0) {
+                treasureChest.innerHTML = '<div class="treasure-item">No treasures yet. Solve math problems to find them!</div>';
+            } else {
+                for (let i = 0; i < gameState.treasures; i++) {
+                    const treasure = document.createElement('div');
+                    treasure.className = 'treasure-item';
+                    treasure.innerHTML = `💰 ${gameState.treasureItems[i]}`;
+                    treasureChest.appendChild(treasure);
+                }
+            }
+        }
+        
+        // Reset the game
+        function resetGame() {
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.treasures = 0;
+            gameState.level = 1;
+            gameState.currentIsland = 0;
+            gameState.clearedIslands = [];
+            
+            updateStats();
+            updateTreasureChest();
+            createIslands();
+            
+            challengeText.textContent = "Welcome! Click on an island to start your adventure!";
+            challengeEquation.textContent = "?";
+            answersContainer.innerHTML = "";
+            
+            showMessage("New Game", "Get ready for a new math adventure!", "info");
+        }
+        
+        // Utility function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Initialize the game when page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+        
+        // Start with first island visited
+        setTimeout(() => {
+            visitIsland(0);
+        }, 500);
+    </script>
+</body>
+</html>

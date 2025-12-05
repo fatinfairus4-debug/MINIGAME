@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Numerical Target Dash</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font family for a modern, clean look -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+        .number-tile {
+            min-width: 60px;
+            min-height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            background-color: #1e2837; /* Slightly lighter dark */
+            border: 3px solid #3b82f6;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            user-select: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+        }
+        .number-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px -1px rgba(0, 0, 0, 0.3);
+        }
+        .number-tile.selected {
+            background-color: #3b82f6; /* Blue for selected */
+            border-color: #60a5fa;
+            transform: scale(0.95);
+        }
+        .number-tile.correct {
+            background-color: #10b981; /* Green for correct */
+            border-color: #34d399;
+            pointer-events: none;
+            animation: pulse-correct 0.3s ease-out;
+        }
+        .number-tile.incorrect {
+            background-color: #ef4444; /* Red for incorrect */
+            border-color: #f87171;
+            animation: shake 0.5s;
+        }
+        @keyframes pulse-correct {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        /* Make tiles larger on mobile for easy tapping */
+        @media (max-width: 640px) {
+            .number-tile {
+                min-width: 70px;
+                min-height: 70px;
+                font-size: 1.75rem;
+            }
+            .game-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.75rem;
+            }
+        }
+        .pointer-events-none {
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container" class="w-full max-w-lg mx-4 p-6 bg-gray-800 rounded-2xl shadow-2xl transition-all duration-300">
+    <!-- Header -->
+    <h1 class="text-4xl font-black text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+        Numerical Target Dash
+    </h1>
+
+    <!-- Game Status & Controls -->
+    <div id="status-area" class="flex justify-between items-center mb-6 p-4 rounded-xl bg-gray-700 shadow-inner">
+        <div class="text-white text-lg font-semibold">
+            Score: <span id="score-display" class="text-cyan-400 text-2xl ml-1">0</span>
+        </div>
+        <div class="text-white text-lg font-semibold">
+            Time: <span id="timer-display" class="text-yellow-400 text-2xl ml-1">30</span>s
+        </div>
+        <button id="start-button" onclick="startGame()" class="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-full transition duration-200 shadow-md transform hover:scale-105">
+            Start Game
+        </button>
+    </div>
+
+    <!-- Target Display -->
+    <div id="target-area" class="flex flex-col items-center justify-center p-6 mb-8 rounded-xl bg-gray-900 border-b-4 border-blue-500 shadow-lg">
+        <p class="text-gray-300 text-xl font-medium mb-2">Find two numbers that make:</p>
+        <div id="target-equation" class="text-5xl font-extrabold text-white flex items-center justify-center">
+            <span class="text-white text-4xl font-extrabold mr-2">(</span>
+            <span class="text-blue-400 text-4xl font-extrabold">N<sub>1</sub></span>
+            <span id="target-op" class="text-blue-400 text-5xl font-extrabold mx-2">?</span>
+            <span class="text-blue-400 text-4xl font-extrabold">N<sub>2</sub></span>
+            <span class="text-white text-4xl font-extrabold mr-2">)</span>
+            <span class="mx-4 text-white text-5xl">=</span>
+            <span id="target-num" class="text-cyan-400 text-5xl font-extrabold">?</span>
+        </div>
+    </div>
+
+    <!-- Game Grid (Numbers) -->
+    <div id="game-grid" class="game-grid">
+        <!-- Tiles will be inserted here by JavaScript -->
+    </div>
+
+    <!-- Message Box/Modal -->
+    <div id="message-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl text-center w-11/12 max-w-sm border-t-4 border-red-500">
+            <h2 id="modal-title" class="text-4xl font-bold mb-4 text-red-400">Time's Up!</h2>
+            <p id="modal-message" class="text-xl text-white mb-6">You scored 0 points.</p>
+            <button onclick="hideModal(); startGame()" class="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full transition duration-200 shadow-lg transform hover:scale-105">
+                Play Again
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Configuration & State ---
+    const GAME_DURATION = 30; // seconds
+    const GRID_SIZE = 12; // Reduced from 16 for better gameplay
+    const MAX_TILE_VALUE = 12;
+
+    let score = 0;
+    let timer = GAME_DURATION;
+    let isGameRunning = false;
+    let selectedTiles = [];
+    let currentTarget = { num: 0, op: '' };
+    let timerInterval;
+
+    // DOM Elements
+    const gridEl = document.getElementById('game-grid');
+    const scoreDisplayEl = document.getElementById('score-display');
+    const timerDisplayEl = document.getElementById('timer-display');
+    const targetNumEl = document.getElementById('target-num');
+    const targetOpEl = document.getElementById('target-op');
+    const startButtonEl = document.getElementById('start-button');
+    const modalEl = document.getElementById('message-modal');
+    const modalTitleEl = document.getElementById('modal-title');
+    const modalMessageEl = document.getElementById('modal-message');
+
+    // --- Utility Functions ---
+
+    /** Shuffles an array in place using the Fisher-Yates (Knuth) algorithm. */
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    /** Generates a random integer between min (inclusive) and max (inclusive) */
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // --- Game Logic ---
+
+    /** Generates a solvable board state (grid numbers and target). */
+    function generateBoard() {
+        // 1. Determine operation and solution components
+        const operation = Math.random() < 0.5 ? '+' : '×';
+        
+        let num1, num2, target;
+        let attempts = 0;
+        const maxAttempts = 50;
+
+        do {
+            if (attempts++ > maxAttempts) {
+                // Fallback solution
+                num1 = 3;
+                num2 = 4;
+                target = operation === '+' ? 7 : 12;
+                break;
+            }
+
+            num1 = getRandomInt(1, MAX_TILE_VALUE);
+            num2 = getRandomInt(1, MAX_TILE_VALUE);
+
+            if (operation === '+') {
+                target = num1 + num2;
+                // Keep sum within reasonable range
+                if (target > MAX_TILE_VALUE + 6) continue; 
+            } else { // Multiplication
+                target = num1 * num2;
+                // Keep multiplication results within a reasonable range
+                if (target > 50 || target < 4) continue; 
+            }
+
+            break;
+        } while (true);
+        
+        currentTarget.num = target;
+        currentTarget.op = operation;
+        
+        // 2. Prepare all numbers for the grid
+        let allNumbers = [];
+        
+        // Add the solution numbers
+        allNumbers.push(num1, num2);
+        
+        // Fill the rest with random numbers
+        while (allNumbers.length < GRID_SIZE) {
+            let randomNum = getRandomInt(1, MAX_TILE_VALUE);
+            allNumbers.push(randomNum);
+        }
+
+        // 3. Shuffle and Render
+        allNumbers = shuffleArray(allNumbers);
+        renderGrid(allNumbers);
+        updateTargetDisplay();
+    }
+
+    /** Renders the number tiles onto the game grid. */
+    function renderGrid(numbers) {
+        gridEl.innerHTML = ''; // Clear existing grid
+        selectedTiles = []; // Clear selected tiles
+        gridEl.classList.remove('pointer-events-none'); // Enable grid interaction
+
+        numbers.forEach(num => {
+            const tile = document.createElement('div');
+            tile.className = 'number-tile';
+            tile.textContent = num;
+            // Store the value and a unique ID on the element for easier tracking
+            tile.dataset.value = num;
+            tile.dataset.id = Math.random().toString(36).substr(2, 9);
+            tile.onclick = () => handleTileClick(tile);
+            gridEl.appendChild(tile);
+        });
+    }
+
+    /** Updates the visual display of the target number and operation. */
+    function updateTargetDisplay() {
+        targetNumEl.textContent = currentTarget.num;
+        targetOpEl.textContent = currentTarget.op;
+    }
+
+    /** Handles the logic when a player clicks a tile. */
+    function handleTileClick(tile) {
+        if (!isGameRunning) return;
+
+        const tileId = tile.dataset.id;
+        const index = selectedTiles.findIndex(t => t.id === tileId);
+
+        if (index > -1) {
+            // Deselect tile
+            selectedTiles.splice(index, 1);
+            tile.classList.remove('selected');
+        } else if (selectedTiles.length < 2) {
+            // Select tile
+            selectedTiles.push({
+                id: tileId,
+                value: parseInt(tile.dataset.value)
+            });
+            tile.classList.add('selected');
+
+            // If two tiles are selected, check the solution
+            if (selectedTiles.length === 2) {
+                // Disable clicking temporarily
+                gridEl.classList.add('pointer-events-none'); 
+                setTimeout(checkSolution, 300);
+            }
+        }
+    }
+
+    /** Checks if the two selected numbers match the target. */
+    function checkSolution() {
+        const [t1, t2] = selectedTiles;
+        const num1 = t1.value;
+        const num2 = t2.value;
+        let result = 0;
+
+        if (currentTarget.op === '+') {
+            result = num1 + num2;
+        } else if (currentTarget.op === '×') {
+            result = num1 * num2;
+        }
+
+        const tile1El = document.querySelector(`[data-id="${t1.id}"]`);
+        const tile2El = document.querySelector(`[data-id="${t2.id}"]`);
+        
+        // Remove selection classes first
+        tile1El.classList.remove('selected');
+        tile2El.classList.remove('selected');
+
+        if (result === currentTarget.num) {
+            // Correct answer!
+            score++;
+            scoreDisplayEl.textContent = score;
+
+            tile1El.classList.add('correct');
+            tile2El.classList.add('correct');
+
+            // Generate next puzzle
+            setTimeout(() => {
+                generateBoard();
+                gridEl.classList.remove('pointer-events-none');
+            }, 600); 
+
+        } else {
+            // Incorrect answer
+            timer = Math.max(0, timer - 3); // Penalty: lose 3 seconds
+            timerDisplayEl.textContent = timer;
+            
+            tile1El.classList.add('incorrect');
+            tile2El.classList.add('incorrect');
+
+            // Clear selected and re-enable grid
+            setTimeout(() => {
+                tile1El.classList.remove('incorrect');
+                tile2El.classList.remove('incorrect');
+                selectedTiles = [];
+                gridEl.classList.remove('pointer-events-none');
+            }, 600);
+        }
+    }
+
+    /** Updates the game timer every second. */
+    function updateTimer() {
+        if (!isGameRunning) return;
+
+        timer--;
+        timerDisplayEl.textContent = timer;
+
+        if (timer <= 0) {
+            endGame();
+        }
+    }
+
+    /** Initializes and starts the game. */
+    function startGame() {
+        if (isGameRunning) {
+            clearInterval(timerInterval);
+        }
+        
+        hideModal();
+        
+        score = 0;
+        timer = GAME_DURATION;
+        isGameRunning = true;
+        scoreDisplayEl.textContent = score;
+        timerDisplayEl.textContent = timer;
+        startButtonEl.classList.add('hidden');
+        
+        generateBoard();
+
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    /** Stops the game and shows the final score. */
+    function endGame() {
+        isGameRunning = false;
+        clearInterval(timerInterval);
+        gridEl.classList.add('pointer-events-none');
+
+        modalTitleEl.textContent = "Time's Up!";
+        modalMessageEl.textContent = `Your final score is: ${score} points.`;
+        modalEl.querySelector('button').textContent = 'Play Again';
+        modalEl.querySelector('.border-t-4').classList.remove('border-red-500', 'border-green-500');
+        modalEl.querySelector('.border-t-4').classList.add('border-red-500');
+        showModal();
+        startButtonEl.classList.remove('hidden');
+    }
+
+    /** Shows the modal. */
+    function showModal() {
+        modalEl.classList.remove('hidden');
+    }
+
+    /** Hides the modal. */
+    function hideModal() {
+        modalEl.classList.add('hidden');
+    }
+    
+    // --- Initialization ---
+    // Start with a dummy board state
+    document.addEventListener('DOMContentLoaded', () => {
+        timerDisplayEl.textContent = GAME_DURATION;
+        // Create initial placeholder tiles
+        const placeholderNumbers = Array.from({length: GRID_SIZE}, (_, i) => i + 1);
+        renderGrid(placeholderNumbers);
+    });
+
+</script>
+
+</body>
+</html>

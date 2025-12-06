@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Body Defender: Immune System Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #4a6491 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            border: 3px solid #3498db;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            color: #3498db;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #bdc3c7;
+            margin-bottom: 15px;
+        }
+
+        /* Game Stats */
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .health-value {
+            color: #e74c3c;
+        }
+
+        .defense-value {
+            color: #3498db;
+        }
+
+        .score-value {
+            color: #f1c40f;
+        }
+
+        .level-value {
+            color: #2ecc71;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #bdc3c7;
+        }
+
+        /* Game Area */
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        /* Body Area */
+        .body-area {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid #34495e;
+            min-height: 400px;
+        }
+
+        .body-title {
+            text-align: center;
+            font-size: 1.8rem;
+            color: #3498db;
+            margin-bottom: 25px;
+        }
+
+        .body-organs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .organ {
+            background: rgba(52, 152, 219, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid #3498db;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .organ:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .organ-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+        }
+
+        .organ-name {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+
+        .organ-health {
+            height: 8px;
+            background: #2c3e50;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .health-bar {
+            height: 100%;
+            background: #2ecc71;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Pathogens */
+        .pathogens-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .pathogen {
+            position: absolute;
+            font-size: 2rem;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.5s ease;
+            animation: float 3s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Defense Cells */
+        .defense-cells {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .defense-cell {
+            background: rgba(46, 204, 113, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            width: 120px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #2ecc71;
+        }
+
+        .defense-cell:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
+        }
+
+        .defense-cell:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .cell-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .cell-name {
+            font-size: 1.1rem;
+            color: #2ecc71;
+            margin-bottom: 5px;
+        }
+
+        .cell-cooldown {
+            font-size: 0.9rem;
+            color: #f1c40f;
+        }
+
+        /* Game Log */
+        .game-log {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid #34495e;
+        }
+
+        .log-title {
+            color: #f1c40f;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .log-message {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.95rem;
+            color: #ecf0f1;
+        }
+
+        .log-message.immune {
+            color: #2ecc71;
+        }
+
+        .log-message.infection {
+            color: #e74c3c;
+        }
+
+        .log-message.defense {
+            color: #3498db;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 35px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        /* Tutorial */
+        .tutorial {
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 2px solid #3498db;
+        }
+
+        .tutorial h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+
+        .tutorial-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .tutorial-step {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .tutorial-step .emoji {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .game-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .body-organs {
+                grid-template-columns: 1fr;
+            }
+            
+            .defense-cells {
+                gap: 10px;
+            }
+            
+            .defense-cell {
+                width: 100px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>🛡️ Body Defender</h1>
+            <p class="subtitle">Defend the body from pathogens using your immune system!</p>
+        </div>
+
+        <!-- Game Stats -->
+        <div class="game-stats">
+            <div class="stat">
+                <div class="stat-value health-value" id="health">100</div>
+                <div class="stat-label">BODY HEALTH</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value defense-value" id="defense">50</div>
+                <div class="stat-label">IMMUNE DEFENSE</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value score-value" id="score">0</div>
+                <div class="stat-label">SCORE</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value level-value" id="level">1</div>
+                <div class="stat-label">LEVEL</div>
+            </div>
+        </div>
+
+        <!-- Main Game Area -->
+        <div class="game-area">
+            <!-- Body Area -->
+            <div class="body-area">
+                <h2 class="body-title">🧠 Protect the Body!</h2>
+                
+                <!-- Organs -->
+                <div class="body-organs">
+                    <div class="organ" data-organ="heart">
+                        <div class="organ-icon">❤️</div>
+                        <div class="organ-name">Heart</div>
+                        <div class="organ-health">
+                            <div class="health-bar" id="heart-health" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="organ" data-organ="lungs">
+                        <div class="organ-icon">🫁</div>
+                        <div class="organ-name">Lungs</div>
+                        <div class="organ-health">
+                            <div class="health-bar" id="lungs-health" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="organ" data-organ="brain">
+                        <div class="organ-icon">🧠</div>
+                        <div class="organ-name">Brain</div>
+                        <div class="organ-health">
+                            <div class="health-bar" id="brain-health" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="organ" data-organ="stomach">
+                        <div class="organ-icon">🍽️</div>
+                        <div class="organ-name">Stomach</div>
+                        <div class="organ-health">
+                            <div class="health-bar" id="stomach-health" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pathogens Container -->
+                <div class="pathogens-container" id="pathogens-container">
+                    <!-- Pathogens will be added here -->
+                </div>
+
+                <!-- Defense Cells -->
+                <div class="defense-cells">
+                    <div class="defense-cell" data-cell="macrophage" id="macrophage-btn">
+                        <div class="cell-icon">🦠</div>
+                        <div class="cell-name">Macrophage</div>
+                        <div class="cell-cooldown" id="macrophage-cooldown">Ready!</div>
+                    </div>
+                    
+                    <div class="defense-cell" data-cell="lymphocyte" id="lymphocyte-btn">
+                        <div class="cell-icon">🔬</div>
+                        <div class="cell-name">Lymphocyte</div>
+                        <div class="cell-cooldown" id="lymphocyte-cooldown">Ready!</div>
+                    </div>
+                    
+                    <div class="defense-cell" data-cell="antibody" id="antibody-btn">
+                        <div class="cell-icon">🎯</div>
+                        <div class="cell-name">Antibody</div>
+                        <div class="cell-cooldown" id="antibody-cooldown">Ready!</div>
+                    </div>
+                    
+                    <div class="defense-cell" data-cell="vaccine" id="vaccine-btn">
+                        <div class="cell-icon">💉</div>
+                        <div class="cell-name">Vaccine</div>
+                        <div class="cell-cooldown" id="vaccine-cooldown">Ready!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Log -->
+            <div class="game-log">
+                <h3 class="log-title">📜 Immune System Log</h3>
+                <div id="log-messages">
+                    <div class="log-message defense">Welcome! Defend the body from pathogens.</div>
+                    <div class="log-message">Click on pathogens to attack them!</div>
+                    <div class="log-message">Use immune cells to fight infections.</div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="btn btn-secondary" id="boost-btn">
+                    <span>⚡</span> Boost Immune System
+                </button>
+                <button class="btn btn-primary" id="start-btn">
+                    <span>▶️</span> Start Wave
+                </button>
+                <button class="btn btn-secondary" id="restart-btn">
+                    <span>🔄</span> Restart Game
+                </button>
+            </div>
+
+            <!-- Tutorial -->
+            <div class="tutorial">
+                <h3>🎮 How to Play</h3>
+                <div class="tutorial-steps">
+                    <div class="tutorial-step">
+                        <span class="emoji">🦠</span>
+                        <strong>Pathogens appear</strong> - Click to destroy them!
+                    </div>
+                    <div class="tutorial-step">
+                        <span class="emoji">🛡️</span>
+                        <strong>Use immune cells</strong> - Each has special abilities
+                    </div>
+                    <div class="tutorial-step">
+                        <span class="emoji">❤️</span>
+                        <strong>Protect organs</strong> - Keep health above 0
+                    </div>
+                    <div class="tutorial-step">
+                        <span class="emoji">💉</span>
+                        <strong>Vaccinate</strong> - Prevents future infections
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Data
+        const pathogens = [
+            { type: "virus", emoji: "🦠", name: "Virus", health: 30, damage: 5, speed: 2 },
+            { type: "bacteria", emoji: "🦠", name: "Bacteria", health: 50, damage: 3, speed: 1 },
+            { type: "fungus", emoji: "🍄", name: "Fungus", health: 40, damage: 4, speed: 1 },
+            { type: "parasite", emoji: "🐛", name: "Parasite", health: 60, damage: 6, speed: 0.5 }
+        ];
+
+        const organs = [
+            { id: "heart", name: "Heart", emoji: "❤️", health: 100, maxHealth: 100 },
+            { id: "lungs", name: "Lungs", emoji: "🫁", health: 100, maxHealth: 100 },
+            { id: "brain", name: "Brain", emoji: "🧠", health: 100, maxHealth: 100 },
+            { id: "stomach", name: "Stomach", emoji: "🍽️", health: 100, maxHealth: 100 }
+        ];
+
+        const immuneCells = [
+            { 
+                id: "macrophage", 
+                name: "Macrophage", 
+                emoji: "🦠", 
+                description: "Eats pathogens", 
+                damage: 25, 
+                cooldown: 3000,
+                cost: 10 
+            },
+            { 
+                id: "lymphocyte", 
+                name: "Lymphocyte", 
+                emoji: "🔬", 
+                description: "Creates antibodies", 
+                damage: 15, 
+                cooldown: 2000,
+                cost: 5 
+            },
+            { 
+                id: "antibody", 
+                name: "Antibody", 
+                emoji: "🎯", 
+                description: "Targets specific pathogens", 
+                damage: 40, 
+                cooldown: 5000,
+                cost: 15 
+            },
+            { 
+                id: "vaccine", 
+                name: "Vaccine", 
+                emoji: "💉", 
+                description: "Prevents future infections", 
+                damage: 0, 
+                cooldown: 10000,
+                cost: 20 
+            }
+        ];
+
+        // Game State
+        let gameState = {
+            health: 100,
+            defense: 50,
+            score: 0,
+            level: 1,
+            waveActive: false,
+            pathogens: [],
+            immuneCells: {},
+            organHealth: {
+                heart: 100,
+                lungs: 100,
+                brain: 100,
+                stomach: 100
+            },
+            cooldowns: {
+                macrophage: 0,
+                lymphocyte: 0,
+                antibody: 0,
+                vaccine: 0
+            },
+            vaccinesUsed: 0
+        };
+
+        // DOM Elements
+        const healthElement = document.getElementById('health');
+        const defenseElement = document.getElementById('defense');
+        const scoreElement = document.getElementById('score');
+        const levelElement = document.getElementById('level');
+        const pathogensContainer = document.getElementById('pathogens-container');
+        const logMessages = document.getElementById('log-messages');
+        const startBtn = document.getElementById('start-btn');
+        const boostBtn = document.getElementById('boost-btn');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // Initialize the game
+        function initGame() {
+            gameState = {
+                health: 100,
+                defense: 50,
+                score: 0,
+                level: 1,
+                waveActive: false,
+                pathogens: [],
+                immuneCells: {},
+                organHealth: {
+                    heart: 100,
+                    lungs: 100,
+                    brain: 100,
+                    stomach: 100
+                },
+                cooldowns: {
+                    macrophage: 0,
+                    lymphocyte: 0,
+                    antibody: 0,
+                    vaccine: 0
+                },
+                vaccinesUsed: 0
+            };
+
+            updateUI();
+            updateOrganHealthBars();
+            clearLog();
+            addLog("Welcome to Body Defender!", "defense");
+            addLog("Start a wave to begin fighting pathogens!", "immune");
+            
+            // Clear pathogens
+            pathogensContainer.innerHTML = '';
+            
+            // Setup event listeners
+            setupImmuneCellButtons();
+            setupEventListeners();
+        }
+
+        // Setup immune cell buttons
+        function setupImmuneCellButtons() {
+            immuneCells.forEach(cell => {
+                const btn = document.getElementById(`${cell.id}-btn`);
+                const cooldownElement = document.getElementById(`${cell.id}-cooldown`);
+                
+                btn.addEventListener('click', () => useImmuneCell(cell.id));
+                
+                // Update cooldown display
+                setInterval(() => {
+                    if (gameState.cooldowns[cell.id] > 0) {
+                        gameState.cooldowns[cell.id] = Math.max(0, gameState.cooldowns[cell.id] - 100);
+                        const seconds = Math.ceil(gameState.cooldowns[cell.id] / 1000);
+                        cooldownElement.textContent = seconds > 0 ? `${seconds}s` : 'Ready!';
+                        btn.disabled = true;
+                    } else {
+                        cooldownElement.textContent = 'Ready!';
+                        btn.disabled = false;
+                    }
+                }, 100);
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            startBtn.addEventListener('click', startWave);
+            boostBtn.addEventListener('click', boostImmuneSystem);
+            restartBtn.addEventListener('click', initGame);
+        }
+
+        // Start a wave of pathogens
+        function startWave() {
+            if (gameState.waveActive) return;
+            
+            gameState.waveActive = true;
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<span>⏸️</span> Wave Active';
+            
+            addLog(`Starting Wave ${gameState.level}!`, "defense");
+            
+            // Spawn pathogens
+            const pathogenCount = 3 + gameState.level;
+            for (let i = 0; i < pathogenCount; i++) {
+                setTimeout(() => spawnPathogen(), i * 1000);
+            }
+            
+            // End wave after time
+            setTimeout(() => {
+                endWave();
+            }, 30000);
+        }
+
+        // Spawn a pathogen
+        function spawnPathogen() {
+            if (!gameState.waveActive) return;
+            
+            const pathogenType = pathogens[Math.floor(Math.random() * pathogens.length)];
+            const organ = organs[Math.floor(Math.random() * organs.length)];
+            
+            const pathogen = {
+                ...pathogenType,
+                id: Date.now() + Math.random(),
+                x: Math.random() * 80 + 10,
+                y: Math.random() * 80 + 10,
+                targetOrgan: organ.id,
+                currentHealth: pathogenType.health
+            };
+            
+            gameState.pathogens.push(pathogen);
+            
+            // Create pathogen element
+            const pathogenElement = document.createElement('div');
+            pathogenElement.className = 'pathogen';
+            pathogenElement.innerHTML = pathogen.emoji;
+            pathogenElement.style.left = `${pathogen.x}%`;
+            pathogenElement.style.top = `${pathogen.y}%`;
+            pathogenElement.dataset.id = pathogen.id;
+            
+            pathogenElement.addEventListener('click', () => attackPathogen(pathogen.id));
+            
+            pathogensContainer.appendChild(pathogenElement);
+            
+            addLog(`${pathogen.name} appears near ${organ.name}!`, "infection");
+            
+            // Start attacking organ
+            const attackInterval = setInterval(() => {
+                if (!gameState.waveActive) {
+                    clearInterval(attackInterval);
+                    return;
+                }
+                
+                const pathogenIndex = gameState.pathogens.findIndex(p => p.id === pathogen.id);
+                if (pathogenIndex === -1) {
+                    clearInterval(attackInterval);
+                    return;
+                }
+                
+                // Damage organ
+                damageOrgan(organ.id, pathogen.damage);
+                
+                // Move toward organ
+                const element = document.querySelector(`[data-id="${pathogen.id}"]`);
+                if (element) {
+                    const currentX = parseFloat(element.style.left);
+                    const currentY = parseFloat(element.style.top);
+                    const targetX = 20 + (organs.findIndex(o => o.id === organ.id) * 25);
+                    const targetY = 40;
+                    
+                    element.style.left = `${currentX + (targetX - currentX) * 0.02}%`;
+                    element.style.top = `${currentY + (targetY - currentY) * 0.02}%`;
+                }
+            }, 1000);
+            
+            // Store interval for cleanup
+            pathogen.attackInterval = attackInterval;
+        }
+
+        // Attack a pathogen
+        function attackPathogen(pathogenId) {
+            const pathogenIndex = gameState.pathogens.findIndex(p => p.id === pathogenId);
+            if (pathogenIndex === -1) return;
+            
+            const pathogen = gameState.pathogens[pathogenIndex];
+            pathogen.currentHealth -= 10 + gameState.level;
+            
+            // Visual feedback
+            const element = document.querySelector(`[data-id="${pathogenId}"]`);
+            if (element) {
+                element.style.transform = 'scale(1.3)';
+                setTimeout(() => {
+                    element.style.transform = 'scale(1)';
+                }, 200);
+            }
+            
+            if (pathogen.currentHealth <= 0) {
+                // Pathogen defeated
+                gameState.pathogens.splice(pathogenIndex, 1);
+                gameState.score += 50;
+                gameState.defense += 5;
+                
+                if (element) {
+                    element.remove();
+                }
+                
+                if (pathogen.attackInterval) {
+                    clearInterval(pathogen.attackInterval);
+                }
+                
+                addLog(`${pathogen.name} defeated! +50 points`, "immune");
+                updateUI();
+            }
+        }
+
+        // Use an immune cell
+        function useImmuneCell(cellId) {
+            if (gameState.cooldowns[cellId] > 0) return;
+            
+            const cell = immuneCells.find(c => c.id === cellId);
+            if (gameState.defense < cell.cost) {
+                addLog(`Not enough defense points! Need ${cell.cost}`, "infection");
+                return;
+            }
+            
+            gameState.defense -= cell.cost;
+            gameState.cooldowns[cellId] = cell.cooldown;
+            
+            // Cell effects
+            switch(cellId) {
+                case 'macrophage':
+                    // Damage all pathogens
+                    gameState.pathogens.forEach(p => {
+                        p.currentHealth -= cell.damage;
+                        if (p.currentHealth <= 0) {
+                            const element = document.querySelector(`[data-id="${p.id}"]`);
+                            if (element) element.remove();
+                        }
+                    });
+                    gameState.pathogens = gameState.pathogens.filter(p => p.currentHealth > 0);
+                    addLog("Macrophage eats pathogens!", "defense");
+                    break;
+                    
+                case 'lymphocyte':
+                    // Boost defense
+                    gameState.defense += 20;
+                    addLog("Lymphocytes produce antibodies!", "immune");
+                    break;
+                    
+                case 'antibody':
+                    // High damage to one pathogen
+                    if (gameState.pathogens.length > 0) {
+                        const target = gameState.pathogens[0];
+                        target.currentHealth -= cell.damage;
+                        if (target.currentHealth <= 0) {
+                            const element = document.querySelector(`[data-id="${target.id}"]`);
+                            if (element) element.remove();
+                            gameState.pathogens = gameState.pathogens.filter(p => p.id !== target.id);
+                        }
+                        addLog("Antibody targets pathogen!", "defense");
+                    }
+                    break;
+                    
+                case 'vaccine':
+                    // Prevent future infections
+                    gameState.vaccinesUsed++;
+                    gameState.defense += 10;
+                    addLog("Vaccine administered! Future waves will be easier.", "immune");
+                    break;
+            }
+            
+            updateUI();
+        }
+
+        // Damage an organ
+        function damageOrgan(organId, damage) {
+            if (gameState.vaccinesUsed > 0) {
+                damage *= (1 - (gameState.vaccinesUsed * 0.2)); // Vaccines reduce damage
+            }
+            
+            gameState.organHealth[organId] = Math.max(0, gameState.organHealth[organId] - damage);
+            gameState.health = Math.max(0, gameState.health - damage * 0.25);
+            
+            // Update health bar
+            const healthBar = document.getElementById(`${organId}-health`);
+            if (healthBar) {
+                const percent = (gameState.organHealth[organId] / 100) * 100;
+                healthBar.style.width = `${percent}%`;
+                healthBar.style.background = percent > 50 ? '#2ecc71' : percent > 20 ? '#f1c40f' : '#e74c3c';
+            }
+            
+            if (gameState.organHealth[organId] <= 0) {
+                addLog(`${organId.charAt(0).toUpperCase() + organId.slice(1)} has failed!`, "infection");
+            }
+            
+            if (gameState.health <= 0) {
+                gameOver();
+            }
+            
+            updateUI();
+        }
+
+        // Boost immune system
+        function boostImmuneSystem() {
+            if (gameState.defense >= 30) {
+                gameState.defense -= 30;
+                gameState.health = Math.min(100, gameState.health + 30);
+                addLog("Immune system boosted! Health restored.", "immune");
+                updateUI();
+            } else {
+                addLog("Need 30 defense points to boost!", "infection");
+            }
+        }
+
+        // End wave
+        function endWave() {
+            gameState.waveActive = false;
+            startBtn.disabled = false;
+            startBtn.innerHTML = '<span>▶️</span> Start Wave';
+            
+            // Clear remaining pathogens
+            gameState.pathogens.forEach(p => {
+                if (p.attackInterval) clearInterval(p.attackInterval);
+                const element = document.querySelector(`[data-id="${p.id}"]`);
+                if (element) element.remove();
+            });
+            gameState.pathogens = [];
+            
+            // Level up
+            gameState.level++;
+            gameState.score += 200;
+            gameState.defense += 20;
+            
+            addLog(`Wave completed! Level ${gameState.level} unlocked.`, "defense");
+            addLog(`+200 points, +20 defense`, "immune");
+            
+            updateUI();
+        }
+
+        // Game over
+        function gameOver() {
+            gameState.waveActive = false;
+            startBtn.disabled = true;
+            
+            addLog("GAME OVER - Body health reached 0!", "infection");
+            addLog(`Final Score: ${gameState.score}`, "defense");
+            
+            // Show restart option
+            setTimeout(() => {
+                if (confirm(`Game Over! Final Score: ${gameState.score}\nPlay again?`)) {
+                    initGame();
+                }
+            }, 1000);
+        }
+
+        // Add message to log
+        function addLog(message, type = "") {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-message ${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}] ${message}`;
+            
+            logMessages.appendChild(logEntry);
+            
+            // Limit log length
+            if (logMessages.children.length > 20) {
+                logMessages.removeChild(logMessages.firstChild);
+            }
+            
+            // Scroll to bottom
+            logMessages.scrollTop = logMessages.scrollHeight;
+        }
+
+        // Clear log
+        function clearLog() {
+            logMessages.innerHTML = '';
+        }
+
+        // Update organ health bars
+        function updateOrganHealthBars() {
+            organs.forEach(organ => {
+                const healthBar = document.getElementById(`${organ.id}-health`);
+                if (healthBar) {
+                    const percent = (gameState.organHealth[organ.id] / 100) * 100;
+                    healthBar.style.width = `${percent}%`;
+                    healthBar.style.background = percent > 50 ? '#2ecc71' : percent > 20 ? '#f1c40f' : '#e74c3c';
+                }
+            });
+        }
+
+        // Update UI
+        function updateUI() {
+            healthElement.textContent = Math.floor(gameState.health);
+            defenseElement.textContent = Math.floor(gameState.defense);
+            scoreElement.textContent = gameState.score;
+            levelElement.textContent = gameState.level;
+            
+            // Update health bar colors
+            healthElement.style.color = gameState.health > 50 ? '#e74c3c' : gameState.health > 20 ? '#f1c40f' : '#e74c3c';
+            defenseElement.style.color = gameState.defense > 30 ? '#3498db' : gameState.defense > 10 ? '#f1c40f' : '#e74c3c';
+        }
+
+        // Initialize the game
+        initGame();
+    </script>
+</body>
+</html>

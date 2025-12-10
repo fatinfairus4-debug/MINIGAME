@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animal Baby Match</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #ffcc00 0%, #ff9933 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .game-container {
+            max-width: 900px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #3366ff;
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0 #ff6699;
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            color: #6633cc;
+            margin-bottom: 20px;
+        }
+        
+        .game-area {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 8px solid #3366ff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .match-instruction {
+            font-size: 1.8rem;
+            color: #ff3366;
+            margin-bottom: 30px;
+            background: #ffffcc;
+            padding: 15px;
+            border-radius: 15px;
+            border: 4px dashed #ff9933;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            height: 180px;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 5px solid #ffcc00;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .parent-card {
+            background: linear-gradient(145deg, #66ccff, #3399ff);
+        }
+        
+        .baby-card {
+            background: linear-gradient(145deg, #ff9966, #ff6633);
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 20px rgba(0,0,0,0.2);
+        }
+        
+        .card.selected {
+            transform: scale(0.95);
+            border-color: #33cc66;
+            box-shadow: 0 0 25px #33cc66;
+        }
+        
+        .card.wrong {
+            border-color: #ff3333 !important;
+            background: linear-gradient(145deg, #ff6666, #ff3333) !important;
+            animation: shake 0.5s;
+            box-shadow: 0 0 25px #ff3333;
+        }
+        
+        .card.matched {
+            background: linear-gradient(145deg, #66ff99, #33cc66);
+            border-color: #33cc66;
+            cursor: default;
+        }
+        
+        .animal-emoji {
+            font-size: 5rem;
+            margin-bottom: 15px;
+        }
+        
+        .animal-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: #ffffcc;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            border: 5px solid #ff9933;
+        }
+        
+        .stat-box {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 3rem;
+            color: #3366ff;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            color: #ff3366;
+            font-size: 1.2rem;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+        
+        button {
+            background: linear-gradient(to right, #ff3366, #ff0066);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 8px 15px rgba(255,51,102,0.3);
+            border: 5px solid white;
+        }
+        
+        button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 20px rgba(255,51,102,0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .instructions {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            border: 5px solid #33cc66;
+            margin-top: 20px;
+        }
+        
+        .instructions h3 {
+            color: #3366ff;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .instructions p {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .animal-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .animal-pair {
+            background: #e6f7ff;
+            padding: 10px;
+            border-radius: 10px;
+            border: 3px solid #66ccff;
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s;
+        }
+        
+        .celebration-content {
+            text-align: center;
+            background: linear-gradient(135deg, #ffcc00, #ff9933);
+            padding: 50px;
+            border-radius: 30px;
+            border: 10px solid #3366ff;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .celebration h2 {
+            font-size: 4rem;
+            color: #3366ff;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 0 #ff6699;
+        }
+        
+        .celebration p {
+            font-size: 2rem;
+            color: #6633cc;
+            margin-bottom: 30px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .bounce {
+            animation: bounce 0.5s;
+        }
+        
+        .feedback {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 2rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .feedback.show {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .cards-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .card {
+                height: 150px;
+            }
+            
+            .animal-emoji {
+                font-size: 3.5rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1><i class="fas fa-paw"></i> Animal Baby Match</h1>
+        <p class="subtitle">Match the parent animals with their babies!</p>
+        
+        <div class="game-area">
+            <div class="match-instruction" id="instruction">
+                Click START to begin matching animals!
+            </div>
+            
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="score">0</div>
+                    <div class="stat-label">Matches</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="attempts">0</div>
+                    <div class="stat-label">Attempts</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="time">60</div>
+                    <div class="stat-label">Seconds</div>
+                </div>
+            </div>
+            
+            <div class="cards-container" id="cards-container">
+                <!-- Cards will be added by JavaScript -->
+            </div>
+            
+            <div class="controls">
+                <button id="start-btn">
+                    <i class="fas fa-play"></i> Start Game
+                </button>
+                <button id="hint-btn" disabled>
+                    <i class="fas fa-lightbulb"></i> Get Hint
+                </button>
+                <button id="reset-btn">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-info-circle"></i> How to Play</h3>
+            <p>1. Click START to begin the game</p>
+            <p>2. Click on a parent animal</p>
+            <p>3. Click on its baby animal</p>
+            <p>4. Make 8 matches before time runs out!</p>
+            <p>5. Wrong matches will turn RED and shake</p>
+            <p>6. Correct matches will turn GREEN</p>
+            
+            <div class="animal-list">
+                <div class="animal-pair">🐕 Dog → 🐶 Puppy</div>
+                <div class="animal-pair">🐈 Cat → 🐱 Kitten</div>
+                <div class="animal-pair">🐄 Cow → 🐄 Calf</div>
+                <div class="animal-pair">🐖 Pig → 🐷 Piglet</div>
+                <div class="animal-pair">🐔 Hen → 🐥 Chick</div>
+                <div class="animal-pair">🦆 Duck → 🦆 Duckling</div>
+                <div class="animal-pair">🐎 Horse → 🐴 Foal</div>
+                <div class="animal-pair">🐑 Sheep → 🐑 Lamb</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="celebration" id="celebration">
+        <div class="celebration-content">
+            <h2>🎉 GREAT JOB! 🎉</h2>
+            <p id="final-score">You made 8 matches!</p>
+            <button id="play-again-btn">
+                <i class="fas fa-redo"></i> Play Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Animal pairs - using EMOJIS that always work
+        const animalPairs = [
+            { parent: "🐕 Dog", baby: "🐶 Puppy", parentEmoji: "🐕", babyEmoji: "🐶" },
+            { parent: "🐈 Cat", baby: "🐱 Kitten", parentEmoji: "🐈", babyEmoji: "🐱" },
+            { parent: "🐄 Cow", baby: "🐄 Calf", parentEmoji: "🐄", babyEmoji: "🐄" },
+            { parent: "🐖 Pig", baby: "🐷 Piglet", parentEmoji: "🐖", babyEmoji: "🐷" },
+            { parent: "🐔 Hen", baby: "🐥 Chick", parentEmoji: "🐔", babyEmoji: "🐥" },
+            { parent: "🦆 Duck", baby: "🦆 Duckling", parentEmoji: "🦆", babyEmoji: "🦆" },
+            { parent: "🐎 Horse", baby: "🐴 Foal", parentEmoji: "🐎", babyEmoji: "🐴" },
+            { parent: "🐑 Sheep", baby: "🐑 Lamb", parentEmoji: "🐑", babyEmoji: "🐑" }
+        ];
+
+        // Game state
+        const gameState = {
+            score: 0,
+            attempts: 0,
+            timeLeft: 60,
+            gameActive: false,
+            selectedCard: null,
+            matchedPairs: 0,
+            totalPairs: 8,
+            cards: [],
+            timer: null,
+            canClick: true
+        };
+
+        // Initialize game
+        function initGame() {
+            createCards();
+            updateDisplay();
+            setupEventListeners();
+        }
+
+        // Create animal cards
+        function createCards() {
+            const cardsContainer = document.getElementById('cards-container');
+            cardsContainer.innerHTML = '';
+            gameState.cards = [];
+            
+            // Create two copies of each animal pair (parent and baby)
+            let allCards = [];
+            
+            animalPairs.forEach(pair => {
+                // Parent card
+                allCards.push({
+                    type: 'parent',
+                    name: pair.parent,
+                    matchName: pair.baby,
+                    emoji: pair.parentEmoji,
+                    id: pair.parent
+                });
+                
+                // Baby card
+                allCards.push({
+                    type: 'baby',
+                    name: pair.baby,
+                    matchName: pair.parent,
+                    emoji: pair.babyEmoji,
+                    id: pair.baby
+                });
+            });
+            
+            // Shuffle cards
+            allCards = shuffleArray(allCards);
+            
+            // Create card elements
+            allCards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = `card ${card.type}-card`;
+                cardElement.dataset.index = index;
+                cardElement.dataset.type = card.type;
+                cardElement.dataset.name = card.name;
+                cardElement.dataset.match = card.matchName;
+                
+                // Add feedback emoji
+                const feedback = document.createElement('div');
+                feedback.className = 'feedback';
+                feedback.id = `feedback-${index}`;
+                
+                cardElement.innerHTML = `
+                    <div class="animal-emoji">${card.emoji}</div>
+                    <div class="animal-name">${card.name}</div>
+                `;
+                cardElement.appendChild(feedback);
+                
+                cardElement.addEventListener('click', () => selectCard(cardElement, card));
+                
+                cardsContainer.appendChild(cardElement);
+                gameState.cards.push({
+                    element: cardElement,
+                    data: card,
+                    matched: false
+                });
+            });
+        }
+
+        // Shuffle array function
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // Select a card
+        function selectCard(cardElement, cardData) {
+            if (!gameState.gameActive || !gameState.canClick || cardElement.classList.contains('matched')) return;
+            
+            // If no card is selected yet
+            if (gameState.selectedCard === null) {
+                gameState.selectedCard = {
+                    element: cardElement,
+                    data: cardData
+                };
+                cardElement.classList.add('selected');
+                document.getElementById('instruction').textContent = `Now find the ${cardData.type === 'parent' ? 'baby' : 'parent'} for ${cardData.name}`;
+            } 
+            // If a card is already selected
+            else {
+                gameState.canClick = false;
+                gameState.attempts++;
+                
+                // Check if it's the same card
+                if (gameState.selectedCard.element === cardElement) {
+                    gameState.selectedCard = null;
+                    cardElement.classList.remove('selected');
+                    document.getElementById('instruction').textContent = "Select another animal!";
+                    gameState.canClick = true;
+                    return;
+                }
+                
+                // Check if it's a match
+                if (gameState.selectedCard.data.name === cardData.matchName && 
+                    cardData.name === gameState.selectedCard.data.matchName) {
+                    
+                    // It's a match!
+                    gameState.selectedCard.element.classList.remove('selected');
+                    gameState.selectedCard.element.classList.add('matched');
+                    cardElement.classList.add('matched');
+                    
+                    // Show correct feedback
+                    const feedback1 = gameState.selectedCard.element.querySelector('.feedback');
+                    const feedback2 = cardElement.querySelector('.feedback');
+                    feedback1.textContent = '✓';
+                    feedback2.textContent = '✓';
+                    feedback1.classList.add('show');
+                    feedback2.classList.add('show');
+                    
+                    gameState.score++;
+                    gameState.matchedPairs++;
+                    
+                    // Update instruction with celebration
+                    document.getElementById('instruction').innerHTML = `<span style="color:#33cc66; font-weight:bold;">✓ CORRECT!</span> ${gameState.selectedCard.data.name} and ${cardData.name} match!`;
+                    
+                    // Remove feedback after delay
+                    setTimeout(() => {
+                        feedback1.classList.remove('show');
+                        feedback2.classList.remove('show');
+                    }, 1000);
+                    
+                    // Check if all pairs are matched
+                    if (gameState.matchedPairs === gameState.totalPairs) {
+                        setTimeout(() => endGame(true), 500);
+                    }
+                    
+                    gameState.canClick = true;
+                } else {
+                    // Not a match - show wrong feedback
+                    gameState.selectedCard.element.classList.add('wrong');
+                    cardElement.classList.add('wrong');
+                    
+                    // Show X feedback
+                    const feedback1 = gameState.selectedCard.element.querySelector('.feedback');
+                    const feedback2 = cardElement.querySelector('.feedback');
+                    feedback1.textContent = '✗';
+                    feedback2.textContent = '✗';
+                    feedback1.style.color = '#ff3333';
+                    feedback2.style.color = '#ff3333';
+                    feedback1.classList.add('show');
+                    feedback2.classList.add('show');
+                    
+                    document.getElementById('instruction').innerHTML = `<span style="color:#ff3333; font-weight:bold;">✗ WRONG!</span> ${gameState.selectedCard.data.name} and ${cardData.name} don't match. Try again!`;
+                    
+                    // Reset after delay
+                    setTimeout(() => {
+                        gameState.selectedCard.element.classList.remove('selected', 'wrong');
+                        cardElement.classList.remove('selected', 'wrong');
+                        feedback1.classList.remove('show');
+                        feedback2.classList.remove('show');
+                        gameState.selectedCard = null;
+                        document.getElementById('instruction').textContent = "Click on a parent animal, then click on its baby!";
+                        gameState.canClick = true;
+                    }, 1500);
+                }
+                
+                gameState.selectedCard = null;
+            }
+            
+            updateDisplay();
+        }
+
+        // Start the game
+        function startGame() {
+            if (gameState.gameActive) return;
+            
+            gameState.gameActive = true;
+            gameState.score = 0;
+            gameState.attempts = 0;
+            gameState.timeLeft = 60;
+            gameState.matchedPairs = 0;
+            gameState.selectedCard = null;
+            gameState.canClick = true;
+            
+            // Enable hint button
+            document.getElementById('hint-btn').disabled = false;
+            
+            // Reset all cards
+            gameState.cards.forEach(card => {
+                card.element.classList.remove('matched', 'selected', 'wrong');
+                const feedback = card.element.querySelector('.feedback');
+                feedback.classList.remove('show');
+            });
+            
+            // Shuffle cards again
+            createCards();
+            
+            // Start timer
+            gameState.timer = setInterval(() => {
+                gameState.timeLeft--;
+                updateDisplay();
+                
+                if (gameState.timeLeft <= 0) {
+                    endGame(false);
+                }
+            }, 1000);
+            
+            // Update UI
+            document.getElementById('start-btn').innerHTML = '<i class="fas fa-redo"></i> Restart';
+            document.getElementById('instruction').textContent = "Click on a parent animal, then click on its baby!";
+            
+            updateDisplay();
+        }
+
+        // Reset the game
+        function resetGame() {
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+            }
+            
+            gameState.gameActive = false;
+            gameState.score = 0;
+            gameState.attempts = 0;
+            gameState.timeLeft = 60;
+            gameState.matchedPairs = 0;
+            gameState.selectedCard = null;
+            
+            // Disable hint button
+            document.getElementById('hint-btn').disabled = true;
+            
+            // Reset all cards
+            gameState.cards.forEach(card => {
+                card.element.classList.remove('matched', 'selected', 'wrong');
+                const feedback = card.element.querySelector('.feedback');
+                feedback.classList.remove('show');
+            });
+            
+            // Reshuffle cards
+            createCards();
+            
+            // Update UI
+            document.getElementById('start-btn').innerHTML = '<i class="fas fa-play"></i> Start Game';
+            document.getElementById('instruction').textContent = "Click START to begin matching animals!";
+            
+            updateDisplay();
+        }
+
+        // Provide a hint
+        function giveHint() {
+            if (!gameState.gameActive || gameState.matchedPairs === gameState.totalPairs) return;
+            
+            // Find first unmatched parent
+            const unmatchedParent = gameState.cards.find(card => 
+                !card.matched && card.data.type === 'parent'
+            );
+            
+            if (unmatchedParent) {
+                // Find its matching baby
+                const matchingBaby = gameState.cards.find(card => 
+                    !card.matched && 
+                    card.data.type === 'baby' && 
+                    card.data.matchName === unmatchedParent.data.name
+                );
+                
+                if (matchingBaby) {
+                    // Highlight both cards
+                    unmatchedParent.element.classList.add('selected');
+                    matchingBaby.element.classList.add('selected');
+                    
+                    // Show hint message
+                    document.getElementById('instruction').textContent = 
+                        `Hint: ${unmatchedParent.data.name} matches with ${matchingBaby.data.name}`;
+                    
+                    // Remove highlight after 2 seconds
+                    setTimeout(() => {
+                        unmatchedParent.element.classList.remove('selected');
+                        matchingBaby.element.classList.remove('selected');
+                        document.getElementById('instruction').textContent = 
+                            "Click on a parent animal, then click on its baby!";
+                    }, 2000);
+                }
+            }
+        }
+
+        // End the game
+        function endGame(win) {
+            gameState.gameActive = false;
+            clearInterval(gameState.timer);
+            
+            // Disable hint button
+            document.getElementById('hint-btn').disabled = true;
+            
+            const celebration = document.getElementById('celebration');
+            const finalScore = document.getElementById('final-score');
+            
+            if (win) {
+                finalScore.textContent = `You won! You made all ${gameState.matchedPairs} matches in ${60 - gameState.timeLeft} seconds!`;
+            } else {
+                finalScore.textContent = `Time's up! You made ${gameState.matchedPairs} matches.`;
+            }
+            
+            celebration.style.display = 'flex';
+        }
+
+        // Play again
+        function playAgain() {
+            document.getElementById('celebration').style.display = 'none';
+            startGame();
+        }
+
+        // Update display
+        function updateDisplay() {
+            document.getElementById('score').textContent = gameState.matchedPairs;
+            document.getElementById('attempts').textContent = gameState.attempts;
+            document.getElementById('time').textContent = gameState.timeLeft;
+            
+            // Make time red and bounce when low
+            const timeElement = document.getElementById('time');
+            if (gameState.timeLeft <= 10) {
+                timeElement.style.color = '#ff3333';
+                timeElement.classList.add('bounce');
+            } else {
+                timeElement.style.color = '#3366ff';
+                timeElement.classList.remove('bounce');
+            }
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            document.getElementById('start-btn').addEventListener('click', startGame);
+            document.getElementById('hint-btn').addEventListener('click', giveHint);
+            document.getElementById('reset-btn').addEventListener('click', resetGame);
+            document.getElementById('play-again-btn').addEventListener('click', playAgain);
+        }
+
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

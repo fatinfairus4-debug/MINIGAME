@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthy Food Plate - 3 Levels</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #ffd54f 0%, #ffb74d 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .game-container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #388e3c;
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0 #c8e6c9;
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            color: #2e7d32;
+            margin-bottom: 20px;
+        }
+        
+        .game-area {
+            background: white;
+            border-radius: 25px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 8px solid #4caf50;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .level-info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 5px solid #66bb6a;
+        }
+        
+        .level-title {
+            font-size: 2rem;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+        
+        .level-description {
+            font-size: 1.3rem;
+            color: #388e3c;
+            margin-top: 10px;
+        }
+        
+        .game-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .plate-container {
+            flex: 1;
+            min-width: 300px;
+            background: #f1f8e9;
+            border-radius: 20px;
+            padding: 20px;
+            border: 5px solid #8bc34a;
+            position: relative;
+            min-height: 350px;
+        }
+        
+        .plate {
+            width: 100%;
+            height: 300px;
+            background: white;
+            border-radius: 50%;
+            border: 10px solid #ffb74d;
+            position: relative;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        
+        .food-sidebar {
+            flex: 1;
+            min-width: 300px;
+            background: #e8f5e9;
+            border-radius: 20px;
+            padding: 20px;
+            border: 5px solid #81c784;
+        }
+        
+        .food-items-title {
+            font-size: 1.8rem;
+            color: #2e7d32;
+            margin-bottom: 20px;
+        }
+        
+        .food-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .food-item {
+            background: linear-gradient(145deg, #ffffff, #f5f5f5);
+            border-radius: 15px;
+            padding: 15px;
+            cursor: grab;
+            font-size: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            border: 4px solid transparent;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            min-height: 100px;
+            justify-content: center;
+        }
+        
+        .food-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.2);
+        }
+        
+        .food-item.dragging {
+            opacity: 0.7;
+            transform: scale(0.95);
+        }
+        
+        .food-item.correct {
+            border-color: #4caf50 !important;
+            background: linear-gradient(145deg, #c8e6c9, #a5d6a7);
+        }
+        
+        .food-item.incorrect {
+            border-color: #f44336 !important;
+            background: linear-gradient(145deg, #ffcdd2, #ef9a9a);
+            animation: shake 0.5s;
+        }
+        
+        .food-emoji {
+            font-size: 2.5rem;
+        }
+        
+        .plate-section {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .section-label {
+            font-size: 1.2rem;
+            margin-top: 5px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 0 #000;
+        }
+        
+        .foods-on-plate {
+            position: absolute;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+        }
+        
+        .food-on-plate {
+            font-size: 2rem;
+            animation: fadeIn 0.5s;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: #fff3e0;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            border: 5px solid #ffb74d;
+        }
+        
+        .stat-box {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 3rem;
+            color: #388e3c;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            color: #ff9800;
+            font-size: 1.2rem;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+        
+        button {
+            background: linear-gradient(to right, #4caf50, #388e3c);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 8px 15px rgba(76, 175, 80, 0.3);
+            border: 5px solid white;
+        }
+        
+        button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .level-progress {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .level-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #c8e6c9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2e7d32;
+            border: 4px solid #81c784;
+        }
+        
+        .level-dot.active {
+            background: #4caf50;
+            color: white;
+            border-color: #388e3c;
+            transform: scale(1.1);
+        }
+        
+        .level-dot.completed {
+            background: #81c784;
+            color: white;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s;
+        }
+        
+        .celebration-content {
+            text-align: center;
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            padding: 50px;
+            border-radius: 30px;
+            border: 10px solid #ffb74d;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .celebration h2 {
+            font-size: 4rem;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 0 #81c784;
+        }
+        
+        .celebration p {
+            font-size: 2rem;
+            color: #e8f5e9;
+            margin-bottom: 30px;
+        }
+        
+        .instructions {
+            background: #e8f5e9;
+            padding: 25px;
+            border-radius: 20px;
+            border: 5px solid #66bb6a;
+            margin-top: 20px;
+        }
+        
+        .instructions h3 {
+            color: #388e3c;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .instructions p {
+            font-size: 1.3rem;
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .game-content {
+                flex-direction: column;
+            }
+            
+            .plate {
+                height: 250px;
+                width: 250px;
+                margin: 0 auto;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .food-items {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1><i class="fas fa-utensils"></i> Healthy Food Plate</h1>
+        <p class="subtitle">Build balanced meals across 3 levels!</p>
+        
+        <div class="game-area">
+            <div class="level-info">
+                <div class="level-title" id="current-level-title">Level 1: Basic Food Groups</div>
+                <div class="level-description" id="level-description">Drag foods to their correct section on the plate</div>
+            </div>
+            
+            <div class="level-progress">
+                <div class="level-dot active" id="level1-dot">1</div>
+                <div class="level-dot" id="level2-dot">2</div>
+                <div class="level-dot" id="level3-dot">3</div>
+            </div>
+            
+            <div class="game-content">
+                <div class="plate-container">
+                    <div class="plate" id="plate">
+                        <!-- Plate sections will be added here -->
+                    </div>
+                </div>
+                
+                <div class="food-sidebar">
+                    <div class="food-items-title">Drag foods to the plate:</div>
+                    <div class="food-items" id="food-items">
+                        <!-- Food items will be added here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="score">0</div>
+                    <div class="stat-label">Correct</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="remaining">8</div>
+                    <div class="stat-label">Remaining</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="level">1</div>
+                    <div class="stat-label">Level</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button id="start-btn">
+                    <i class="fas fa-play"></i> Start Level
+                </button>
+                <button id="check-btn" disabled>
+                    <i class="fas fa-check-circle"></i> Check Plate
+                </button>
+                <button id="restart-btn" style="display:none;">
+                    <i class="fas fa-redo"></i> Play Again
+                </button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-info-circle"></i> How to Play</h3>
+            <p>1. Click START LEVEL to begin</p>
+            <p>2. Drag foods from the right to the correct section on the plate</p>
+            <p>3. Fruits 🍎 & Vegetables 🥦 = Top half of plate</p>
+            <p>4. Grains 🍞 = Bottom left quarter</p>
+            <p>5. Protein 🥩 = Bottom right quarter</p>
+            <p>6. Click CHECK PLATE when done</p>
+            <p>7. Complete all 3 levels automatically!</p>
+        </div>
+    </div>
+    
+    <div class="celebration" id="celebration">
+        <div class="celebration-content">
+            <h2 id="celebration-title">🎉 LEVEL COMPLETE! 🎉</h2>
+            <p id="celebration-message">You completed Level 1!</p>
+            <button id="continue-btn">
+                <i class="fas fa-arrow-right"></i> Continue to Next Level
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game data for all 3 levels
+        const gameLevels = {
+            level1: {
+                title: "Level 1: Basic Food Groups",
+                description: "Drag foods to their correct section on the plate",
+                foods: [
+                    { name: "🍎 Apple", group: "fruits", correctSection: "fruits" },
+                    { name: "🥦 Broccoli", group: "vegetables", correctSection: "vegetables" },
+                    { name: "🍞 Bread", group: "grains", correctSection: "grains" },
+                    { name: "🥩 Steak", group: "protein", correctSection: "protein" },
+                    { name: "🍌 Banana", group: "fruits", correctSection: "fruits" },
+                    { name: "🥕 Carrot", group: "vegetables", correctSection: "vegetables" },
+                    { name: "🍚 Rice", group: "grains", correctSection: "grains" },
+                    { name: "🍗 Chicken", group: "protein", correctSection: "protein" }
+                ]
+            },
+            level2: {
+                title: "Level 2: More Foods",
+                description: "More foods to sort - remember the plate sections!",
+                foods: [
+                    { name: "🍊 Orange", group: "fruits", correctSection: "fruits" },
+                    { name: "🍓 Strawberry", group: "fruits", correctSection: "fruits" },
+                    { name: "🥬 Lettuce", group: "vegetables", correctSection: "vegetables" },
+                    { name: "🍅 Tomato", group: "vegetables", correctSection: "vegetables" },
+                    { name: "🍝 Pasta", group: "grains", correctSection: "grains" },
+                    { name: "🥐 Croissant", group: "grains", correctSection: "grains" },
+                    { name: "🐟 Fish", group: "protein", correctSection: "protein" },
+                    { name: "🥚 Eggs", group: "protein", correctSection: "protein" }
+                ]
+            },
+            level3: {
+                title: "Level 3: Challenge Round",
+                description: "Can you sort all these foods correctly?",
+                foods: [
+                    { name: "🍍 Pineapple", group: "fruits", correctSection: "fruits" },
+                    { name: "🍇 Grapes", group: "fruits", correctSection: "fruits" },
+                    { name: "🌶️ Pepper", group: "vegetables", correctSection: "vegetables" },
+                    { name: "🥒 Cucumber", group: "vegetables", correctSection: "vegetables" },
+                    { name: "🥖 Baguette", group: "grains", correctSection: "grains" },
+                    { name: "🌽 Corn", group: "grains", correctSection: "grains" },
+                    { name: "🥓 Bacon", group: "protein", correctSection: "protein" },
+                    { name: "🍤 Shrimp", group: "protein", correctSection: "protein" }
+                ]
+            }
+        };
+
+        // Game state
+        const gameState = {
+            currentLevel: 1,
+            score: 0,
+            remaining: 8,
+            gameActive: false,
+            draggedFood: null,
+            placedFoods: {
+                fruits: [],
+                vegetables: [],
+                grains: [],
+                protein: []
+            }
+        };
+
+        // Initialize game
+        function initGame() {
+            createPlateSections();
+            createFoodItems();
+            setupEventListeners();
+            updateDisplay();
+        }
+
+        // Create plate sections
+        function createPlateSections() {
+            const plate = document.getElementById('plate');
+            plate.innerHTML = '';
+            
+            // Clear any existing foods on plate
+            const existingFoods = document.querySelectorAll('.foods-on-plate');
+            existingFoods.forEach(food => food.remove());
+            
+            // Create quarter sections
+            const positions = [
+                { top: '0%', left: '0%', width: '50%', height: '50%', borderRadius: '100% 0 0 0', section: 'fruits' },
+                { top: '0%', left: '50%', width: '50%', height: '50%', borderRadius: '0 100% 0 0', section: 'vegetables' },
+                { top: '50%', left: '0%', width: '50%', height: '50%', borderRadius: '0 0 0 100%', section: 'grains' },
+                { top: '50%', left: '50%', width: '50%', height: '50%', borderRadius: '0 0 100% 0', section: 'protein' }
+            ];
+            
+            const colors = {
+                fruits: '#ff9800',
+                vegetables: '#4caf50',
+                grains: '#ffb74d',
+                protein: '#f44336'
+            };
+            
+            const emojis = {
+                fruits: '🍎',
+                vegetables: '🥦',
+                grains: '🍞',
+                protein: '🥩'
+            };
+            
+            positions.forEach((pos, index) => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'plate-section';
+                sectionDiv.dataset.section = pos.section;
+                
+                sectionDiv.style.top = pos.top;
+                sectionDiv.style.left = pos.left;
+                sectionDiv.style.width = pos.width;
+                sectionDiv.style.height = pos.height;
+                sectionDiv.style.borderRadius = pos.borderRadius;
+                sectionDiv.style.background = colors[pos.section];
+                sectionDiv.style.opacity = '0.3';
+                
+                sectionDiv.innerHTML = `
+                    <div>${emojis[pos.section]}</div>
+                    <div class="section-label">${pos.section.charAt(0).toUpperCase() + pos.section.slice(1)}</div>
+                `;
+                
+                // Make entire section a drop zone
+                sectionDiv.addEventListener('dragover', handleDragOver);
+                sectionDiv.addEventListener('dragenter', handleDragEnter);
+                sectionDiv.addEventListener('dragleave', handleDragLeave);
+                sectionDiv.addEventListener('drop', handleDrop);
+                
+                plate.appendChild(sectionDiv);
+                
+                // Create container for foods in this section
+                const foodsContainer = document.createElement('div');
+                foodsContainer.className = 'foods-on-plate';
+                foodsContainer.id = `foods-${pos.section}`;
+                foodsContainer.style.top = pos.top;
+                foodsContainer.style.left = pos.left;
+                foodsContainer.style.width = pos.width;
+                foodsContainer.style.height = pos.height;
+                plate.appendChild(foodsContainer);
+            });
+        }
+
+        // Create food items
+        function createFoodItems() {
+            const foodItemsContainer = document.getElementById('food-items');
+            foodItemsContainer.innerHTML = '';
+            
+            const levelData = gameLevels[`level${gameState.currentLevel}`];
+            
+            levelData.foods.forEach((food, index) => {
+                const foodElement = document.createElement('div');
+                foodElement.className = 'food-item';
+                foodElement.draggable = true;
+                foodElement.dataset.index = index;
+                foodElement.dataset.name = food.name;
+                foodElement.dataset.group = food.group;
+                foodElement.dataset.correctSection = food.correctSection;
+                
+                foodElement.innerHTML = `
+                    <div class="food-emoji">${food.name.split(' ')[0]}</div>
+                    <div>${food.name.split(' ')[1] || ''}</div>
+                `;
+                
+                // Add drag events
+                foodElement.addEventListener('dragstart', handleDragStart);
+                foodElement.addEventListener('dragend', handleDragEnd);
+                
+                foodItemsContainer.appendChild(foodElement);
+            });
+            
+            // Reset placed foods
+            gameState.placedFoods = {
+                fruits: [],
+                vegetables: [],
+                grains: [],
+                protein: []
+            };
+            
+            gameState.remaining = levelData.foods.length;
+            updateDisplay();
+        }
+
+        // Handle drag start
+        function handleDragStart(e) {
+            if (!gameState.gameActive) return;
+            
+            this.classList.add('dragging');
+            gameState.draggedFood = {
+                element: this,
+                name: this.dataset.name,
+                group: this.dataset.group,
+                correctSection: this.dataset.correctSection,
+                index: this.dataset.index
+            };
+            e.dataTransfer.setData('text/plain', this.dataset.name);
+            
+            // Make plate sections more visible
+            document.querySelectorAll('.plate-section').forEach(section => {
+                section.style.opacity = '0.6';
+            });
+        }
+
+        // Handle drag end
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            gameState.draggedFood = null;
+            
+            // Reset plate section opacity
+            document.querySelectorAll('.plate-section').forEach(section => {
+                section.style.opacity = '0.3';
+            });
+        }
+
+        // Handle drag over
+        function handleDragOver(e) {
+            if (!gameState.gameActive || !gameState.draggedFood) return;
+            e.preventDefault();
+            this.style.opacity = '0.8';
+        }
+
+        // Handle drag enter
+        function handleDragEnter(e) {
+            if (!gameState.gameActive) return;
+            e.preventDefault();
+        }
+
+        // Handle drag leave
+        function handleDragLeave() {
+            this.style.opacity = '0.3';
+        }
+
+        // Handle drop
+        function handleDrop(e) {
+            if (!gameState.gameActive || !gameState.draggedFood) return;
+            
+            e.preventDefault();
+            this.style.opacity = '0.3';
+            
+            const section = this.dataset.section;
+            const draggedFood = gameState.draggedFood;
+            
+            // Check if this food was already placed
+            const foodElement = document.querySelector(`.food-item[data-index="${draggedFood.index}"]`);
+            
+            // If food was already placed somewhere, remove it
+            Object.keys(gameState.placedFoods).forEach(sec => {
+                const index = gameState.placedFoods[sec].indexOf(draggedFood.index);
+                if (index > -1) {
+                    gameState.placedFoods[sec].splice(index, 1);
+                    
+                    // Remove visual from old section
+                    const oldContainer = document.getElementById(`foods-${sec}`);
+                    const oldFood = oldContainer.querySelector(`[data-index="${draggedFood.index}"]`);
+                    if (oldFood) {
+                        oldFood.remove();
+                    }
+                }
+            });
+            
+            // Add to new section
+            gameState.placedFoods[section].push(draggedFood.index);
+            
+            // Hide the original food item
+            foodElement.style.opacity = '0.3';
+            foodElement.style.cursor = 'default';
+            foodElement.draggable = false;
+            
+            // Create food icon in the plate section
+            const foodsContainer = document.getElementById(`foods-${section}`);
+            const foodOnPlate = document.createElement('div');
+            foodOnPlate.className = 'food-on-plate';
+            foodOnPlate.dataset.index = draggedFood.index;
+            foodOnPlate.textContent = draggedFood.name.split(' ')[0];
+            foodOnPlate.style.animation = 'fadeIn 0.5s';
+            
+            foodsContainer.appendChild(foodOnPlate);
+            
+            gameState.remaining--;
+            updateDisplay();
+            
+            // Check if all foods are placed
+            if (gameState.remaining === 0) {
+                document.getElementById('check-btn').disabled = false;
+            }
+        }
+
+        // Start the level
+        function startLevel() {
+            if (gameState.gameActive) return;
+            
+            gameState.gameActive = true;
+            gameState.score = 0;
+            gameState.placedFoods = { fruits: [], vegetables: [], grains: [], protein: [] };
+            
+            // Reset all food items
+            document.querySelectorAll('.food-item').forEach(item => {
+                item.style.opacity = '1';
+                item.style.cursor = 'grab';
+                item.draggable = true;
+                item.classList.remove('correct', 'incorrect');
+            });
+            
+            // Clear foods from plate
+            document.querySelectorAll('.foods-on-plate').forEach(container => {
+                container.innerHTML = '';
+            });
+            
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('check-btn').disabled = true;
+            document.getElementById('restart-btn').style.display = 'none';
+            
+            // Reset plate sections opacity
+            document.querySelectorAll('.plate-section').forEach(section => {
+                section.style.opacity = '0.3';
+            });
+            
+            updateDisplay();
+        }
+
+        // Check the plate
+        function checkPlate() {
+            if (!gameState.gameActive) return;
+            
+            let correctCount = 0;
+            const levelData = gameLevels[`level${gameState.currentLevel}`];
+            const totalFoods = levelData.foods.length;
+            
+            // Check each placed food
+            Object.keys(gameState.placedFoods).forEach(section => {
+                gameState.placedFoods[section].forEach(foodIndex => {
+                    const food = levelData.foods[foodIndex];
+                    if (food && food.correctSection === section) {
+                        correctCount++;
+                    }
+                });
+            });
+            
+            gameState.score = correctCount;
+            
+            // Show visual feedback
+            document.querySelectorAll('.food-item').forEach(item => {
+                const foodIndex = parseInt(item.dataset.index);
+                const food = levelData.foods[foodIndex];
+                
+                // Find which section this food is in
+                let placedSection = null;
+                Object.keys(gameState.placedFoods).forEach(section => {
+                    if (gameState.placedFoods[section].includes(foodIndex)) {
+                        placedSection = section;
+                    }
+                });
+                
+                if (placedSection === food.correctSection) {
+                    item.classList.add('correct');
+                } else if (placedSection !== null) {
+                    item.classList.add('incorrect');
+                }
+            });
+            
+            // Check if level passed (need at least 75% correct)
+            const scorePercent = Math.round((correctCount / totalFoods) * 100);
+            
+            if (scorePercent >= 75) {
+                // Level passed - show celebration and auto-proceed
+                setTimeout(() => {
+                    showCelebration(`You got ${correctCount} out of ${totalFoods} correct!`, scorePercent);
+                }, 1000);
+            } else {
+                // Level failed - restart
+                setTimeout(() => {
+                    alert(`You got ${correctCount} out of ${totalFoods} correct (${scorePercent}%). Need 75% to pass. Try again!`);
+                    resetLevel();
+                }, 1000);
+            }
+            
+            updateDisplay();
+        }
+
+        // Show celebration
+        function showCelebration(message, scorePercent) {
+            const celebration = document.getElementById('celebration');
+            const title = document.getElementById('celebration-title');
+            const msg = document.getElementById('celebration-message');
+            const continueBtn = document.getElementById('continue-btn');
+            
+            if (gameState.currentLevel === 3) {
+                title.textContent = "🎉 ALL LEVELS COMPLETE! 🎉";
+                msg.textContent = `Congratulations! You completed all 3 levels with ${scorePercent}% average!`;
+                continueBtn.innerHTML = '<i class="fas fa-trophy"></i> Play Again';
+            } else {
+                title.textContent = "🎉 LEVEL COMPLETE! 🎉";
+                msg.textContent = message;
+                continueBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Continue to Next Level';
+            }
+            
+            celebration.style.display = 'flex';
+        }
+
+        // Continue to next level
+        function continueToNextLevel() {
+            document.getElementById('celebration').style.display = 'none';
+            
+            if (gameState.currentLevel === 3) {
+                // Game completed - show restart button
+                document.getElementById('restart-btn').style.display = 'flex';
+                document.getElementById('start-btn').style.display = 'none';
+                document.getElementById('check-btn').disabled = true;
+                return;
+            }
+            
+            // Move to next level
+            gameState.currentLevel++;
+            
+            // Update level progress dots
+            updateLevelDots();
+            
+            // Load next level
+            loadLevel(gameState.currentLevel);
+        }
+
+        // Load a level
+        function loadLevel(level) {
+            gameState.currentLevel = level;
+            const levelData = gameLevels[`level${level}`];
+            
+            document.getElementById('current-level-title').textContent = levelData.title;
+            document.getElementById('level-description').textContent = levelData.description;
+            
+            createPlateSections();
+            createFoodItems();
+            
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('check-btn').disabled = true;
+            document.getElementById('start-btn').style.display = 'flex';
+            document.getElementById('restart-btn').style.display = 'none';
+            
+            updateDisplay();
+        }
+
+        // Update level progress dots
+        function updateLevelDots() {
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById(`level${i}-dot`);
+                dot.classList.remove('active', 'completed');
+                
+                if (i === gameState.currentLevel) {
+                    dot.classList.add('active');
+                } else if (i < gameState.currentLevel) {
+                    dot.classList.add('completed');
+                }
+            }
+        }
+
+        // Reset current level
+        function resetLevel() {
+            gameState.gameActive = false;
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('check-btn').disabled = true;
+            
+            // Reset food items
+            document.querySelectorAll('.food-item').forEach(item => {
+                item.style.opacity = '1';
+                item.style.cursor = 'grab';
+                item.draggable = true;
+                item.classList.remove('correct', 'incorrect');
+            });
+            
+            // Clear foods from plate
+            document.querySelectorAll('.foods-on-plate').forEach(container => {
+                container.innerHTML = '';
+            });
+            
+            updateDisplay();
+        }
+
+        // Restart entire game
+        function restartGame() {
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            gameState.remaining = 8;
+            gameState.gameActive = false;
+            gameState.placedFoods = { fruits: [], vegetables: [], grains: [], protein: [] };
+            
+            updateLevelDots();
+            loadLevel(1);
+        }
+
+        // Update display
+        function updateDisplay() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('remaining').textContent = gameState.remaining;
+            document.getElementById('level').textContent = gameState.currentLevel;
+            
+            // Make remaining number bounce when low
+            const remainingElement = document.getElementById('remaining');
+            if (gameState.remaining <= 2 && gameState.remaining > 0) {
+                remainingElement.classList.add('bounce');
+            } else {
+                remainingElement.classList.remove('bounce');
+            }
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            document.getElementById('start-btn').addEventListener('click', startLevel);
+            document.getElementById('check-btn').addEventListener('click', checkPlate);
+            document.getElementById('continue-btn').addEventListener('click', continueToNextLevel);
+            document.getElementById('restart-btn').addEventListener('click', restartGame);
+            
+            // Make entire plate a drop zone for easier dropping
+            document.getElementById('plate').addEventListener('dragover', (e) => {
+                if (!gameState.gameActive || !gameState.draggedFood) return;
+                e.preventDefault();
+            });
+            
+            document.getElementById('plate').addEventListener('drop', (e) => {
+                e.preventDefault();
+                // Find which section the drop happened in
+                const plate = document.getElementById('plate');
+                const rect = plate.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Determine which section based on position
+                let section = '';
+                if (y < rect.height / 2) {
+                    // Top half - fruits or vegetables
+                    if (x < rect.width / 2) {
+                        section = 'fruits';
+                    } else {
+                        section = 'vegetables';
+                    }
+                } else {
+                    // Bottom half - grains or protein
+                    if (x < rect.width / 2) {
+                        section = 'grains';
+                    } else {
+                        section = 'protein';
+                    }
+                }
+                
+                // Simulate drop on that section
+                const sectionElement = document.querySelector(`.plate-section[data-section="${section}"]`);
+                if (sectionElement && gameState.draggedFood) {
+                    handleDrop.call(sectionElement, e);
+                }
+            });
+        }
+
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

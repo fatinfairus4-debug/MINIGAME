@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemistry Memory Match</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a1b9a 0%, #8e24aa 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: #ffcc80;
+            text-shadow: 0 0 10px rgba(255, 204, 128, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #e1bee7;
+            margin-bottom: 20px;
+        }
+        
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background: rgba(255, 204, 128, 0.9);
+            border: none;
+            color: #6a1b9a;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 224, 178, 1);
+            transform: translateY(-2px);
+        }
+        
+        .control-btn:active {
+            transform: translateY(0);
+        }
+        
+        .control-btn.restart {
+            background: rgba(165, 214, 167, 0.9);
+        }
+        
+        .control-btn.hint {
+            background: rgba(179, 229, 252, 0.9);
+        }
+        
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 20px;
+            background: rgba(106, 27, 154, 0.7);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #ffcc80;
+        }
+        
+        .stat-label {
+            color: #e1bee7;
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .game-area {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .memory-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 20px;
+            background: rgba(142, 36, 170, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .memory-card {
+            aspect-ratio: 1;
+            background: linear-gradient(145deg, #8e24aa, #7b1fa2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            transform-style: preserve-3d;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .memory-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .memory-card.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .memory-card.matched {
+            transform: scale(0.95);
+            background: linear-gradient(145deg, #4caf50, #2e7d32);
+            cursor: default;
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+        
+        .card-front {
+            background: linear-gradient(145deg, #8e24aa, #7b1fa2);
+            transform: rotateY(180deg);
+        }
+        
+        .card-back {
+            background: linear-gradient(145deg, #ba68c8, #ab47bc);
+            color: white;
+            font-size: 2.5rem;
+        }
+        
+        .card-back i {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .element-symbol {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: white;
+        }
+        
+        .element-name {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+        }
+        
+        .compound-formula {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: white;
+        }
+        
+        .compound-name {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+        }
+        
+        .game-info {
+            background: rgba(106, 27, 154, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+        
+        .info-title {
+            color: #ffcc80;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-title i {
+            margin-right: 10px;
+        }
+        
+        .current-match {
+            background: rgba(142, 36, 170, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .match-title {
+            color: #e1bee7;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .match-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .matched-item {
+            background: rgba(255, 204, 128, 0.9);
+            color: #6a1b9a;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.3rem;
+            min-width: 100px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(255, 204, 128, 0.3);
+        }
+        
+        .match-arrow {
+            font-size: 2rem;
+            color: #ffcc80;
+        }
+        
+        .instructions {
+            background: rgba(142, 36, 170, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .instructions h3 {
+            color: #ffcc80;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .instructions h3 i {
+            margin-right: 10px;
+        }
+        
+        .instructions p {
+            color: #e1bee7;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .highlight {
+            color: #ffcc80;
+            font-weight: bold;
+        }
+        
+        .message-display {
+            background: rgba(142, 36, 170, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 800px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #ffcc80;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .message-success {
+            background: rgba(76, 175, 80, 0.7);
+            color: #c8e6c9;
+        }
+        
+        .message-info {
+            background: rgba(33, 150, 243, 0.7);
+            color: #bbdefb;
+        }
+        
+        .match-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+        }
+        
+        .match-text {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #ffcc80;
+            text-shadow: 0 0 20px rgba(255, 204, 128, 0.8);
+            transform: scale(0);
+        }
+        
+        .element-color-H { color: #4fc3f7; }
+        .element-color-O { color: #f06292; }
+        .element-color-C { color: #ba68c8; }
+        .element-color-N { color: #4db6ac; }
+        .element-color-Na { color: #ffd54f; }
+        .element-color-Cl { color: #aed581; }
+        .element-color-H2O { color: #29b6f6; }
+        .element-color-CO2 { color: #81c784; }
+        .element-color-NaCl { color: #fff176; }
+        .element-color-CH4 { color: #ce93d8; }
+        
+        @media (max-width: 768px) {
+            .memory-board {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(4, 1fr);
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .element-symbol, .compound-formula {
+                font-size: 1.8rem;
+            }
+            
+            .element-name, .compound-name {
+                font-size: 0.8rem;
+            }
+            
+            .game-stats {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .stat-item {
+                flex: 0 0 calc(50% - 10px);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .memory-board {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(5, 1fr);
+            }
+            
+            .game-controls {
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            
+            .control-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .match-display {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .match-arrow {
+                transform: rotate(90deg);
+            }
+        }
+        
+        @keyframes matchSuccess {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+        
+        @keyframes cardFlip {
+            0% { transform: rotateY(0); }
+            100% { transform: rotateY(180deg); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-brain"></i> Chemistry Memory Match</h1>
+            <p class="subtitle">Match elements with their compounds. Relax and learn chemistry!</p>
+        </header>
+        
+        <div class="game-controls">
+            <button class="control-btn" id="startGameBtn">
+                <i class="fas fa-play"></i> Start Game
+            </button>
+            <button class="control-btn hint" id="hintBtn">
+                <i class="fas fa-lightbulb"></i> Get Hint
+            </button>
+            <button class="control-btn restart" id="restartBtn">
+                <i class="fas fa-redo"></i> New Game
+            </button>
+        </div>
+        
+        <div class="game-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="matchesCount">0</div>
+                <div class="stat-label">MATCHES FOUND</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="movesCount">0</div>
+                <div class="stat-label">MOVES</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="timeCount">0</div>
+                <div class="stat-label">TIME (SECONDS)</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="accuracyCount">100%</div>
+                <div class="stat-label">ACCURACY</div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="memory-board" id="memoryBoard">
+                <!-- Memory cards will be generated by JavaScript -->
+            </div>
+            
+            <div class="message-display" id="messageDisplay">
+                Click "Start Game" to begin matching elements and compounds!
+            </div>
+        </div>
+        
+        <div class="game-info">
+            <div class="info-title">
+                <i class="fas fa-atom"></i> Current Match Goal
+            </div>
+            
+            <div class="current-match">
+                <div class="match-title">Match these pairs:</div>
+                <div class="match-display">
+                    <div class="matched-item element-color-H">H + H + O</div>
+                    <div class="match-arrow">→</div>
+                    <div class="matched-item element-color-H2O">H₂O (Water)</div>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <h3><i class="fas fa-info-circle"></i> How to Play</h3>
+                <p>1. Click cards to flip them and reveal elements or compounds</p>
+                <p>2. Find <span class="highlight">matching pairs</span> - elements that combine to form a compound</p>
+                <p>3. Match all 8 pairs to win the game</p>
+                <p>4. Take your time - no time pressure!</p>
+                <p>5. Use "Get Hint" if you need help finding a match</p>
+                <p>6. Try to complete the game with as few moves as possible</p>
+            </div>
+        </div>
+        
+        <div class="match-animation" id="matchAnimation">
+            <div class="match-text">Perfect Match!</div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            matchesFound: 0,
+            totalMatches: 8,
+            moves: 0,
+            time: 0,
+            accuracy: 100,
+            flippedCards: [],
+            matchedPairs: [],
+            gameStarted: false,
+            gameTimer: null,
+            canFlip: true
+        };
+
+        // Card pairs: element(s) -> compound
+        const cardPairs = [
+            { elements: ["H", "H", "O"], compound: "H₂O", name: "Water" },
+            { elements: ["C", "O", "O"], compound: "CO₂", name: "Carbon Dioxide" },
+            { elements: ["Na", "Cl"], compound: "NaCl", name: "Salt" },
+            { elements: ["N", "H", "H", "H"], compound: "NH₃", name: "Ammonia" },
+            { elements: ["C", "H", "H", "H", "H"], compound: "CH₄", name: "Methane" },
+            { elements: ["H", "Cl"], compound: "HCl", name: "Hydrochloric Acid" },
+            { elements: ["H", "O", "H"], compound: "H₂O", name: "Water" }, // Alternative representation
+            { elements: ["Na", "O", "H"], compound: "NaOH", name: "Sodium Hydroxide" }
+        ];
+
+        // Initialize the game
+        function initGame() {
+            // Reset game state
+            gameState.matchesFound = 0;
+            gameState.moves = 0;
+            gameState.time = 0;
+            gameState.accuracy = 100;
+            gameState.flippedCards = [];
+            gameState.matchedPairs = [];
+            gameState.gameStarted = false;
+            gameState.canFlip = true;
+            
+            // Clear timer
+            if (gameState.gameTimer) {
+                clearInterval(gameState.gameTimer);
+            }
+            
+            // Update displays
+            updateStatsDisplay();
+            
+            // Create the memory board
+            createMemoryBoard();
+            
+            // Set initial message
+            document.getElementById('messageDisplay').textContent = "Click cards to find matching element-compound pairs!";
+            document.getElementById('messageDisplay').className = "message-display";
+            
+            // Reset animation
+            document.getElementById('matchAnimation').style.opacity = '0';
+        }
+
+        // Start the game
+        function startGame() {
+            if (gameState.gameStarted) return;
+            
+            gameState.gameStarted = true;
+            
+            // Start timer
+            gameState.gameTimer = setInterval(() => {
+                gameState.time++;
+                updateStatsDisplay();
+            }, 1000);
+            
+            // Update message
+            showMessage("Game started! Find all 8 matching pairs.", "info");
+        }
+
+        // Create the memory board
+        function createMemoryBoard() {
+            const board = document.getElementById('memoryBoard');
+            board.innerHTML = '';
+            
+            // Create cards array with elements and compounds
+            let cards = [];
+            
+            // Add element cards
+            cardPairs.forEach(pair => {
+                // Create element card(s) - for multi-element compounds, we'll create a combined card
+                const elementText = pair.elements.length === 1 ? 
+                    pair.elements[0] : 
+                    pair.elements.join(" + ");
+                
+                cards.push({
+                    type: 'element',
+                    content: elementText,
+                    matchId: pair.compound,
+                    name: pair.elements.length === 1 ? 
+                        getElementName(pair.elements[0]) : 
+                        "Elements for " + pair.name
+                });
+                
+                // Create compound card
+                cards.push({
+                    type: 'compound',
+                    content: pair.compound,
+                    matchId: pair.compound,
+                    name: pair.name
+                });
+            });
+            
+            // Shuffle cards
+            shuffleArray(cards);
+            
+            // Create card elements
+            cards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'memory-card';
+                cardElement.dataset.index = index;
+                cardElement.dataset.type = card.type;
+                cardElement.dataset.content = card.content;
+                cardElement.dataset.matchId = card.matchId;
+                
+                // Front side (content)
+                const front = document.createElement('div');
+                front.className = 'card-front';
+                
+                if (card.type === 'element') {
+                    const symbol = document.createElement('div');
+                    symbol.className = 'element-symbol';
+                    symbol.textContent = card.content;
+                    symbol.classList.add(`element-color-${card.matchId.replace('₂', '2').replace('₃', '3').replace('₄', '4')}`);
+                    
+                    const name = document.createElement('div');
+                    name.className = 'element-name';
+                    name.textContent = card.name;
+                    
+                    front.appendChild(symbol);
+                    front.appendChild(name);
+                } else {
+                    const formula = document.createElement('div');
+                    formula.className = 'compound-formula';
+                    formula.textContent = card.content;
+                    formula.classList.add(`element-color-${card.matchId.replace('₂', '2').replace('₃', '3').replace('₄', '4')}`);
+                    
+                    const name = document.createElement('div');
+                    name.className = 'compound-name';
+                    name.textContent = card.name;
+                    
+                    front.appendChild(formula);
+                    front.appendChild(name);
+                }
+                
+                // Back side (question mark)
+                const back = document.createElement('div');
+                back.className = 'card-back';
+                back.innerHTML = '<i class="fas fa-question"></i>';
+                
+                cardElement.appendChild(front);
+                cardElement.appendChild(back);
+                
+                // Add click event
+                cardElement.addEventListener('click', () => flipCard(cardElement));
+                
+                board.appendChild(cardElement);
+            });
+        }
+
+        // Flip a card
+        function flipCard(cardElement) {
+            if (!gameState.gameStarted) {
+                showMessage("Click 'Start Game' first!", "info");
+                return;
+            }
+            
+            if (!gameState.canFlip) return;
+            if (cardElement.classList.contains('flipped')) return;
+            if (cardElement.classList.contains('matched')) return;
+            
+            // Flip the card
+            cardElement.classList.add('flipped');
+            gameState.flippedCards.push(cardElement);
+            
+            // Start game if not already started
+            if (!gameState.gameStarted) {
+                startGame();
+            }
+            
+            // Check for match when two cards are flipped
+            if (gameState.flippedCards.length === 2) {
+                gameState.canFlip = false;
+                gameState.moves++;
+                updateStatsDisplay();
+                
+                const card1 = gameState.flippedCards[0];
+                const card2 = gameState.flippedCards[1];
+                
+                // Check if they match (element-compound pair with same matchId)
+                const isMatch = (
+                    card1.dataset.type !== card2.dataset.type && 
+                    card1.dataset.matchId === card2.dataset.matchId
+                );
+                
+                if (isMatch) {
+                    // Successful match!
+                    setTimeout(() => {
+                        card1.classList.add('matched');
+                        card2.classList.add('matched');
+                        
+                        gameState.matchesFound++;
+                        gameState.matchedPairs.push(card1.dataset.matchId);
+                        
+                        // Show success animation
+                        showMatchAnimation();
+                        
+                        // Update message
+                        const compoundName = getCompoundName(card1.dataset.matchId);
+                        showMessage(`Great! Matched ${card1.dataset.content} with ${card2.dataset.content} (${compoundName})`, "success");
+                        
+                        // Check for win
+                        if (gameState.matchesFound === gameState.totalMatches) {
+                            winGame();
+                        }
+                        
+                        // Reset for next turn
+                        gameState.flippedCards = [];
+                        gameState.canFlip = true;
+                    }, 800);
+                } else {
+                    // Not a match - flip back after delay
+                    setTimeout(() => {
+                        card1.classList.remove('flipped');
+                        card2.classList.remove('flipped');
+                        
+                        // Update accuracy
+                        const incorrectMoves = gameState.moves - gameState.matchesFound;
+                        gameState.accuracy = Math.round((gameState.matchesFound / gameState.moves) * 100) || 100;
+                        updateStatsDisplay();
+                        
+                        // Update message
+                        showMessage("Not a match. Try again!", "info");
+                        
+                        // Reset for next turn
+                        gameState.flippedCards = [];
+                        gameState.canFlip = true;
+                    }, 1500);
+                }
+            } else if (gameState.flippedCards.length === 1) {
+                // Only one card flipped - show message about what to look for
+                const flippedCard = gameState.flippedCards[0];
+                if (flippedCard.dataset.type === 'element') {
+                    showMessage(`Now find the compound that forms from ${flippedCard.dataset.content}`, "info");
+                } else {
+                    showMessage(`Now find the elements that make ${flippedCard.dataset.content}`, "info");
+                }
+            }
+        }
+
+        // Show match animation
+        function showMatchAnimation() {
+            const animation = document.getElementById('matchAnimation');
+            const text = animation.querySelector('.match-text');
+            
+            // Random positive messages
+            const messages = ["Perfect!", "Great Match!", "Chemistry Win!", "Correct!", "Well Done!", "Elementary!"];
+            text.textContent = messages[Math.floor(Math.random() * messages.length)];
+            
+            animation.style.opacity = '1';
+            text.style.animation = 'matchSuccess 1.5s ease-out';
+            
+            setTimeout(() => {
+                animation.style.opacity = '0';
+                text.style.animation = '';
+            }, 1500);
+        }
+
+        // Get element name from symbol
+        function getElementName(symbol) {
+            const elements = {
+                'H': 'Hydrogen', 'O': 'Oxygen', 'C': 'Carbon', 'N': 'Nitrogen',
+                'Na': 'Sodium', 'Cl': 'Chlorine'
+            };
+            return elements[symbol] || symbol;
+        }
+
+        // Get compound name from formula
+        function getCompoundName(formula) {
+            const compounds = {
+                'H₂O': 'Water', 'CO₂': 'Carbon Dioxide', 'NaCl': 'Salt',
+                'NH₃': 'Ammonia', 'CH₄': 'Methane', 'HCl': 'Hydrochloric Acid',
+                'NaOH': 'Sodium Hydroxide'
+            };
+            return compounds[formula] || formula;
+        }
+
+        // Provide a hint
+        function giveHint() {
+            if (!gameState.gameStarted) {
+                showMessage("Start the game first!", "info");
+                return;
+            }
+            
+            if (!gameState.canFlip || gameState.flippedCards.length > 0) {
+                showMessage("Finish your current move first!", "info");
+                return;
+            }
+            
+            // Find an unmatched pair
+            const allCards = Array.from(document.querySelectorAll('.memory-card:not(.matched)'));
+            const unmatchedCards = allCards.filter(card => !card.classList.contains('matched'));
+            
+            if (unmatchedCards.length === 0) return;
+            
+            // Find a pair that hasn't been matched yet
+            let hintCard1 = null;
+            let hintCard2 = null;
+            
+            for (let i = 0; i < unmatchedCards.length && !hintCard1; i++) {
+                const card1 = unmatchedCards[i];
+                const matchId = card1.dataset.matchId;
+                
+                // Look for its match
+                for (let j = 0; j < unmatchedCards.length; j++) {
+                    if (i !== j) {
+                        const card2 = unmatchedCards[j];
+                        if (card2.dataset.matchId === matchId && card1.dataset.type !== card2.dataset.type) {
+                            hintCard1 = card1;
+                            hintCard2 = card2;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (hintCard1 && hintCard2) {
+                // Temporarily highlight the cards
+                hintCard1.style.animation = 'pulse 1s ease-in-out 2';
+                hintCard2.style.animation = 'pulse 1s ease-in-out 2';
+                
+                // Show hint message
+                const compoundName = getCompoundName(hintCard1.dataset.matchId);
+                showMessage(`Hint: Try matching ${hintCard1.dataset.content} with ${hintCard2.dataset.content} (${compoundName})`, "info");
+                
+                // Remove animation after it completes
+                setTimeout(() => {
+                    hintCard1.style.animation = '';
+                    hintCard2.style.animation = '';
+                }, 2000);
+            }
+        }
+
+        // Win the game
+        function winGame() {
+            clearInterval(gameState.gameTimer);
+            
+            // Calculate score
+            const score = Math.max(1, Math.floor(
+                (gameState.totalMatches * 1000) / 
+                (gameState.moves + gameState.time / 10)
+            ));
+            
+            // Show win message
+            const winMessage = `
+                🎉 Congratulations! You've matched all ${gameState.totalMatches} pairs!
+                <br>Moves: ${gameState.moves} | Time: ${gameState.time}s | Accuracy: ${gameState.accuracy}%
+                <br>Your score: ${score}
+                <br>Click "New Game" to play again!
+            `;
+            
+            showMessage(winMessage, "success");
+            
+            // Add celebration effect
+            celebrateWin();
+        }
+
+        // Celebration effect for winning
+        function celebrateWin() {
+            const board = document.getElementById('memoryBoard');
+            const cards = board.querySelectorAll('.memory-card');
+            
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.transform = `scale(1.1) rotate(${index % 2 === 0 ? '5deg' : '-5deg'})`;
+                    card.style.transition = 'transform 0.3s ease';
+                    
+                    setTimeout(() => {
+                        card.style.transform = 'scale(1) rotate(0deg)';
+                    }, 300);
+                }, index * 100);
+            });
+        }
+
+        // Show message
+        function showMessage(text, type = "info") {
+            const messageDisplay = document.getElementById('messageDisplay');
+            messageDisplay.innerHTML = text;
+            messageDisplay.className = `message-display message-${type}`;
+        }
+
+        // Update stats display
+        function updateStatsDisplay() {
+            document.getElementById('matchesCount').textContent = `${gameState.matchesFound}/${gameState.totalMatches}`;
+            document.getElementById('movesCount').textContent = gameState.moves;
+            document.getElementById('timeCount').textContent = gameState.time;
+            document.getElementById('accuracyCount').textContent = `${gameState.accuracy}%`;
+        }
+
+        // Utility function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Event listeners
+        document.getElementById('startGameBtn').addEventListener('click', startGame);
+        document.getElementById('hintBtn').addEventListener('click', giveHint);
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+
+        // Initialize the game when page loads
+        window.onload = initGame;
+    </script>
+</body>
+</html>

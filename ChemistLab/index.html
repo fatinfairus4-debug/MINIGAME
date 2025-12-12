@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemistry Lab Escape</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c2461 0%, #1e3799 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #ffdd59;
+            text-shadow: 0 0 10px rgba(255, 221, 89, 0.5);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a5b1c2;
+            margin-bottom: 20px;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .restart-btn, .hint-btn {
+            background: rgba(75, 123, 236, 0.8);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .restart-btn:hover, .hint-btn:hover {
+            background: rgba(95, 143, 255, 0.9);
+            transform: translateY(-2px);
+        }
+        
+        .restart-btn:active, .hint-btn:active {
+            transform: translateY(0);
+        }
+        
+        .restart-btn {
+            background: rgba(46, 204, 113, 0.8);
+        }
+        
+        .restart-btn:hover {
+            background: rgba(56, 224, 123, 0.9);
+        }
+        
+        .hint-btn {
+            background: rgba(155, 89, 182, 0.8);
+        }
+        
+        .hint-btn:hover {
+            background: rgba(175, 109, 202, 0.9);
+        }
+        
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+        }
+        
+        .lab-area {
+            flex: 1;
+            min-width: 500px;
+            background: rgba(30, 39, 46, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .lab-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            color: #ffdd59;
+            font-size: 1.5rem;
+        }
+        
+        .lab-title i {
+            margin-right: 10px;
+        }
+        
+        .lab-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 6px;
+            flex-grow: 1;
+            background: rgba(20, 29, 38, 0.7);
+            border-radius: 10px;
+            padding: 10px;
+            position: relative;
+        }
+        
+        .cell {
+            background: rgba(47, 54, 64, 0.7);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: bold;
+            font-size: 1.1rem;
+            min-height: 45px;
+        }
+        
+        .cell:hover {
+            background: rgba(72, 84, 96, 0.9);
+            transform: scale(1.05);
+        }
+        
+        .cell.empty {
+            background: rgba(30, 39, 46, 0.5);
+        }
+        
+        .cell.element {
+            background: rgba(75, 123, 236, 0.8);
+            color: white;
+            box-shadow: 0 0 10px rgba(75, 123, 236, 0.5);
+        }
+        
+        .cell.compound {
+            background: rgba(46, 204, 113, 0.8);
+            color: white;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+        
+        .cell.equipment {
+            background: rgba(225, 112, 85, 0.8);
+            color: white;
+            box-shadow: 0 0 10px rgba(225, 112, 85, 0.5);
+        }
+        
+        .cell.player {
+            background: rgba(255, 221, 89, 0.9);
+            color: #2c3e50;
+            box-shadow: 0 0 15px rgba(255, 221, 89, 0.7);
+        }
+        
+        .cell.goal {
+            background: rgba(155, 89, 182, 0.9);
+            color: white;
+            box-shadow: 0 0 15px rgba(155, 89, 182, 0.7);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .cell-wall {
+            background: rgba(127, 140, 141, 0.9);
+            cursor: not-allowed;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .control-btn {
+            background: rgba(75, 123, 236, 0.8);
+            border: none;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .control-btn:hover {
+            background: rgba(95, 143, 255, 0.9);
+            transform: scale(1.1);
+        }
+        
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .info-panel {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(30, 39, 46, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-title {
+            color: #ffdd59;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .panel-title i {
+            margin-right: 10px;
+        }
+        
+        .inventory {
+            background: rgba(20, 29, 38, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            min-height: 120px;
+        }
+        
+        .inventory-title {
+            color: #a5b1c2;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .inventory-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .inventory-item {
+            background: rgba(75, 123, 236, 0.8);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 8px rgba(75, 123, 236, 0.5);
+            font-size: 1.1rem;
+            position: relative;
+        }
+        
+        .inventory-item.compound {
+            background: rgba(46, 204, 113, 0.8);
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.5);
+        }
+        
+        .element-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff3838;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .message-log {
+            background: rgba(20, 29, 38, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: 200px;
+        }
+        
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            background: rgba(47, 54, 64, 0.5);
+        }
+        
+        .message.new {
+            background: rgba(75, 123, 236, 0.2);
+            border-left: 3px solid #4b7bec;
+        }
+        
+        .message.success {
+            background: rgba(46, 204, 113, 0.2);
+            border-left: 3px solid #2ecc71;
+        }
+        
+        .message.warning {
+            background: rgba(243, 156, 18, 0.2);
+            border-left: 3px solid #f39c12;
+        }
+        
+        .message.hint {
+            background: rgba(155, 89, 182, 0.2);
+            border-left: 3px solid #9b59b6;
+        }
+        
+        .game-status {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .status-item {
+            background: rgba(30, 39, 46, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            flex: 1;
+            margin: 0 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .status-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffdd59;
+        }
+        
+        .status-label {
+            color: #a5b1c2;
+            margin-top: 5px;
+        }
+        
+        .compound-formula {
+            display: inline-block;
+            font-size: 0.9rem;
+            margin-left: 5px;
+            color: #ffdd59;
+        }
+        
+        .instructions {
+            background: rgba(30, 39, 46, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .instructions h3 {
+            color: #ffdd59;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .instructions h3 i {
+            margin-right: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            color: #a5b1c2;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        
+        .highlight {
+            color: #ffdd59;
+            font-weight: bold;
+        }
+        
+        .combination-panel {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(20, 29, 38, 0.5);
+            border-radius: 8px;
+        }
+        
+        .combination-title {
+            color: #a5b1c2;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .combination-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .combination-item {
+            background: rgba(46, 204, 113, 0.3);
+            color: #a5b1c2;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+        }
+        
+        .element-spawner {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: rgba(75, 123, 236, 0.5);
+            border-radius: 50%;
+            animation: spawnPulse 3s infinite;
+        }
+        
+        @keyframes spawnPulse {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 0.5; }
+        }
+        
+        @media (max-width: 900px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .lab-area, .info-panel {
+                min-width: 100%;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .lab-grid {
+                grid-template-columns: repeat(10, 1fr);
+                grid-template-rows: repeat(10, 1fr);
+                gap: 4px;
+            }
+            
+            .control-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .header-controls {
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+            
+            .restart-btn, .hint-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .cell {
+                min-height: 35px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-flask"></i> Chemistry Lab Escape</h1>
+            <p class="subtitle">Collect elements, create compounds, and solve puzzles to escape the lab!</p>
+            
+            <div class="header-controls">
+                <button class="restart-btn" id="restartBtn">
+                    <i class="fas fa-redo"></i> Restart Game
+                </button>
+                <button class="hint-btn" id="hintBtn">
+                    <i class="fas fa-lightbulb"></i> Get Hint
+                </button>
+            </div>
+        </header>
+        
+        <div class="game-container">
+            <div class="lab-area">
+                <div class="lab-title">
+                    <i class="fas fa-atom"></i> Laboratory Grid
+                </div>
+                <div class="lab-grid" id="labGrid">
+                    <!-- Lab grid will be generated by JavaScript -->
+                </div>
+                
+                <div class="controls">
+                    <button class="control-btn" id="moveUp"><i class="fas fa-arrow-up"></i></button>
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <button class="control-btn" id="moveLeft"><i class="fas fa-arrow-left"></i></button>
+                        <button class="control-btn" id="moveRight"><i class="fas fa-arrow-right"></i></button>
+                    </div>
+                    <button class="control-btn" id="moveDown"><i class="fas fa-arrow-down"></i></button>
+                    <button class="control-btn" id="combineBtn" style="background: rgba(46, 204, 113, 0.8);"><i class="fas fa-plus-circle"></i></button>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <div class="panel-title">
+                    <i class="fas fa-clipboard-list"></i> Game Information
+                </div>
+                
+                <div class="inventory">
+                    <div class="inventory-title">
+                        <span>Your Inventory</span>
+                        <span id="inventoryCount">0 items</span>
+                    </div>
+                    <div class="inventory-items" id="inventory">
+                        <!-- Inventory items will be added by JavaScript -->
+                    </div>
+                    
+                    <div class="combination-panel">
+                        <div class="combination-title">Possible Combinations:</div>
+                        <div class="combination-list">
+                            <div class="combination-item">2H + O = H₂O (Water)</div>
+                            <div class="combination-item">Na + Cl = NaCl (Salt)</div>
+                            <div class="combination-item">C + 2O = CO₂</div>
+                            <div class="combination-item">N + 3H = NH₃</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="message-log" id="messageLog">
+                    <div class="message new">Welcome to Chemistry Lab Escape! Collect elements and combine them to form compounds.</div>
+                    <div class="message">Your goal: Create H₂O (water) and NaCl (salt) to unlock the exit.</div>
+                    <div class="message">Elements respawn! You can collect multiple copies of the same element.</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-status">
+            <div class="status-item">
+                <div class="status-value" id="movesCount">0</div>
+                <div class="status-label">Moves</div>
+            </div>
+            <div class="status-item">
+                <div class="status-value" id="elementsCount">0</div>
+                <div class="status-label">Elements Collected</div>
+            </div>
+            <div class="status-item">
+                <div class="status-value" id="compoundsCount">0</div>
+                <div class="status-label">Compounds Created</div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-info-circle"></i> How to Play</h3>
+            <ul>
+                <li>Move your player <span class="highlight">(yellow circle)</span> around the lab using the arrow buttons.</li>
+                <li>Collect elements <span class="highlight">(blue squares)</span> by moving onto them.</li>
+                <li>Elements respawn randomly! You can collect multiple copies of each element.</li>
+                <li>Use equipment <span class="highlight">(orange squares)</span> to combine elements into compounds.</li>
+                <li>Create required compounds to unlock the exit <span class="highlight">(purple square)</span>.</li>
+                <li>Combine elements by standing next to equipment and clicking the <span class="highlight">green combine button</span>.</li>
+                <li>Current goal: Create <span class="highlight">H₂O</span> and <span class="highlight">NaCl</span> to escape!</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            playerPos: {x: 0, y: 4},
+            inventory: [],
+            moves: 0,
+            elementsCollected: 0,
+            compoundsCreated: 0,
+            gameCompleted: false,
+            labSize: 10,
+            requiredCompounds: ["H₂O", "NaCl"],
+            createdCompounds: [],
+            elementSpawners: [],
+            lastSpawnTime: 0,
+            spawnInterval: 3000 // 3 seconds
+        };
+
+        // Element and compound definitions
+        const elements = [
+            { symbol: "H", name: "Hydrogen", color: "#4b7bec" },
+            { symbol: "O", name: "Oxygen", color: "#4b7bec" },
+            { symbol: "Na", name: "Sodium", color: "#4b7bec" },
+            { symbol: "Cl", name: "Chlorine", color: "#4b7bec" },
+            { symbol: "C", name: "Carbon", color: "#4b7bec" },
+            { symbol: "N", name: "Nitrogen", color: "#4b7bec" }
+        ];
+
+        const compounds = [
+            { formula: "H₂O", name: "Water", elements: ["H", "H", "O"], color: "#2ecc71" },
+            { formula: "NaCl", name: "Salt", elements: ["Na", "Cl"], color: "#2ecc71" },
+            { formula: "CO₂", name: "Carbon Dioxide", elements: ["C", "O", "O"], color: "#2ecc71" },
+            { formula: "NH₃", name: "Ammonia", elements: ["N", "H", "H", "H"], color: "#2ecc71" }
+        ];
+
+        // Lab layout: 0=empty, 1=wall, 2=element spawn area, 3=equipment, 4=goal
+        const labLayout = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 2, 2, 2, 1, 2, 0, 1],
+            [1, 0, 2, 3, 2, 3, 2, 1, 0, 1],
+            [1, 0, 2, 2, 2, 2, 1, 2, 0, 1],
+            [1, 0, 1, 2, 2, 3, 2, 1, 0, 1],
+            [1, 0, 2, 2, 2, 2, 1, 2, 0, 1],
+            [1, 0, 2, 1, 2, 1, 2, 3, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 4, 1, 1, 1, 1, 1]
+        ];
+
+        // Track active elements on the board
+        let activeElements = [
+            {x: 2, y: 3, element: elements[0]}, // H
+            {x: 3, y: 2, element: elements[1]}, // O
+            {x: 5, y: 3, element: elements[2]}, // Na
+            {x: 2, y: 6, element: elements[3]}, // Cl
+            {x: 6, y: 2, element: elements[4]}, // C
+            {x: 3, y: 6, element: elements[5]}, // N
+            // Additional elements for easier combination
+            {x: 4, y: 2, element: elements[0]}, // H
+            {x: 4, y: 4, element: elements[1]}, // O
+            {x: 7, y: 2, element: elements[0]}, // H
+        ];
+
+        // Element spawner positions (where new elements can appear)
+        const spawnerPositions = [
+            {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2},
+            {x: 2, y: 3}, {x: 4, y: 3},
+            {x: 2, y: 4}, {x: 3, y: 4}, {x: 4, y: 4},
+            {x: 5, y: 2}, {x: 6, y: 2}, {x: 7, y: 2},
+            {x: 2, y: 5}, {x: 3, y: 5}, {x: 4, y: 5}, {x: 5, y: 5},
+            {x: 2, y: 6}, {x: 4, y: 6}, {x: 5, y: 6}, {x: 6, y: 6},
+            {x: 3, y: 7}, {x: 6, y: 7}, {x: 7, y: 7}
+        ];
+
+        // Equipment positions
+        const equipmentPositions = [
+            {x: 3, y: 3},
+            {x: 5, y: 5},
+            {x: 7, y: 7}
+        ];
+
+        // Goal position
+        const goalPosition = {x: 4, y: 9};
+
+        // Initialize the game
+        function initGame() {
+            // Reset game state
+            gameState = {
+                playerPos: {x: 0, y: 4},
+                inventory: [],
+                moves: 0,
+                elementsCollected: 0,
+                compoundsCreated: 0,
+                gameCompleted: false,
+                labSize: 10,
+                requiredCompounds: ["H₂O", "NaCl"],
+                createdCompounds: [],
+                elementSpawners: [...spawnerPositions],
+                lastSpawnTime: Date.now(),
+                spawnInterval: 3000
+            };
+            
+            // Reset active elements
+            activeElements = [
+                {x: 2, y: 3, element: elements[0]},
+                {x: 3, y: 2, element: elements[1]},
+                {x: 5, y: 3, element: elements[2]},
+                {x: 2, y: 6, element: elements[3]},
+                {x: 6, y: 2, element: elements[4]},
+                {x: 3, y: 6, element: elements[5]},
+                {x: 4, y: 2, element: elements[0]},
+                {x: 4, y: 4, element: elements[1]},
+                {x: 7, y: 2, element: elements[0]},
+            ];
+            
+            createLabGrid();
+            updateInventoryDisplay();
+            updateStatusDisplay();
+            addMessage("Game started! Move to collect elements.", "new");
+            addMessage("Elements will randomly spawn in blue areas. Collect multiple copies!", "new");
+            
+            // Start spawn timer
+            gameState.spawnTimer = setInterval(spawnRandomElement, gameState.spawnInterval);
+        }
+
+        // Create the lab grid
+        function createLabGrid() {
+            const labGrid = document.getElementById("labGrid");
+            labGrid.innerHTML = "";
+            
+            for (let y = 0; y < gameState.labSize; y++) {
+                for (let x = 0; x < gameState.labSize; x++) {
+                    const cell = document.createElement("div");
+                    cell.className = "cell";
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+                    
+                    // Set cell type based on layout
+                    const cellType = labLayout[y][x];
+                    
+                    if (cellType === 1) {
+                        cell.classList.add("cell-wall");
+                        cell.textContent = "▧";
+                    } else if (cellType === 2) {
+                        // Check if there's an element at this position
+                        const elementHere = activeElements.find(pos => pos.x === x && pos.y === y);
+                        if (elementHere) {
+                            cell.classList.add("element");
+                            cell.textContent = elementHere.element.symbol;
+                            cell.title = elementHere.element.name;
+                        } else {
+                            cell.classList.add("empty");
+                            // Show spawn area with subtle indicator
+                            cell.style.background = "rgba(75, 123, 236, 0.2)";
+                        }
+                    } else if (cellType === 3) {
+                        cell.classList.add("equipment");
+                        cell.textContent = "⚗";
+                        cell.title = "Mixing Equipment - Stand next to this and click combine";
+                    } else if (cellType === 4) {
+                        // Check if goal is unlocked
+                        const hasRequiredCompounds = gameState.requiredCompounds.every(compound => 
+                            gameState.createdCompounds.includes(compound)
+                        );
+                        
+                        if (hasRequiredCompounds) {
+                            cell.classList.add("goal");
+                            cell.textContent = "🚪";
+                            cell.title = "Exit (Unlocked!)";
+                        } else {
+                            cell.classList.add("cell-wall");
+                            cell.textContent = "🔒";
+                            cell.title = `Exit (Locked) - Need: ${gameState.requiredCompounds.join(", ")}`;
+                        }
+                    } else {
+                        cell.classList.add("empty");
+                    }
+                    
+                    // Check if player is at this position
+                    if (x === gameState.playerPos.x && y === gameState.playerPos.y) {
+                        cell.classList.add("player");
+                        cell.textContent = "⚛";
+                        cell.title = "You";
+                    }
+                    
+                    labGrid.appendChild(cell);
+                }
+            }
+        }
+
+        // Move player
+        function movePlayer(dx, dy) {
+            if (gameState.gameCompleted) return;
+            
+            const newX = gameState.playerPos.x + dx;
+            const newY = gameState.playerPos.y + dy;
+            
+            // Check boundaries and walls
+            if (newX < 0 || newX >= gameState.labSize || 
+                newY < 0 || newY >= gameState.labSize || 
+                labLayout[newY][newX] === 1) {
+                addMessage("Can't move there!", "warning");
+                return;
+            }
+            
+            // Check if goal is reached
+            if (newX === goalPosition.x && newY === goalPosition.y) {
+                const hasRequiredCompounds = gameState.requiredCompounds.every(compound => 
+                    gameState.createdCompounds.includes(compound)
+                );
+                
+                if (hasRequiredCompounds) {
+                    gameState.gameCompleted = true;
+                    clearInterval(gameState.spawnTimer);
+                    addMessage("🎉 Congratulations! You've escaped the lab!", "success");
+                    addMessage("You created all required compounds and found the exit!", "success");
+                    addMessage("Click 'Restart Game' to play again.", "new");
+                } else {
+                    const missing = gameState.requiredCompounds.filter(c => !gameState.createdCompounds.includes(c));
+                    addMessage(`The exit is locked! You still need: ${missing.join(", ")}`, "warning");
+                    return;
+                }
+            }
+            
+            // Update player position
+            gameState.playerPos.x = newX;
+            gameState.playerPos.y = newY;
+            gameState.moves++;
+            
+            // Check if player collected an element
+            const elementIndex = activeElements.findIndex(pos => pos.x === newX && pos.y === newY);
+            if (elementIndex !== -1) {
+                const elementHere = activeElements[elementIndex];
+                
+                // Add to inventory
+                gameState.inventory.push({
+                    type: "element",
+                    symbol: elementHere.element.symbol,
+                    name: elementHere.element.name
+                });
+                gameState.elementsCollected++;
+                
+                // Remove from active elements
+                activeElements.splice(elementIndex, 1);
+                
+                addMessage(`Collected ${elementHere.element.name} (${elementHere.element.symbol})!`, "new");
+            }
+            
+            updateInventoryDisplay();
+            updateStatusDisplay();
+            createLabGrid();
+        }
+
+        // Spawn a random element
+        function spawnRandomElement() {
+            if (gameState.gameCompleted) return;
+            
+            // Don't spawn if there are already many elements
+            if (activeElements.length >= 15) return;
+            
+            // Find empty spawn positions
+            const emptySpawnPositions = spawnerPositions.filter(pos => {
+                // Check if position is empty (no element and not player)
+                const hasElement = activeElements.some(e => e.x === pos.x && e.y === pos.y);
+                const isPlayer = gameState.playerPos.x === pos.x && gameState.playerPos.y === pos.y;
+                const isWall = labLayout[pos.y][pos.x] === 1;
+                const isEquipment = labLayout[pos.y][pos.x] === 3;
+                const isGoal = labLayout[pos.y][pos.x] === 4;
+                
+                return !hasElement && !isPlayer && !isWall && !isEquipment && !isGoal;
+            });
+            
+            if (emptySpawnPositions.length > 0) {
+                // Pick a random empty position
+                const randomPos = emptySpawnPositions[Math.floor(Math.random() * emptySpawnPositions.length)];
+                
+                // Pick a random element (weighted towards H and O for water creation)
+                const elementWeights = [0.35, 0.35, 0.1, 0.1, 0.05, 0.05]; // H, O have higher chance
+                const random = Math.random();
+                let cumulative = 0;
+                let selectedElement = elements[0];
+                
+                for (let i = 0; i < elements.length; i++) {
+                    cumulative += elementWeights[i];
+                    if (random <= cumulative) {
+                        selectedElement = elements[i];
+                        break;
+                    }
+                }
+                
+                // Add to active elements
+                activeElements.push({
+                    x: randomPos.x,
+                    y: randomPos.y,
+                    element: selectedElement
+                });
+                
+                createLabGrid();
+                
+                // Occasionally notify player
+                if (Math.random() < 0.3) {
+                    addMessage(`A new ${selectedElement.name} (${selectedElement.symbol}) has appeared!`, "hint");
+                }
+            }
+        }
+
+        // Combine elements at equipment
+        function combineElements() {
+            if (gameState.gameCompleted) return;
+            
+            // Check if player is adjacent to equipment
+            let nearEquipment = false;
+            for (const equipment of equipmentPositions) {
+                const dx = Math.abs(gameState.playerPos.x - equipment.x);
+                const dy = Math.abs(gameState.playerPos.y - equipment.y);
+                if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1) || (dx === 0 && dy === 0)) {
+                    nearEquipment = true;
+                    break;
+                }
+            }
+            
+            if (!nearEquipment) {
+                addMessage("You need to be next to or on equipment to combine elements!", "warning");
+                return;
+            }
+            
+            // Get player's elements
+            const playerElements = gameState.inventory.filter(item => item.type === "element");
+            
+            if (playerElements.length < 2) {
+                addMessage("You need at least 2 elements to combine!", "warning");
+                return;
+            }
+            
+            // Count elements in inventory
+            const elementCounts = {};
+            playerElements.forEach(element => {
+                elementCounts[element.symbol] = (elementCounts[element.symbol] || 0) + 1;
+            });
+            
+            // Check for each compound
+            let compoundCreated = null;
+            
+            for (const compound of compounds) {
+                // Count elements needed for this compound
+                const requiredCounts = {};
+                compound.elements.forEach(elementSymbol => {
+                    requiredCounts[elementSymbol] = (requiredCounts[elementSymbol] || 0) + 1;
+                });
+                
+                // Check if player has all required elements
+                let hasAllElements = true;
+                for (const elementSymbol in requiredCounts) {
+                    if (!elementCounts[elementSymbol] || elementCounts[elementSymbol] < requiredCounts[elementSymbol]) {
+                        hasAllElements = false;
+                        break;
+                    }
+                }
+                
+                if (hasAllElements) {
+                    compoundCreated = compound;
+                    break;
+                }
+            }
+            
+            if (compoundCreated) {
+                // Remove used elements from inventory
+                const requiredCounts = {};
+                compoundCreated.elements.forEach(elementSymbol => {
+                    requiredCounts[elementSymbol] = (requiredCounts[elementSymbol] || 0) + 1;
+                });
+                
+                // Create a new inventory without the used elements
+                const newInventory = [];
+                const tempCounts = {...elementCounts};
+                
+                for (const item of gameState.inventory) {
+                    if (item.type === "element") {
+                        if (tempCounts[item.symbol] > 0 && requiredCounts[item.symbol] > 0) {
+                            tempCounts[item.symbol]--;
+                            requiredCounts[item.symbol]--;
+                        } else {
+                            newInventory.push(item);
+                        }
+                    } else {
+                        newInventory.push(item);
+                    }
+                }
+                
+                // Add compound to inventory
+                newInventory.push({
+                    type: "compound",
+                    formula: compoundCreated.formula,
+                    name: compoundCreated.name
+                });
+                
+                gameState.inventory = newInventory;
+                gameState.compoundsCreated++;
+                gameState.createdCompounds.push(compoundCreated.formula);
+                
+                addMessage(`Successfully created ${compoundCreated.name} (${compoundCreated.formula})!`, "success");
+                
+                // Check if required compounds are created
+                if (gameState.requiredCompounds.includes(compoundCreated.formula)) {
+                    const remaining = gameState.requiredCompounds.filter(c => !gameState.createdCompounds.includes(c));
+                    if (remaining.length > 0) {
+                        addMessage(`Great! You still need to create: ${remaining.join(", ")}`, "new");
+                    } else {
+                        addMessage("🎉 You've created all required compounds! The exit is now unlocked.", "success");
+                    }
+                }
+                
+                updateInventoryDisplay();
+                updateStatusDisplay();
+                createLabGrid();
+                return;
+            }
+            
+            // Show what the player can make
+            const possibleCompounds = compounds.filter(compound => {
+                const requiredCounts = {};
+                compound.elements.forEach(elementSymbol => {
+                    requiredCounts[elementSymbol] = (requiredCounts[elementSymbol] || 0) + 1;
+                });
+                
+                for (const elementSymbol in requiredCounts) {
+                    if (!elementCounts[elementSymbol] || elementCounts[elementSymbol] < requiredCounts[elementSymbol]) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            
+            if (possibleCompounds.length > 0) {
+                addMessage("You have the right elements but need to stand next to equipment!", "warning");
+            } else {
+                addMessage("No valid compound can be formed. You need different elements!", "warning");
+                addMessage("Try collecting more Hydrogen (H) and Oxygen (O) for Water (H₂O)", "hint");
+            }
+        }
+
+        // Update inventory display with counts
+        function updateInventoryDisplay() {
+            const inventoryElement = document.getElementById("inventory");
+            const inventoryCountElement = document.getElementById("inventoryCount");
+            
+            inventoryElement.innerHTML = "";
+            
+            // Count elements
+            const elementCounts = {};
+            const compoundItems = [];
+            
+            gameState.inventory.forEach(item => {
+                if (item.type === "element") {
+                    elementCounts[item.symbol] = (elementCounts[item.symbol] || 0) + 1;
+                } else {
+                    compoundItems.push(item);
+                }
+            });
+            
+            // Display elements with counts
+            for (const symbol in elementCounts) {
+                const element = elements.find(e => e.symbol === symbol);
+                const count = elementCounts[symbol];
+                
+                const itemElement = document.createElement("div");
+                itemElement.className = "inventory-item";
+                itemElement.textContent = symbol;
+                itemElement.title = `${element.name} (${count} available)`;
+                
+                if (count > 1) {
+                    const countBadge = document.createElement("div");
+                    countBadge.className = "element-count";
+                    countBadge.textContent = count;
+                    itemElement.appendChild(countBadge);
+                }
+                
+                inventoryElement.appendChild(itemElement);
+            }
+            
+            // Display compounds
+            compoundItems.forEach(item => {
+                const itemElement = document.createElement("div");
+                itemElement.className = "inventory-item compound";
+                itemElement.textContent = item.formula;
+                itemElement.title = item.name;
+                inventoryElement.appendChild(itemElement);
+            });
+            
+            // Update count display
+            const totalItems = gameState.inventory.length;
+            inventoryCountElement.textContent = `${totalItems} item${totalItems !== 1 ? 's' : ''}`;
+            
+            if (totalItems === 0) {
+                inventoryElement.innerHTML = "<div style='color: #a5b1c2; font-style: italic; width: 100%; text-align: center; padding: 10px;'>Empty - Go collect some elements!</div>";
+            }
+        }
+
+        // Update status display
+        function updateStatusDisplay() {
+            document.getElementById("movesCount").textContent = gameState.moves;
+            document.getElementById("elementsCount").textContent = gameState.elementsCollected;
+            document.getElementById("compoundsCount").textContent = gameState.compoundsCreated;
+        }
+
+        // Add message to log
+        function addMessage(text, type = "") {
+            const messageLog = document.getElementById("messageLog");
+            const messageElement = document.createElement("div");
+            messageElement.className = `message ${type}`;
+            messageElement.textContent = text;
+            messageLog.appendChild(messageElement);
+            
+            // Auto-scroll to bottom
+            messageLog.scrollTop = messageLog.scrollHeight;
+        }
+
+        // Show a hint
+        function showHint() {
+            const playerElements = gameState.inventory.filter(item => item.type === "element");
+            const elementCounts = {};
+            playerElements.forEach(element => {
+                elementCounts[element.symbol] = (elementCounts[element.symbol] || 0) + 1;
+            });
+            
+            if (playerElements.length === 0) {
+                addMessage("Hint: Collect elements (blue squares) by moving onto them. They respawn randomly!", "hint");
+            } else if (!gameState.createdCompounds.includes("H₂O")) {
+                const hCount = elementCounts["H"] || 0;
+                const oCount = elementCounts["O"] || 0;
+                
+                if (hCount >= 2 && oCount >= 1) {
+                    addMessage("Hint: You have 2+ Hydrogen and 1+ Oxygen! Stand on or next to equipment (⚗) and click the green combine button to create Water (H₂O).", "hint");
+                } else if (hCount < 2) {
+                    addMessage(`Hint: You need 2 Hydrogen (H) for Water. You have ${hCount}. Collect more H from blue areas!`, "hint");
+                } else if (oCount < 1) {
+                    addMessage("Hint: You need 1 Oxygen (O) for Water. Collect O from blue areas!", "hint");
+                }
+            } else if (!gameState.createdCompounds.includes("NaCl")) {
+                const naCount = elementCounts["Na"] || 0;
+                const clCount = elementCounts["Cl"] || 0;
+                
+                if (naCount >= 1 && clCount >= 1) {
+                    addMessage("Hint: You have Sodium (Na) and Chlorine (Cl)! Stand on or next to equipment and combine them to create Salt (NaCl).", "hint");
+                } else if (naCount < 1) {
+                    addMessage("Hint: You need Sodium (Na) for Salt. Look for Na in blue areas!", "hint");
+                } else if (clCount < 1) {
+                    addMessage("Hint: You need Chlorine (Cl) for Salt. Look for Cl in blue areas!", "hint");
+                }
+            } else {
+                addMessage("Hint: You have all required compounds! Go to the exit (purple door at bottom) to escape.", "hint");
+            }
+        }
+
+        // Event listeners for controls
+        document.getElementById("moveUp").addEventListener("click", () => movePlayer(0, -1));
+        document.getElementById("moveDown").addEventListener("click", () => movePlayer(0, 1));
+        document.getElementById("moveLeft").addEventListener("click", () => movePlayer(-1, 0));
+        document.getElementById("moveRight").addEventListener("click", () => movePlayer(1, 0));
+        document.getElementById("combineBtn").addEventListener("click", combineElements);
+        document.getElementById("restartBtn").addEventListener("click", () => {
+            clearInterval(gameState.spawnTimer);
+            initGame();
+        });
+        document.getElementById("hintBtn").addEventListener("click", showHint);
+
+        // Keyboard controls
+        document.addEventListener("keydown", (e) => {
+            if (gameState.gameCompleted) return;
+            
+            switch(e.key) {
+                case "ArrowUp":
+                case "w":
+                case "W":
+                    movePlayer(0, -1);
+                    break;
+                case "ArrowDown":
+                case "s":
+                case "S":
+                    movePlayer(0, 1);
+                    break;
+                case "ArrowLeft":
+                case "a":
+                case "A":
+                    movePlayer(-1, 0);
+                    break;
+                case "ArrowRight":
+                case "d":
+                case "D":
+                    movePlayer(1, 0);
+                    break;
+                case " ":
+                case "Enter":
+                    combineElements();
+                    break;
+                case "r":
+                case "R":
+                    if (e.ctrlKey) {
+                        clearInterval(gameState.spawnTimer);
+                        initGame();
+                    }
+                    break;
+                case "h":
+                case "H":
+                    showHint();
+                    break;
+            }
+        });
+
+        // Initialize the game when page loads
+        window.onload = initGame;
+    </script>
+</body>
+</html>

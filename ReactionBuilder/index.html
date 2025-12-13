@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemistry Lab Escape - Fixed</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c2461 0%, #1e3799 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            border: 2px solid #3498db;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: #1abc9c;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+        
+        .game-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .game-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .inventory-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            border: 2px solid #e74c3c;
+        }
+        
+        .lab-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            border: 2px solid #3498db;
+            min-height: 600px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .panel-title {
+            color: #f1c40f;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #f1c40f;
+            padding-bottom: 10px;
+        }
+        
+        .panel-title i {
+            font-size: 1.5rem;
+        }
+        
+        .inventory-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .inventory-item {
+            background: rgba(52, 152, 219, 0.3);
+            border-radius: 10px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid #3498db;
+            user-select: none;
+        }
+        
+        .inventory-item:hover {
+            transform: translateY(-5px);
+            background: rgba(52, 152, 219, 0.5);
+            box-shadow: 0 6px 12px rgba(52, 152, 219, 0.4);
+        }
+        
+        .inventory-item.selected {
+            background: rgba(241, 196, 15, 0.3);
+            border-color: #f1c40f;
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(241, 196, 15, 0.4);
+        }
+        
+        .inventory-item.combine-mode {
+            background: rgba(46, 204, 113, 0.3);
+            border-color: #2ecc71;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: translateY(-5px); }
+            50% { transform: translateY(-5px) scale(1.05); }
+            100% { transform: translateY(-5px); }
+        }
+        
+        .item-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .item-name {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+        
+        .item-quantity {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .lab-objective {
+            background: rgba(231, 76, 60, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 2px solid #e74c3c;
+        }
+        
+        .objective-title {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .objective-text {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        .lab-room {
+            width: 100%;
+            height: 500px;
+            background: #2c3e50;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 20px;
+            border: 3px solid #34495e;
+        }
+        
+        .lab-object {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .lab-object:hover {
+            transform: scale(1.1);
+        }
+        
+        .lab-object i {
+            font-size: 3rem;
+            color: #ecf0f1;
+        }
+        
+        .object-label {
+            font-size: 0.9rem;
+            margin-top: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 3px 8px;
+            border-radius: 5px;
+        }
+        
+        #door {
+            top: 200px;
+            right: 30px;
+        }
+        
+        #fume-hood {
+            top: 100px;
+            left: 100px;
+        }
+        
+        #chemical-shelf {
+            top: 300px;
+            left: 200px;
+        }
+        
+        #lab-bench {
+            bottom: 50px;
+            left: 150px;
+        }
+        
+        #storage-cabinet {
+            bottom: 100px;
+            right: 200px;
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .timer, .puzzles-solved, .hints-left {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px 25px;
+            border-radius: 10px;
+            flex-grow: 1;
+            text-align: center;
+            border: 2px solid #9b59b6;
+        }
+        
+        .timer-value, .puzzles-value, .hints-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #9b59b6;
+        }
+        
+        .action-panel {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        #use-btn {
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            color: white;
+        }
+        
+        #use-btn:hover {
+            background: linear-gradient(to right, #27ae60, #219653);
+            transform: translateY(-3px);
+        }
+        
+        #combine-btn {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+        }
+        
+        #combine-btn:hover {
+            background: linear-gradient(to right, #2980b9, #1f618d);
+            transform: translateY(-3px);
+        }
+        
+        #hint-btn {
+            background: linear-gradient(to right, #f39c12, #e67e22);
+            color: white;
+        }
+        
+        #hint-btn:hover {
+            background: linear-gradient(to right, #e67e22, #d35400);
+            transform: translateY(-3px);
+        }
+        
+        #cancel-btn {
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+            color: white;
+            display: none;
+        }
+        
+        #cancel-btn:hover {
+            background: linear-gradient(to right, #c0392b, #a93226);
+            transform: translateY(-3px);
+        }
+        
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            width: 500px;
+            max-width: 90%;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            border: 3px solid #1abc9c;
+            display: none;
+        }
+        
+        .message-title {
+            color: #1abc9c;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .message-content {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .message-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .message-btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .continue-btn {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .close-btn {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .reaction-result {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #f1c40f;
+            z-index: 100;
+            display: none;
+        }
+        
+        .reaction-title {
+            color: #f1c40f;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .reaction-text {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 5px solid #1abc9c;
+        }
+        
+        .instructions h3 {
+            color: #1abc9c;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .locked:hover {
+            transform: none !important;
+        }
+        
+        .puzzle-solved {
+            border-color: #2ecc71 !important;
+            opacity: 0.7;
+        }
+        
+        .puzzle-solved i {
+            color: #2ecc71 !important;
+        }
+        
+        .combine-instruction {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #f1c40f;
+            display: none;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-overlay" id="game-overlay"></div>
+    
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-vial"></i> Chemistry Lab Escape</h1>
+            <p class="subtitle">Use chemical reactions to solve puzzles and escape the laboratory!</p>
+            <div class="game-info">
+                <div class="timer">
+                    <div>Time Remaining</div>
+                    <div class="timer-value" id="timer">10:00</div>
+                </div>
+                <div class="puzzles-solved">
+                    <div>Puzzles Solved</div>
+                    <div class="puzzles-value" id="puzzles-solved">0/5</div>
+                </div>
+                <div class="hints-left">
+                    <div>Hints Available</div>
+                    <div class="hints-value" id="hints-left">3</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="game-container">
+            <div class="inventory-panel">
+                <h2 class="panel-title"><i class="fas fa-box-open"></i> Inventory</h2>
+                <p>Select items to use or combine:</p>
+                <div class="inventory-items" id="inventory-items">
+                    <!-- Inventory items will be added by JavaScript -->
+                </div>
+                <div class="combine-instruction" id="combine-instruction">
+                    <i class="fas fa-hand-point-up"></i> Click a second item to combine
+                </div>
+                
+                <div class="lab-objective">
+                    <div class="objective-title"><i class="fas fa-crosshairs"></i> Current Objective</div>
+                    <div class="objective-text" id="current-objective">Find a way to open the locked door. Look for clues around the lab.</div>
+                </div>
+            </div>
+            
+            <div class="lab-panel">
+                <h2 class="panel-title"><i class="fas fa-flask"></i> Laboratory</h2>
+                <p>Click on objects to interact with them:</p>
+                
+                <div class="lab-room">
+                    <!-- Lab objects -->
+                    <div class="lab-object" id="door">
+                        <i class="fas fa-door-closed"></i>
+                        <div class="object-label">Locked Door</div>
+                    </div>
+                    
+                    <div class="lab-object" id="fume-hood">
+                        <i class="fas fa-wind"></i>
+                        <div class="object-label">Fume Hood</div>
+                    </div>
+                    
+                    <div class="lab-object" id="chemical-shelf">
+                        <i class="fas fa-vials"></i>
+                        <div class="object-label">Chemical Shelf</div>
+                    </div>
+                    
+                    <div class="lab-object" id="lab-bench">
+                        <i class="fas fa-tint"></i>
+                        <div class="object-label">Lab Bench</div>
+                    </div>
+                    
+                    <div class="lab-object" id="storage-cabinet">
+                        <i class="fas fa-archive"></i>
+                        <div class="object-label">Storage Cabinet</div>
+                    </div>
+                </div>
+                
+                <div class="action-panel">
+                    <button id="use-btn">
+                        <i class="fas fa-hand-paper"></i> Use Selected Item
+                    </button>
+                    <button id="combine-btn">
+                        <i class="fas fa-random"></i> Combine Items
+                    </button>
+                    <button id="cancel-btn">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button id="hint-btn">
+                        <i class="fas fa-lightbulb"></i> Use Hint
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-info-circle"></i> How to Play</h3>
+            <ul>
+                <li><strong>Explore the lab</strong> by clicking on objects to find items and clues</li>
+                <li><strong>Collect chemicals</strong> and equipment for your inventory</li>
+                <li><strong>Combine chemicals</strong> to create reactions that help solve puzzles</li>
+                <li><strong>Use items</strong> on lab objects to interact with them</li>
+                <li><strong>Solve 5 chemistry puzzles</strong> to unlock the door and escape</li>
+                <li><strong>Watch the timer</strong> - you have 10 minutes to escape!</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Chemistry Lab Escape | Use your chemistry knowledge to solve puzzles and escape!</p>
+            <p>Made with <i class="fas fa-flask" style="color:#1abc9c;"></i> for chemistry puzzle lovers</p>
+        </footer>
+    </div>
+    
+    <!-- Message Box -->
+    <div class="message-box" id="message-box">
+        <h2 class="message-title" id="message-title"><i class="fas fa-flask"></i> Chemical Reaction</h2>
+        <div class="message-content" id="message-content">
+            You've created a chemical reaction!
+        </div>
+        <div class="message-buttons">
+            <button class="message-btn continue-btn" id="continue-btn">Continue</button>
+        </div>
+    </div>
+    
+    <!-- Reaction Result Display -->
+    <div class="reaction-result" id="reaction-result">
+        <div class="reaction-title">Reaction Result</div>
+        <div class="reaction-text" id="reaction-text">You created water!</div>
+    </div>
+
+    <script>
+        // Game data
+        const gameData = {
+            timeLeft: 600, // 10 minutes in seconds
+            puzzlesSolved: 0,
+            totalPuzzles: 5,
+            hintsLeft: 3,
+            selectedItem: null,
+            inventory: [],
+            currentPuzzle: 1,
+            gameActive: true,
+            doorLocked: true,
+            combineMode: false,
+            firstCombineItem: null
+        };
+
+        // Lab objects data
+        const labObjects = {
+            door: { 
+                name: "Locked Door", 
+                status: "locked", 
+                requiredItem: "acid_solution",
+                puzzle: 5 
+            },
+            fumeHood: { 
+                name: "Fume Hood", 
+                status: "active", 
+                puzzle: 2 
+            },
+            chemicalShelf: { 
+                name: "Chemical Shelf", 
+                status: "available", 
+                puzzle: 1 
+            },
+            labBench: { 
+                name: "Lab Bench", 
+                status: "empty", 
+                puzzle: 3 
+            },
+            storageCabinet: { 
+                name: "Storage Cabinet", 
+                status: "locked", 
+                requiredItem: "key",
+                puzzle: 4 
+            }
+        };
+
+        // Inventory items data
+        const itemsData = [
+            { id: "sodium", name: "Sodium Metal", icon: "fa-atom", quantity: 1, puzzle: 1 },
+            { id: "water", name: "Distilled Water", icon: "fa-tint", quantity: 1, puzzle: 1 },
+            { id: "vinegar", name: "Vinegar (Acetic Acid)", icon: "fa-wine-bottle", quantity: 1, puzzle: 2 },
+            { id: "baking_soda", name: "Baking Soda", icon: "fa-mortar-pestle", quantity: 1, puzzle: 2 },
+            { id: "copper_sulfate", name: "Copper Sulfate", icon: "fa-gem", quantity: 1, puzzle: 3 },
+            { id: "iron_nail", name: "Iron Nail", icon: "fa-tools", quantity: 1, puzzle: 3 },
+            { id: "hydrochloric_acid", name: "HCl Solution", icon: "fa-vial", quantity: 1, puzzle: 4 },
+            { id: "calcium_carbonate", name: "Calcium Carbonate", icon: "fa-mountain", quantity: 1, puzzle: 4 },
+            { id: "magnesium", name: "Magnesium Ribbon", icon: "fa-bolt", quantity: 1, puzzle: 5 },
+            { id: "key", name: "Cabinet Key", icon: "fa-key", quantity: 1, puzzle: 4, hidden: true }
+        ];
+
+        // Chemical reactions for puzzles
+        const chemicalReactions = [
+            {
+                id: "puzzle1",
+                name: "Sodium + Water Reaction",
+                reactants: ["sodium", "water"],
+                product: "sodium_hydroxide",
+                description: "Sodium reacts violently with water to produce sodium hydroxide and hydrogen gas. The hydrogen gas can be ignited with a spark!",
+                puzzle: 1,
+                result: "You produced hydrogen gas! The fume hood turns on automatically.",
+                unlocks: "fumeHood"
+            },
+            {
+                id: "puzzle2",
+                name: "Vinegar + Baking Soda Reaction",
+                reactants: ["vinegar", "baking_soda"],
+                product: "carbon_dioxide",
+                description: "Acetic acid (vinegar) reacts with sodium bicarbonate (baking soda) to produce carbon dioxide gas, water, and sodium acetate.",
+                puzzle: 2,
+                result: "You produced carbon dioxide gas! The gas displaces air in a container.",
+                unlocks: "chemicalShelf"
+            },
+            {
+                id: "puzzle3",
+                name: "Copper Sulfate + Iron Reaction",
+                reactants: ["copper_sulfate", "iron_nail"],
+                product: "copper_metal",
+                description: "Iron displaces copper from copper sulfate solution in a single displacement reaction, producing iron sulfate and copper metal.",
+                puzzle: 3,
+                result: "You produced copper metal on the nail! The copper coating is conductive.",
+                unlocks: "labBench"
+            },
+            {
+                id: "puzzle4",
+                name: "Acid + Carbonate Reaction",
+                reactants: ["hydrochloric_acid", "calcium_carbonate"],
+                product: "calcium_chloride",
+                description: "Hydrochloric acid reacts with calcium carbonate to produce calcium chloride, water, and carbon dioxide gas.",
+                puzzle: 4,
+                result: "The reaction produced enough gas pressure to pop open the cabinet! You found a key inside.",
+                unlocks: "key"
+            },
+            {
+                id: "puzzle5",
+                name: "Acid + Metal Reaction",
+                reactants: ["hydrochloric_acid", "magnesium"],
+                product: "magnesium_chloride",
+                description: "Magnesium reacts with hydrochloric acid to produce magnesium chloride and hydrogen gas. The hydrogen can be explosive!",
+                puzzle: 5,
+                result: "You produced hydrogen gas! Combined with oxygen from the air, it creates a small explosion that breaks the door lock.",
+                unlocks: "door"
+            }
+        ];
+
+        // Objectives for each puzzle
+        const objectives = [
+            "Find a way to open the locked door. Look for clues around the lab.",
+            "The fume hood is off. Find a way to turn it on to safely conduct experiments.",
+            "The chemical shelf is jammed. Create a reaction that produces gas to build pressure.",
+            "The lab bench has a broken electrical connection. Create a conductive coating to fix it.",
+            "The storage cabinet is locked. Create a reaction that produces enough gas to pop it open.",
+            "The door is locked with a metal mechanism. Create a reaction that can break it open."
+        ];
+
+        // DOM elements
+        const inventoryItemsContainer = document.getElementById('inventory-items');
+        const currentObjective = document.getElementById('current-objective');
+        const timerElement = document.getElementById('timer');
+        const puzzlesSolvedElement = document.getElementById('puzzles-solved');
+        const hintsLeftElement = document.getElementById('hints-left');
+        const useBtn = document.getElementById('use-btn');
+        const combineBtn = document.getElementById('combine-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const hintBtn = document.getElementById('hint-btn');
+        const messageBox = document.getElementById('message-box');
+        const messageTitle = document.getElementById('message-title');
+        const messageContent = document.getElementById('message-content');
+        const continueBtn = document.getElementById('continue-btn');
+        const reactionResult = document.getElementById('reaction-result');
+        const reactionText = document.getElementById('reaction-text');
+        const gameOverlay = document.getElementById('game-overlay');
+        const labObjectsElements = document.querySelectorAll('.lab-object');
+        const combineInstruction = document.getElementById('combine-instruction');
+
+        // Initialize the game
+        function initGame() {
+            // Set up initial inventory with first puzzle items
+            gameData.inventory = itemsData.filter(item => item.puzzle === 1);
+            
+            // Set initial objective
+            currentObjective.textContent = objectives[0];
+            
+            // Set up event listeners
+            useBtn.addEventListener('click', useSelectedItem);
+            combineBtn.addEventListener('click', startCombineMode);
+            cancelBtn.addEventListener('click', cancelCombineMode);
+            hintBtn.addEventListener('click', useHint);
+            continueBtn.addEventListener('click', closeMessageBox);
+            
+            // Set up lab object click events
+            labObjectsElements.forEach(object => {
+                object.addEventListener('click', () => interactWithObject(object.id));
+            });
+            
+            // Create inventory display
+            updateInventoryDisplay();
+            
+            // Start game timer
+            startGameTimer();
+            
+            // Initial game message
+            showMessage(
+                "Chemistry Lab Escape", 
+                "Welcome to the chemistry lab! You're locked in and need to escape. Use your knowledge of chemical reactions to solve 5 puzzles. The clock is ticking - you have 10 minutes!",
+                "start"
+            );
+        }
+
+        // Start the game timer
+        function startGameTimer() {
+            const timerInterval = setInterval(() => {
+                if (!gameData.gameActive) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+                
+                gameData.timeLeft--;
+                
+                // Update timer display
+                const minutes = Math.floor(gameData.timeLeft / 60);
+                const seconds = gameData.timeLeft % 60;
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Check for game over (time's up)
+                if (gameData.timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    gameOver(false);
+                }
+                
+                // Flash timer when less than 2 minutes
+                if (gameData.timeLeft < 120) {
+                    timerElement.style.color = '#e74c3c';
+                    if (gameData.timeLeft % 2 === 0) {
+                        timerElement.style.animation = 'none';
+                        setTimeout(() => {
+                            timerElement.style.animation = 'pulse 1s infinite';
+                        }, 10);
+                    }
+                }
+            }, 1000);
+        }
+
+        // Update inventory display
+        function updateInventoryDisplay() {
+            inventoryItemsContainer.innerHTML = '';
+            
+            gameData.inventory.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'inventory-item';
+                
+                // Add classes based on state
+                if (gameData.selectedItem && gameData.selectedItem.id === item.id) {
+                    itemElement.classList.add('selected');
+                }
+                
+                if (gameData.combineMode && gameData.firstCombineItem && gameData.firstCombineItem.id === item.id) {
+                    itemElement.classList.add('selected');
+                }
+                
+                itemElement.dataset.id = item.id;
+                
+                itemElement.innerHTML = `
+                    <div class="item-icon"><i class="fas ${item.icon}"></i></div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-quantity">Qty: ${item.quantity}</div>
+                `;
+                
+                // Add click event - different behavior based on mode
+                if (gameData.combineMode) {
+                    itemElement.classList.add('combine-mode');
+                    itemElement.addEventListener('click', () => handleCombineClick(item));
+                } else {
+                    itemElement.addEventListener('click', () => selectInventoryItem(item.id));
+                }
+                
+                inventoryItemsContainer.appendChild(itemElement);
+            });
+            
+            // Add empty slots if needed
+            const emptySlots = 6 - gameData.inventory.length;
+            for (let i = 0; i < emptySlots; i++) {
+                const emptySlot = document.createElement('div');
+                emptySlot.className = 'inventory-item locked';
+                emptySlot.innerHTML = `
+                    <div class="item-icon"><i class="fas fa-question"></i></div>
+                    <div class="item-name">Empty Slot</div>
+                    <div class="item-quantity">Find items</div>
+                `;
+                inventoryItemsContainer.appendChild(emptySlot);
+            }
+        }
+
+        // Select an inventory item
+        function selectInventoryItem(itemId) {
+            const item = gameData.inventory.find(item => item.id === itemId);
+            if (item) {
+                gameData.selectedItem = item;
+                updateInventoryDisplay();
+            }
+        }
+
+        // Start combine mode
+        function startCombineMode() {
+            if (gameData.inventory.length < 2) {
+                showMessage("Not Enough Items", "You need at least 2 items in your inventory to combine them.", "error");
+                return;
+            }
+            
+            gameData.combineMode = true;
+            gameData.firstCombineItem = null;
+            
+            // Update UI
+            combineInstruction.style.display = 'block';
+            cancelBtn.style.display = 'flex';
+            combineBtn.style.display = 'none';
+            
+            // Show instructions
+            showMessage("Combine Mode", "Click the first item you want to combine, then click a second item.", "instruction");
+            
+            updateInventoryDisplay();
+        }
+
+        // Cancel combine mode
+        function cancelCombineMode() {
+            gameData.combineMode = false;
+            gameData.firstCombineItem = null;
+            
+            // Update UI
+            combineInstruction.style.display = 'none';
+            cancelBtn.style.display = 'none';
+            combineBtn.style.display = 'flex';
+            
+            updateInventoryDisplay();
+        }
+
+        // Handle combine click
+        function handleCombineClick(item) {
+            if (!gameData.firstCombineItem) {
+                // First item selected
+                gameData.firstCombineItem = item;
+                combineInstruction.innerHTML = `<i class="fas fa-hand-point-up"></i> Now click a second item to combine with ${item.name}`;
+                updateInventoryDisplay();
+            } else {
+                // Second item selected - attempt combination
+                if (gameData.firstCombineItem.id === item.id) {
+                    showMessage("Same Item", "You can't combine an item with itself. Select a different item.", "error");
+                    return;
+                }
+                
+                // Attempt the reaction
+                attemptChemicalReaction(gameData.firstCombineItem.id, item.id);
+                
+                // Exit combine mode
+                cancelCombineMode();
+            }
+        }
+
+        // Use selected item on a lab object
+        function useSelectedItem() {
+            if (!gameData.selectedItem) {
+                showMessage("No Item Selected", "Please select an item from your inventory first.", "error");
+                return;
+            }
+            
+            showMessage("Use Item", "Click on a lab object to use the selected item on it.", "instruction");
+            
+            // Set up one-time click handlers for lab objects
+            labObjectsElements.forEach(object => {
+                const originalBorder = object.style.border;
+                object.style.border = "3px solid #2ecc71";
+                
+                const clickHandler = () => {
+                    useItemOnObject(gameData.selectedItem.id, object.id);
+                    // Restore original styling
+                    object.style.border = originalBorder;
+                    // Remove the click handler
+                    object.removeEventListener('click', clickHandler);
+                    // Clear the instruction
+                    closeMessageBox();
+                };
+                
+                object.addEventListener('click', clickHandler);
+            });
+        }
+
+        // Use item on a specific lab object
+        function useItemOnObject(itemId, objectId) {
+            const item = gameData.inventory.find(item => item.id === itemId);
+            const object = labObjects[objectId];
+            
+            // Check if this is the right item for the puzzle
+            if (object.requiredItem && object.requiredItem === itemId) {
+                // Success! Solve the puzzle
+                solvePuzzle(object.puzzle);
+                
+                // Special case for key on cabinet
+                if (itemId === "key" && objectId === "storageCabinet") {
+                    showMessage(
+                        "Cabinet Unlocked", 
+                        "You used the key to unlock the cabinet. Inside you find hydrochloric acid and calcium carbonate!",
+                        "success"
+                    );
+                    
+                    // Add new items to inventory
+                    addItemToInventory("hydrochloric_acid");
+                    addItemToInventory("calcium_carbonate");
+                    
+                    // Mark cabinet as solved
+                    document.getElementById(objectId).classList.add('puzzle-solved');
+                }
+                
+                // Special case for acid on door
+                if (itemId === "acid_solution" && objectId === "door") {
+                    showMessage(
+                        "Door Mechanism", 
+                        "You pour the acid solution on the metal door lock. It begins to corrode the mechanism!",
+                        "success"
+                    );
+                }
+                
+            } else {
+                // Wrong item
+                showMessage(
+                    "Not Useful", 
+                    `The ${item.name} doesn't seem to do anything useful with the ${object.name}. Try something else.`,
+                    "error"
+                );
+            }
+        }
+
+        // Attempt a chemical reaction with two items
+        function attemptChemicalReaction(item1Id, item2Id) {
+            // Find if there's a reaction that uses these two items
+            const reaction = chemicalReactions.find(reaction => {
+                const hasReactant1 = reaction.reactants.includes(item1Id);
+                const hasReactant2 = reaction.reactants.includes(item2Id);
+                const correctPuzzle = reaction.puzzle === gameData.currentPuzzle;
+                
+                return hasReactant1 && hasReactant2 && correctPuzzle;
+            });
+            
+            if (reaction) {
+                // Successful reaction!
+                showReactionResult(reaction);
+                
+                // Remove reactants from inventory
+                removeItemFromInventory(item1Id);
+                removeItemFromInventory(item2Id);
+                
+                // Solve the puzzle
+                solvePuzzle(reaction.puzzle);
+                
+                // Unlock the next puzzle or object
+                if (reaction.unlocks === "key") {
+                    // Special case: add key to inventory
+                    addItemToInventory("key");
+                } else if (reaction.unlocks === "door") {
+                    // Special case: prepare acid solution for door
+                    addItemToInventory("acid_solution");
+                }
+                
+                // Mark corresponding lab object as available
+                if (reaction.unlocks && reaction.unlocks !== "key" && reaction.unlocks !== "door") {
+                    document.getElementById(reaction.unlocks).classList.remove('locked');
+                }
+                
+            } else {
+                // No reaction between these items (or wrong puzzle)
+                showMessage(
+                    "No Reaction", 
+                    "These chemicals don't react in a useful way, or it's not the right time for this reaction.",
+                    "error"
+                );
+            }
+        }
+
+        // Show reaction result animation
+        function showReactionResult(reaction) {
+            reactionText.textContent = reaction.result;
+            reactionResult.style.display = 'block';
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                reactionResult.style.display = 'none';
+            }, 3000);
+            
+            // Also show detailed message
+            showMessage(
+                reaction.name,
+                reaction.description,
+                "reaction"
+            );
+        }
+
+        // Solve a puzzle
+        function solvePuzzle(puzzleNumber) {
+            if (puzzleNumber === gameData.currentPuzzle) {
+                gameData.puzzlesSolved++;
+                gameData.currentPuzzle++;
+                
+                // Update display
+                puzzlesSolvedElement.textContent = `${gameData.puzzlesSolved}/${gameData.totalPuzzles}`;
+                currentObjective.textContent = objectives[gameData.currentPuzzle - 1];
+                
+                // Add new items for next puzzle if applicable
+                const nextPuzzleItems = itemsData.filter(item => item.puzzle === gameData.currentPuzzle && !item.hidden);
+                nextPuzzleItems.forEach(item => {
+                    if (!gameData.inventory.some(invItem => invItem.id === item.id)) {
+                        addItemToInventory(item.id);
+                    }
+                });
+                
+                // Check for game completion
+                if (gameData.puzzlesSolved === gameData.totalPuzzles) {
+                    // All puzzles solved - door is now unlockable
+                    gameData.doorLocked = false;
+                    showMessage(
+                        "Final Puzzle Solved!", 
+                        "You've solved all the chemistry puzzles! Now use the acid solution on the door to escape.",
+                        "success"
+                    );
+                } else {
+                    showMessage(
+                        "Puzzle Solved!", 
+                        `Great work! You've solved puzzle ${puzzleNumber}. ${gameData.totalPuzzles - gameData.puzzlesSolved} more to go.`,
+                        "success"
+                    );
+                }
+            }
+        }
+
+        // Interact with a lab object
+        function interactWithObject(objectId) {
+            const object = labObjects[objectId];
+            
+            // Check if object is locked or has special interaction
+            if (object.status === "locked" && object.requiredItem) {
+                showMessage(
+                    object.name, 
+                    `The ${object.name} is locked. You need ${object.requiredItem === "key" ? "a key" : "an acid solution"} to open it.`,
+                    "info"
+                );
+            } else {
+                // General interaction - search for items
+                searchObject(objectId);
+            }
+        }
+
+        // Search a lab object for items
+        function searchObject(objectId) {
+            let foundItem = null;
+            
+            // Different objects yield different items
+            switch(objectId) {
+                case "chemicalShelf":
+                    foundItem = gameData.currentPuzzle === 1 ? "sodium" : "vinegar";
+                    break;
+                case "fumeHood":
+                    foundItem = "baking_soda";
+                    break;
+                case "labBench":
+                    foundItem = gameData.currentPuzzle === 3 ? "copper_sulfate" : "magnesium";
+                    break;
+                case "storageCabinet":
+                    foundItem = "iron_nail";
+                    break;
+            }
+            
+            if (foundItem) {
+                // Check if player already has this item
+                if (gameData.inventory.some(item => item.id === foundItem)) {
+                    showMessage(
+                        labObjects[objectId].name, 
+                        `You've already searched the ${labObjects[objectId].name.toLowerCase()}. Nothing new here.`,
+                        "info"
+                    );
+                } else {
+                    // Add item to inventory
+                    addItemToInventory(foundItem);
+                    showMessage(
+                        "Item Found!", 
+                        `You found ${itemsData.find(item => item.id === foundItem).name} in the ${labObjects[objectId].name.toLowerCase()}!`,
+                        "success"
+                    );
+                }
+            } else {
+                showMessage(
+                    labObjects[objectId].name, 
+                    `You examine the ${labObjects[objectId].name.toLowerCase()}, but don't find anything useful right now.`,
+                    "info"
+                );
+            }
+        }
+
+        // Add item to inventory
+        function addItemToInventory(itemId) {
+            const item = itemsData.find(item => item.id === itemId);
+            if (item && !gameData.inventory.some(invItem => invItem.id === itemId)) {
+                gameData.inventory.push({...item});
+                updateInventoryDisplay();
+            }
+        }
+
+        // Remove item from inventory
+        function removeItemFromInventory(itemId) {
+            const itemIndex = gameData.inventory.findIndex(item => item.id === itemId);
+            if (itemIndex !== -1) {
+                gameData.inventory.splice(itemIndex, 1);
+                updateInventoryDisplay();
+                
+                // Clear selection if selected item was removed
+                if (gameData.selectedItem && gameData.selectedItem.id === itemId) {
+                    gameData.selectedItem = null;
+                }
+            }
+        }
+
+        // Use a hint
+        function useHint() {
+            if (gameData.hintsLeft <= 0) {
+                showMessage("No Hints Left", "You've used all your hints! You'll have to figure this out on your own.", "error");
+                return;
+            }
+            
+            gameData.hintsLeft--;
+            hintsLeftElement.textContent = gameData.hintsLeft;
+            
+            // Provide a hint based on current puzzle
+            let hint = "";
+            switch(gameData.currentPuzzle) {
+                case 1:
+                    hint = "Try combining reactive metals with water to produce gases.";
+                    break;
+                case 2:
+                    hint = "Acids combined with carbonates produce carbon dioxide gas.";
+                    break;
+                case 3:
+                    hint = "Some metals can displace other metals from their compounds in solution.";
+                    break;
+                case 4:
+                    hint = "Strong acids react with metal carbonates to produce gas. Gas can create pressure.";
+                    break;
+                case 5:
+                    hint = "Acids react with some metals to produce hydrogen gas, which is flammable.";
+                    break;
+                default:
+                    hint = "Look for items around the lab and try combining them in different ways.";
+            }
+            
+            showMessage("Hint", hint, "hint");
+        }
+
+        // Show message box
+        function showMessage(title, content, type) {
+            messageTitle.innerHTML = `<i class="fas fa-flask"></i> ${title}`;
+            messageContent.textContent = content;
+            
+            // Set color based on type
+            if (type === "error") {
+                messageBox.style.borderColor = "#e74c3c";
+                messageTitle.style.color = "#e74c3c";
+            } else if (type === "success") {
+                messageBox.style.borderColor = "#2ecc71";
+                messageTitle.style.color = "#2ecc71";
+            } else if (type === "hint") {
+                messageBox.style.borderColor = "#f1c40f";
+                messageTitle.style.color = "#f1c40f";
+            } else {
+                messageBox.style.borderColor = "#3498db";
+                messageTitle.style.color = "#3498db";
+            }
+            
+            messageBox.style.display = 'block';
+            gameOverlay.style.display = 'block';
+        }
+
+        // Close message box
+        function closeMessageBox() {
+            messageBox.style.display = 'none';
+            gameOverlay.style.display = 'none';
+            
+            // Check for game completion after closing certain messages
+            if (gameData.puzzlesSolved === gameData.totalPuzzles && !gameData.doorLocked) {
+                // Player has solved all puzzles and used acid on door
+                setTimeout(() => {
+                    gameOver(true);
+                }, 500);
+            }
+        }
+
+        // Game over
+        function gameOver(success) {
+            gameData.gameActive = false;
+            
+            if (success) {
+                showMessage(
+                    "Escape Successful!", 
+                    `Congratulations! You escaped the chemistry lab with ${Math.floor(gameData.timeLeft/60)}:${(gameData.timeLeft%60).toString().padStart(2, '0')} remaining! You used chemistry to solve all ${gameData.totalPuzzles} puzzles.`,
+                    "success"
+                );
+                
+                // Change continue button to play again
+                continueBtn.textContent = "Play Again";
+                continueBtn.onclick = () => location.reload();
+                
+                // Change door icon to open
+                document.getElementById('door').innerHTML = `
+                    <i class="fas fa-door-open" style="color:#2ecc71"></i>
+                    <div class="object-label">Open Door</div>
+                `;
+            } else {
+                showMessage(
+                    "Time's Up!", 
+                    "You ran out of time and couldn't escape the lab. Better luck next time!",
+                    "error"
+                );
+                
+                // Change continue button to try again
+                continueBtn.textContent = "Try Again";
+                continueBtn.onclick = () => location.reload();
+            }
+        }
+
+        // Initialize the game when page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

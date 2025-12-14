@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Element Match - Progressive Levels</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1b2e 0%, #0c0d1a 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(78, 205, 196, 0.15);
+            border-radius: 20px;
+            border: 3px solid #4ecdc4;
+            box-shadow: 0 10px 30px rgba(78, 205, 196, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #ff6b6b;
+            text-shadow: 0 2px 10px rgba(255, 107, 107, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            color: #ffd166;
+        }
+
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .control-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #start-btn {
+            background: linear-gradient(to right, #06d6a0, #05b888);
+            color: white;
+        }
+
+        #start-btn:hover:not(:disabled) {
+            background: linear-gradient(to right, #05b888, #049c73);
+            box-shadow: 0 8px 20px rgba(6, 214, 160, 0.4);
+        }
+
+        #reset-btn {
+            background: linear-gradient(to right, #ffd166, #ffc043);
+            color: white;
+        }
+
+        #reset-btn:hover:not(:disabled) {
+            background: linear-gradient(to right, #ffc043, #ffb030);
+            box-shadow: 0 8px 20px rgba(255, 209, 102, 0.4);
+        }
+
+        #hint-btn {
+            background: linear-gradient(to right, #118ab2, #0d7799);
+            color: white;
+        }
+
+        #hint-btn:hover:not(:disabled) {
+            background: linear-gradient(to right, #0d7799, #0a6380);
+            box-shadow: 0 8px 20px rgba(17, 138, 178, 0.4);
+        }
+
+        #next-level-btn {
+            background: linear-gradient(to right, #9d4edd, #7b2cbf);
+            color: white;
+        }
+
+        #next-level-btn:hover:not(:disabled) {
+            background: linear-gradient(to right, #7b2cbf, #5a189a);
+            box-shadow: 0 8px 20px rgba(157, 78, 221, 0.4);
+        }
+
+        .game-info {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .game-info {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .game-info {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .info-card {
+            background: rgba(17, 138, 178, 0.2);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #118ab2;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #4ecdc4;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffd166;
+        }
+
+        .info-subvalue {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 3px;
+        }
+
+        .game-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            border: 3px solid #ff6b6b;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.2);
+            margin-bottom: 30px;
+            min-height: 400px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .game-board {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .game-board {
+                grid-template-columns: repeat(8, 1fr);
+            }
+        }
+
+        .card {
+            aspect-ratio: 1;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-front {
+            background: linear-gradient(145deg, #2d3047, #1c1e2e);
+            border: 3px solid #ffd166;
+            color: #ffd166;
+            font-size: 2.2rem;
+        }
+
+        .card-back {
+            background: linear-gradient(145deg, #1c1e2e, #2d3047);
+            border: 3px solid #4ecdc4;
+            transform: rotateY(180deg);
+            text-align: center;
+        }
+
+        .element-symbol {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ff6b6b;
+        }
+
+        .element-name {
+            font-size: 0.8rem;
+            color: #ffd166;
+            margin-bottom: 5px;
+        }
+
+        .element-number {
+            font-size: 0.7rem;
+            color: #4ecdc4;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+
+        .element-type {
+            font-size: 0.7rem;
+            color: #aaa;
+            margin-top: 3px;
+        }
+
+        .level-progress {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(157, 78, 221, 0.1);
+            padding: 15px 20px;
+            border-radius: 15px;
+            border: 2px solid #9d4edd;
+            margin-bottom: 20px;
+        }
+
+        .level-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .level-badge {
+            background: #9d4edd;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .level-title {
+            color: #ffd166;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .level-stats {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #06d6a0, #4ecdc4);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #ff6b6b;
+        }
+
+        .instructions h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .instructions p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .instructions strong {
+            color: #ffd166;
+        }
+
+        .instructions ul {
+            padding-left: 25px;
+            margin-top: 10px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .match-animation {
+            animation: matchPulse 0.5s ease 3;
+        }
+
+        @keyframes matchPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            width: 500px;
+            max-width: 90%;
+            z-index: 1000;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+            border: 4px solid;
+            display: none;
+            text-align: center;
+        }
+
+        .feedback.success {
+            border-color: #06d6a0;
+        }
+
+        .feedback.level-complete {
+            border-color: #9d4edd;
+        }
+
+        .feedback-title {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            color: inherit;
+        }
+
+        .success .feedback-title {
+            color: #06d6a0;
+        }
+
+        .level-complete .feedback-title {
+            color: #9d4edd;
+        }
+
+        .feedback-content {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .feedback-btn {
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 1.1rem;
+            margin: 0 10px;
+        }
+
+        .continue-btn {
+            background: #06d6a0;
+            color: white;
+        }
+
+        .next-level-btn {
+            background: #9d4edd;
+            color: white;
+        }
+
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+            display: none;
+        }
+
+        .card.matched {
+            opacity: 0.7;
+            cursor: default;
+        }
+
+        .card.matched .card-back {
+            border-color: #06d6a0;
+            background: linear-gradient(145deg, #0d2818, #1e4031);
+        }
+
+        .current-element {
+            background: rgba(239, 71, 111, 0.2);
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid #ef476f;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .element-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .element-display {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ffd166;
+        }
+
+        .hint-text {
+            color: #4ecdc4;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        .element-category {
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 3px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .category-metal { background: rgba(255, 107, 107, 0.3); color: #ff6b6b; }
+        .category-nonmetal { background: rgba(78, 205, 196, 0.3); color: #4ecdc4; }
+        .category-noble { background: rgba(157, 78, 221, 0.3); color: #9d4edd; }
+        .category-alkali { background: rgba(255, 209, 102, 0.3); color: #ffd166; }
+        .category-alkaline { background: rgba(17, 138, 178, 0.3); color: #118ab2; }
+        .category-transition { background: rgba(239, 71, 111, 0.3); color: #ef476f; }
+        .category-halogen { background: rgba(6, 214, 160, 0.3); color: #06d6a0; }
+
+        .win-celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            pointer-events: none;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--color);
+            border-radius: 50%;
+            animation: confettiFall 2s ease-out forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .game-title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-title h2 {
+            color: #ffd166;
+            font-size: 1.5rem;
+        }
+
+        .game-title p {
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .level-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid;
+        }
+
+        .level-circle.available {
+            background: rgba(78, 205, 196, 0.2);
+            border-color: #4ecdc4;
+            color: #4ecdc4;
+        }
+
+        .level-circle.available:hover {
+            background: rgba(78, 205, 196, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .level-circle.current {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .level-circle.completed {
+            background: #06d6a0;
+            border-color: #06d6a0;
+            color: white;
+        }
+
+        .level-circle.locked {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #666;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .final-score {
+            font-size: 3rem;
+            color: #ffd166;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .score-breakdown {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .score-label {
+            color: #4ecdc4;
+        }
+
+        .score-value {
+            color: #ffd166;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-overlay" id="game-overlay"></div>
+    
+    <div class="win-celebration" id="win-celebration"></div>
+    
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-trophy"></i> Element Match Challenge</h1>
+            <p class="subtitle">Complete all 5 levels to become a Periodic Table Master!</p>
+        </header>
+        
+        <div class="level-progress">
+            <div class="level-info">
+                <div class="level-badge" id="current-level-badge">1</div>
+                <div>
+                    <div class="level-title" id="level-title">Level 1: Beginner Elements</div>
+                    <div class="level-stats" id="level-stats">4 pairs to match</div>
+                </div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+            
+            <div class="level-info">
+                <div class="level-stats">Score: <span id="total-score">0</span></div>
+            </div>
+        </div>
+        
+        <div class="level-selector" id="level-selector">
+            <!-- Level circles will be generated here -->
+        </div>
+        
+        <div class="game-controls">
+            <button class="control-btn" id="start-btn">
+                <i class="fas fa-play"></i> Start Level
+            </button>
+            <button class="control-btn" id="reset-btn" disabled>
+                <i class="fas fa-redo"></i> Restart Level
+            </button>
+            <button class="control-btn" id="hint-btn" disabled>
+                <i class="fas fa-lightbulb"></i> Get Hint
+            </button>
+            <button class="control-btn" id="next-level-btn" disabled>
+                <i class="fas fa-forward"></i> Next Level
+            </button>
+        </div>
+        
+        <div class="game-info">
+            <div class="info-card">
+                <div class="info-label">Matches</div>
+                <div class="info-value" id="matches">0/0</div>
+                <div class="info-subvalue">Pairs found</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Moves</div>
+                <div class="info-value" id="moves">0</div>
+                <div class="info-subvalue">Total moves</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Time</div>
+                <div class="info-value" id="timer">00:00</div>
+                <div class="info-subvalue">This level</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Accuracy</div>
+                <div class="info-value" id="accuracy">100%</div>
+                <div class="info-subvalue">Correct moves</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Level Score</div>
+                <div class="info-value" id="level-score">0</div>
+                <div class="info-subvalue">This level</div>
+            </div>
+        </div>
+        
+        <div class="current-element" id="current-element">
+            <div class="element-info">
+                <div class="element-display" id="looking-for">Click Start to begin!</div>
+                <div class="hint-text" id="hint-text">Match element symbols with their names</div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="game-title">
+                <h2 id="game-title">Ready to Play?</h2>
+                <p id="game-subtitle">Click "Start Level" to begin matching elements!</p>
+            </div>
+            
+            <div class="game-board" id="game-board">
+                <!-- Cards will be generated here -->
+            </div>
+            
+            <div class="level-stats" style="text-align: center; margin-top: 20px; color: #aaa;" id="game-instruction">
+                <i class="fas fa-info-circle"></i> Complete level to unlock the next one!
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-graduation-cap"></i> How to Play & Scoring</h3>
+            <ul>
+                <li><strong>Complete 5 levels</strong> with increasing difficulty</li>
+                <li><strong>Each level</strong> gives you score based on speed and accuracy</li>
+                <li><strong>Level Score = (1000 - Time in seconds) × Accuracy% × Difficulty Multiplier</strong></li>
+                <li><strong>Bonus points</strong> for perfect accuracy and speed</li>
+                <li><strong>Unlock next level</strong> by completing current one</li>
+                <li><strong>Final score</strong> = Sum of all level scores + completion bonus</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Element Match Challenge - Progressive Levels</p>
+            <p>Made with <i class="fas fa-atom" style="color:#4ecdc4;"></i> for aspiring chemists</p>
+        </footer>
+    </div>
+    
+    <!-- Feedback Messages -->
+    <div class="feedback level-complete" id="level-complete-feedback">
+        <h2 class="feedback-title"><i class="fas fa-star"></i> Level Complete!</h2>
+        <div class="feedback-content" id="level-complete-content">
+            <!-- Content will be filled dynamically -->
+        </div>
+        <button class="feedback-btn next-level-btn" id="next-level-continue-btn">Next Level</button>
+        <button class="feedback-btn continue-btn" id="level-continue-btn">Play Again</button>
+    </div>
+
+    <div class="feedback success" id="game-complete-feedback">
+        <h2 class="feedback-title"><i class="fas fa-trophy"></i> Game Complete!</h2>
+        <div class="feedback-content" id="game-complete-content">
+            <!-- Content will be filled dynamically -->
+        </div>
+        <button class="feedback-btn continue-btn" id="play-again-btn">Play Again</button>
+    </div>
+
+    <script>
+        // Game data
+        const gameData = {
+            currentLevel: 1,
+            maxLevel: 5,
+            levels: [
+                { level: 1, name: "Beginner Elements", pairs: 4, difficulty: 1, completed: false, score: 0 },
+                { level: 2, name: "Common Elements", pairs: 6, difficulty: 1.2, completed: false, score: 0 },
+                { level: 3, name: "Essential Elements", pairs: 8, difficulty: 1.5, completed: false, score: 0 },
+                { level: 4, name: "Advanced Elements", pairs: 10, difficulty: 2, completed: false, score: 0 },
+                { level: 5, name: "Expert Elements", pairs: 12, difficulty: 2.5, completed: false, score: 0 }
+            ],
+            cards: [],
+            flippedCards: [],
+            matchedPairs: 0,
+            totalPairs: 4,
+            moves: 0,
+            correctMoves: 0,
+            gameStarted: false,
+            gameActive: false,
+            timeElapsed: 0,
+            timerInterval: null,
+            currentHint: null,
+            levelScore: 0,
+            totalScore: 0
+        };
+
+        // Element database - organized by difficulty
+        const elements = [
+            // Level 1 elements (easiest)
+            { symbol: "H", name: "Hydrogen", number: 1, category: "nonmetal", hint: "Lightest element" },
+            { symbol: "He", name: "Helium", number: 2, category: "noble", hint: "Balloon gas" },
+            { symbol: "C", name: "Carbon", number: 6, category: "nonmetal", hint: "Makes diamonds" },
+            { symbol: "O", name: "Oxygen", number: 8, category: "nonmetal", hint: "We breathe it" },
+            
+            // Level 2 elements
+            { symbol: "N", name: "Nitrogen", number: 7, category: "nonmetal", hint: "78% of air" },
+            { symbol: "Na", name: "Sodium", number: 11, category: "alkali", hint: "In table salt" },
+            { symbol: "Mg", name: "Magnesium", number: 12, category: "alkaline", hint: "In chlorophyll" },
+            { symbol: "Al", name: "Aluminum", number: 13, category: "metal", hint: "Light metal" },
+            { symbol: "S", name: "Sulfur", number: 16, category: "nonmetal", hint: "Smells bad" },
+            { symbol: "Cl", name: "Chlorine", number: 17, category: "halogen", hint: "In pools" },
+            
+            // Level 3 elements
+            { symbol: "P", name: "Phosphorus", number: 15, category: "nonmetal", hint: "Glows in dark" },
+            { symbol: "K", name: "Potassium", number: 19, category: "alkali", hint: "In bananas" },
+            { symbol: "Ca", name: "Calcium", number: 20, category: "alkaline", hint: "In bones" },
+            { symbol: "Fe", name: "Iron", number: 26, category: "transition", hint: "Magnetic metal" },
+            { symbol: "Cu", name: "Copper", number: 29, category: "transition", hint: "Penny metal" },
+            { symbol: "Zn", name: "Zinc", number: 30, category: "transition", hint: "In batteries" },
+            { symbol: "Ag", name: "Silver", number: 47, category: "transition", hint: "Shiny jewelry" },
+            { symbol: "Au", name: "Gold", number: 79, category: "transition", hint: "Expensive metal" },
+            
+            // Level 4 elements
+            { symbol: "Li", name: "Lithium", number: 3, category: "alkali", hint: "In batteries" },
+            { symbol: "Be", name: "Beryllium", number: 4, category: "alkaline", hint: "Light metal" },
+            { symbol: "B", name: "Boron", number: 5, category: "metal", hint: "In borax" },
+            { symbol: "F", name: "Fluorine", number: 9, category: "halogen", hint: "In toothpaste" },
+            { symbol: "Ne", name: "Neon", number: 10, category: "noble", hint: "Glowing signs" },
+            { symbol: "Si", name: "Silicon", number: 14, category: "metal", hint: "In computer chips" },
+            { symbol: "Ar", name: "Argon", number: 18, category: "noble", hint: "Inert gas" },
+            { symbol: "Ni", name: "Nickel", number: 28, category: "transition", hint: "In coins" },
+            { symbol: "Br", name: "Bromine", number: 35, category: "halogen", hint: "Liquid halogen" },
+            { symbol: "I", name: "Iodine", number: 53, category: "halogen", hint: "Antiseptic" },
+            
+            // Level 5 elements
+            { symbol: "Sc", name: "Scandium", number: 21, category: "transition", hint: "Rare earth" },
+            { symbol: "Ti", name: "Titanium", number: 22, category: "transition", hint: "Strong metal" },
+            { symbol: "Cr", name: "Chromium", number: 24, category: "transition", hint: "Shiny coating" },
+            { symbol: "Mn", name: "Manganese", number: 25, category: "transition", hint: "In steel" },
+            { symbol: "Co", name: "Cobalt", number: 27, category: "transition", hint: "Blue color" },
+            { symbol: "Ga", name: "Gallium", number: 31, category: "metal", hint: "Melts in hand" },
+            { symbol: "Kr", name: "Krypton", number: 36, category: "noble", hint: "Superman planet" },
+            { symbol: "Rb", name: "Rubidium", number: 37, category: "alkali", hint: "Radioactive" },
+            { symbol: "Sr", name: "Strontium", number: 38, category: "alkaline", hint: "In fireworks" },
+            { symbol: "Sn", name: "Tin", number: 50, category: "metal", hint: "Cans metal" },
+            { symbol: "Xe", name: "Xenon", number: 54, category: "noble", hint: "Headlights" },
+            { symbol: "Pb", name: "Lead", number: 82, category: "metal", hint: "Pencil (wrongly)" }
+        ];
+
+        // Get category class
+        function getCategoryClass(category) {
+            const categoryMap = {
+                'metal': 'category-metal',
+                'nonmetal': 'category-nonmetal',
+                'noble': 'category-noble',
+                'alkali': 'category-alkali',
+                'alkaline': 'category-alkaline',
+                'transition': 'category-transition',
+                'halogen': 'category-halogen'
+            };
+            return categoryMap[category] || 'category-metal';
+        }
+
+        // DOM elements
+        const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const hintBtn = document.getElementById('hint-btn');
+        const nextLevelBtn = document.getElementById('next-level-btn');
+        const gameBoard = document.getElementById('game-board');
+        const matchesElement = document.getElementById('matches');
+        const movesElement = document.getElementById('moves');
+        const timerElement = document.getElementById('timer');
+        const accuracyElement = document.getElementById('accuracy');
+        const levelScoreElement = document.getElementById('level-score');
+        const totalScoreElement = document.getElementById('total-score');
+        const currentElement = document.getElementById('current-element');
+        const lookingForElement = document.getElementById('looking-for');
+        const hintText = document.getElementById('hint-text');
+        const gameTitle = document.getElementById('game-title');
+        const gameSubtitle = document.getElementById('game-subtitle');
+        const currentLevelBadge = document.getElementById('current-level-badge');
+        const levelTitle = document.getElementById('level-title');
+        const levelStats = document.getElementById('level-stats');
+        const progressFill = document.getElementById('progress-fill');
+        const levelSelector = document.getElementById('level-selector');
+        const levelCompleteFeedback = document.getElementById('level-complete-feedback');
+        const levelCompleteContent = document.getElementById('level-complete-content');
+        const nextLevelContinueBtn = document.getElementById('next-level-continue-btn');
+        const levelContinueBtn = document.getElementById('level-continue-btn');
+        const gameCompleteFeedback = document.getElementById('game-complete-feedback');
+        const gameCompleteContent = document.getElementById('game-complete-content');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const gameOverlay = document.getElementById('game-overlay');
+        const winCelebration = document.getElementById('win-celebration');
+
+        // Initialize the game
+        function initGame() {
+            // Event listeners
+            startBtn.addEventListener('click', startLevel);
+            resetBtn.addEventListener('click', restartLevel);
+            hintBtn.addEventListener('click', showHint);
+            nextLevelBtn.addEventListener('click', goToNextLevel);
+            nextLevelContinueBtn.addEventListener('click', goToNextLevel);
+            levelContinueBtn.addEventListener('click', replayLevel);
+            playAgainBtn.addEventListener('click', restartGame);
+            
+            // Initialize level selector
+            initLevelSelector();
+            
+            // Load current level
+            loadLevel(gameData.currentLevel);
+            
+            // Update display
+            updateDisplay();
+        }
+
+        // Initialize level selector circles
+        function initLevelSelector() {
+            levelSelector.innerHTML = '';
+            
+            for (let i = 1; i <= gameData.maxLevel; i++) {
+                const levelCircle = document.createElement('div');
+                levelCircle.className = 'level-circle';
+                levelCircle.textContent = i;
+                levelCircle.dataset.level = i;
+                
+                // Set status
+                if (i === gameData.currentLevel) {
+                    levelCircle.classList.add('current');
+                } else if (gameData.levels[i-1].completed) {
+                    levelCircle.classList.add('completed');
+                } else if (i === 1 || gameData.levels[i-2].completed) {
+                    levelCircle.classList.add('available');
+                } else {
+                    levelCircle.classList.add('locked');
+                }
+                
+                // Add click event for available levels
+                if (levelCircle.classList.contains('available') || levelCircle.classList.contains('completed')) {
+                    levelCircle.addEventListener('click', () => selectLevel(i));
+                }
+                
+                levelSelector.appendChild(levelCircle);
+            }
+        }
+
+        // Select a level
+        function selectLevel(level) {
+            if (level === gameData.currentLevel) return;
+            
+            // Update current level
+            gameData.currentLevel = level;
+            
+            // Reset game state for new level
+            resetGameState();
+            
+            // Load the level
+            loadLevel(level);
+            
+            // Update display
+            updateDisplay();
+        }
+
+        // Load a level
+        function loadLevel(levelNumber) {
+            const level = gameData.levels[levelNumber - 1];
+            
+            // Update level info display
+            currentLevelBadge.textContent = levelNumber;
+            levelTitle.textContent = `Level ${levelNumber}: ${level.name}`;
+            levelStats.textContent = `${level.pairs} pairs to match`;
+            
+            // Update total pairs
+            gameData.totalPairs = level.pairs;
+            
+            // Update game title
+            gameTitle.textContent = `Level ${levelNumber}: ${level.name}`;
+            gameSubtitle.textContent = `Find ${level.pairs} matching pairs of elements`;
+            
+            // Clear game board
+            gameBoard.innerHTML = '<p style="text-align: center; color: #aaa; padding: 50px;">Click "Start Level" to begin!</p>';
+            
+            // Hide current element hint
+            currentElement.style.display = 'none';
+            
+            // Update buttons
+            startBtn.disabled = false;
+            resetBtn.disabled = true;
+            hintBtn.disabled = true;
+            nextLevelBtn.disabled = true;
+            
+            // Update progress bar
+            updateProgressBar();
+            
+            // Update level selector
+            initLevelSelector();
+        }
+
+        // Start current level
+        function startLevel() {
+            if (gameData.gameActive) return;
+            
+            gameData.gameActive = true;
+            gameData.gameStarted = true;
+            gameData.matchedPairs = 0;
+            gameData.moves = 0;
+            gameData.correctMoves = 0;
+            gameData.timeElapsed = 0;
+            gameData.flippedCards = [];
+            gameData.levelScore = 0;
+            
+            // Start timer
+            startTimer();
+            
+            // Generate cards for current level
+            generateCards();
+            
+            // Shuffle cards
+            shuffleCards();
+            
+            // Display cards
+            displayCards();
+            
+            // Update display
+            updateDisplay();
+            
+            // Show first hint
+            updateCurrentElementHint();
+            
+            // Update buttons
+            startBtn.disabled = true;
+            resetBtn.disabled = false;
+            hintBtn.disabled = false;
+            
+            // Update progress bar
+            updateProgressBar();
+        }
+
+        // Generate cards for current level
+        function generateCards() {
+            gameData.cards = [];
+            
+            const currentLevel = gameData.currentLevel;
+            const level = gameData.levels[currentLevel - 1];
+            const elementCount = level.pairs;
+            
+            // Get elements for this level (each level gets its own set)
+            const levelElements = [];
+            const elementsPerLevel = Math.ceil(elements.length / gameData.maxLevel);
+            const startIndex = (currentLevel - 1) * elementsPerLevel;
+            const endIndex = Math.min(startIndex + elementCount, elements.length);
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                if (elements[i]) {
+                    levelElements.push(elements[i]);
+                }
+            }
+            
+            // If we need more elements, add some from the beginning
+            while (levelElements.length < elementCount) {
+                levelElements.push(elements[levelElements.length]);
+            }
+            
+            // Create pairs (symbol card and name card for each element)
+            levelElements.forEach(element => {
+                // Symbol card
+                gameData.cards.push({
+                    type: 'symbol',
+                    content: element.symbol,
+                    element: element,
+                    matched: false,
+                    id: element.symbol + '_symbol_' + currentLevel
+                });
+                
+                // Name card
+                gameData.cards.push({
+                    type: 'name',
+                    content: element.name,
+                    element: element,
+                    matched: false,
+                    id: element.symbol + '_name_' + currentLevel
+                });
+            });
+        }
+
+        // Shuffle cards
+        function shuffleCards() {
+            for (let i = gameData.cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [gameData.cards[i], gameData.cards[j]] = [gameData.cards[j], gameData.cards[i]];
+            }
+        }
+
+        // Display cards on board
+        function displayCards() {
+            gameBoard.innerHTML = '';
+            
+            gameData.cards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.dataset.index = index;
+                
+                const cardInner = document.createElement('div');
+                cardInner.className = 'card-inner';
+                
+                // Card front (question mark)
+                const cardFront = document.createElement('div');
+                cardFront.className = 'card-front';
+                cardFront.innerHTML = '<i class="fas fa-question"></i>';
+                
+                // Card back (content)
+                const cardBack = document.createElement('div');
+                cardBack.className = 'card-back';
+                
+                if (card.type === 'symbol') {
+                    cardBack.innerHTML = `
+                        <div class="element-symbol">${card.content}</div>
+                        <div class="element-number">${card.element.number}</div>
+                        <div class="element-type ${getCategoryClass(card.element.category)}">${card.element.category}</div>
+                    `;
+                } else {
+                    cardBack.innerHTML = `
+                        <div class="element-name">${card.content}</div>
+                        <div class="element-number">${card.element.number}</div>
+                        <div class="element-type ${getCategoryClass(card.element.category)}">${card.element.category}</div>
+                    `;
+                }
+                
+                cardInner.appendChild(cardFront);
+                cardInner.appendChild(cardBack);
+                cardElement.appendChild(cardInner);
+                
+                // Add click event
+                cardElement.addEventListener('click', () => flipCard(index));
+                
+                gameBoard.appendChild(cardElement);
+            });
+            
+            // Show current element hint
+            currentElement.style.display = 'block';
+        }
+
+        // Flip a card
+        function flipCard(index) {
+            if (!gameData.gameActive) return;
+            
+            const card = gameData.cards[index];
+            const cardElement = gameBoard.children[index];
+            
+            // Don't flip if already flipped, matched, or two cards already flipped
+            if (card.matched || 
+                cardElement.classList.contains('flipped') || 
+                gameData.flippedCards.length >= 2) {
+                return;
+            }
+            
+            // Flip the card
+            cardElement.classList.add('flipped');
+            gameData.flippedCards.push({ index, card });
+            
+            // If two cards are flipped, check for match
+            if (gameData.flippedCards.length === 2) {
+                gameData.moves++;
+                
+                const [first, second] = gameData.flippedCards;
+                
+                // Check if cards match (same element)
+                if (first.card.element.symbol === second.card.element.symbol) {
+                    // Match found!
+                    gameData.matchedPairs++;
+                    gameData.correctMoves++;
+                    
+                    // Mark cards as matched
+                    gameData.cards[first.index].matched = true;
+                    gameData.cards[second.index].matched = true;
+                    
+                    // Add match animation
+                    setTimeout(() => {
+                        gameBoard.children[first.index].classList.add('matched');
+                        gameBoard.children[second.index].classList.add('matched');
+                        gameBoard.children[first.index].classList.add('match-animation');
+                        gameBoard.children[second.index].classList.add('match-animation');
+                        
+                        setTimeout(() => {
+                            gameBoard.children[first.index].classList.remove('match-animation');
+                            gameBoard.children[second.index].classList.remove('match-animation');
+                        }, 1500);
+                    }, 500);
+                    
+                    // Update current element hint
+                    updateCurrentElementHint();
+                    
+                    // Update progress bar
+                    updateProgressBar();
+                    
+                    // Check for level completion
+                    if (gameData.matchedPairs === gameData.totalPairs) {
+                        setTimeout(completeLevel, 1000);
+                    }
+                } else {
+                    // No match, flip cards back after delay
+                    setTimeout(() => {
+                        gameBoard.children[first.index].classList.remove('flipped');
+                        gameBoard.children[second.index].classList.remove('flipped');
+                    }, 1000);
+                }
+                
+                // Clear flipped cards after checking
+                setTimeout(() => {
+                    gameData.flippedCards = [];
+                }, 1000);
+            }
+            
+            updateDisplay();
+        }
+
+        // Update current element hint
+        function updateCurrentElementHint() {
+            // Find first unmatched element
+            const unmatchedCard = gameData.cards.find(card => !card.matched);
+            
+            if (unmatchedCard) {
+                const element = unmatchedCard.element;
+                const cardType = unmatchedCard.type === 'symbol' ? 'name' : 'symbol';
+                
+                lookingForElement.textContent = `Find: ${cardType === 'symbol' ? element.name : element.symbol}`;
+                hintText.textContent = `Hint: ${element.hint}`;
+                gameData.currentHint = element;
+            } else {
+                lookingForElement.textContent = "All matches found!";
+                hintText.textContent = "Waiting for level completion...";
+            }
+        }
+
+        // Show hint
+        function showHint() {
+            if (!gameData.gameActive || !gameData.currentHint) return;
+            
+            // Highlight all cards with the current element
+            const currentElementSymbol = gameData.currentHint.symbol;
+            
+            gameData.cards.forEach((card, index) => {
+                if (card.element.symbol === currentElementSymbol && !card.matched) {
+                    const cardElement = gameBoard.children[index];
+                    cardElement.classList.add('match-animation');
+                    
+                    setTimeout(() => {
+                        cardElement.classList.remove('match-animation');
+                    }, 1500);
+                }
+            });
+        }
+
+        // Complete current level
+        function completeLevel() {
+            gameData.gameActive = false;
+            
+            // Stop timer
+            clearInterval(gameData.timerInterval);
+            
+            // Calculate level score
+            const currentLevelData = gameData.levels[gameData.currentLevel - 1];
+            const accuracy = gameData.moves > 0 
+                ? (gameData.correctMoves / gameData.moves) 
+                : 1;
+            
+            // Base score calculation
+            const timeBonus = Math.max(0, 300 - gameData.timeElapsed); // Max 5 minutes
+            const accuracyBonus = accuracy * 100;
+            const movesBonus = Math.max(0, (gameData.totalPairs * 2) - gameData.moves) * 10;
+            
+            // Level score formula
+            gameData.levelScore = Math.floor(
+                (1000 + timeBonus + movesBonus) * accuracy * currentLevelData.difficulty
+            );
+            
+            // Update level data
+            currentLevelData.completed = true;
+            currentLevelData.score = gameData.levelScore;
+            
+            // Update total score
+            gameData.totalScore = gameData.levels.reduce((sum, level) => sum + level.score, 0);
+            
+            // Show celebration
+            createConfetti();
+            
+            // Check if all levels are completed
+            const allLevelsCompleted = gameData.levels.every(level => level.completed);
+            
+            if (allLevelsCompleted) {
+                // Game complete - show final score
+                setTimeout(() => showGameComplete(), 1500);
+            } else {
+                // Level complete - show level results
+                setTimeout(() => showLevelComplete(), 1500);
+            }
+            
+            // Update display
+            updateDisplay();
+            
+            // Enable next level button
+            nextLevelBtn.disabled = false;
+        }
+
+        // Show level complete feedback
+        function showLevelComplete() {
+            const currentLevelData = gameData.levels[gameData.currentLevel - 1];
+            const nextLevelAvailable = gameData.currentLevel < gameData.maxLevel;
+            
+            levelCompleteContent.innerHTML = `
+                <p>🎉 Level ${gameData.currentLevel} Complete!</p>
+                <p><strong>Time:</strong> ${formatTime(gameData.timeElapsed)}</p>
+                <p><strong>Moves:</strong> ${gameData.moves} (Accuracy: ${Math.round((gameData.correctMoves / gameData.moves) * 100)}%)</p>
+                <p><strong>Level Score:</strong> ${gameData.levelScore} points</p>
+                <p><strong>Total Score:</strong> ${gameData.totalScore} points</p>
+                ${nextLevelAvailable ? '<p>Level ' + (gameData.currentLevel + 1) + ' unlocked!</p>' : ''}
+            `;
+            
+            showFeedback(levelCompleteFeedback);
+        }
+
+        // Show game complete feedback
+        function showGameComplete() {
+            // Calculate final score with completion bonus
+            const completionBonus = 5000; // Bonus for completing all levels
+            const perfectBonus = gameData.levels.every(level => level.score > 2000) ? 3000 : 0;
+            const finalScore = gameData.totalScore + completionBonus + perfectBonus;
+            
+            gameCompleteContent.innerHTML = `
+                <div class="final-score">${finalScore}</div>
+                <div class="score-breakdown">
+                    <div class="score-item">
+                        <span class="score-label">Level Scores Total:</span>
+                        <span class="score-value">${gameData.totalScore}</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score-label">Completion Bonus:</span>
+                        <span class="score-value">+${completionBonus}</span>
+                    </div>
+                    ${perfectBonus > 0 ? `
+                    <div class="score-item">
+                        <span class="score-label">Perfect Game Bonus:</span>
+                        <span class="score-value">+${perfectBonus}</span>
+                    </div>
+                    ` : ''}
+                    <div class="score-item" style="border-top: 2px solid #ffd166; padding-top: 10px;">
+                        <span class="score-label">FINAL SCORE:</span>
+                        <span class="score-value" style="font-size: 1.5rem;">${finalScore}</span>
+                    </div>
+                </div>
+                <p>🎊 Congratulations! You've completed all ${gameData.maxLevel} levels! 🎊</p>
+                <p>You are now a Periodic Table Master!</p>
+            `;
+            
+            showFeedback(gameCompleteFeedback);
+        }
+
+        // Go to next level
+        function goToNextLevel() {
+            if (gameData.currentLevel < gameData.maxLevel) {
+                gameData.currentLevel++;
+                resetGameState();
+                loadLevel(gameData.currentLevel);
+                hideAllFeedback();
+                updateDisplay();
+            }
+        }
+
+        // Replay current level
+        function replayLevel() {
+            hideAllFeedback();
+            restartLevel();
+        }
+
+        // Restart current level
+        function restartLevel() {
+            resetGameState();
+            loadLevel(gameData.currentLevel);
+            startLevel();
+        }
+
+        // Restart entire game
+        function restartGame() {
+            // Reset all levels
+            gameData.levels.forEach(level => {
+                level.completed = false;
+                level.score = 0;
+            });
+            
+            // Reset to level 1
+            gameData.currentLevel = 1;
+            gameData.totalScore = 0;
+            
+            // Reset game state
+            resetGameState();
+            
+            // Reload level 1
+            loadLevel(1);
+            
+            // Hide feedback
+            hideAllFeedback();
+            
+            // Update display
+            updateDisplay();
+        }
+
+        // Reset game state (keep level progress)
+        function resetGameState() {
+            gameData.cards = [];
+            gameData.flippedCards = [];
+            gameData.matchedPairs = 0;
+            gameData.moves = 0;
+            gameData.correctMoves = 0;
+            gameData.gameStarted = false;
+            gameData.gameActive = false;
+            gameData.timeElapsed = 0;
+            gameData.currentHint = null;
+            gameData.levelScore = 0;
+            
+            // Stop timer
+            clearInterval(gameData.timerInterval);
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            winCelebration.style.display = 'flex';
+            winCelebration.innerHTML = '';
+            
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffd166', '#06d6a0', '#118ab2', '#9d4edd'];
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+                confetti.style.setProperty('--color', colors[Math.floor(Math.random() * colors.length)]);
+                winCelebration.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    confetti.remove();
+                }, 2000);
+            }
+            
+            // Hide celebration after animation
+            setTimeout(() => {
+                winCelebration.style.display = 'none';
+            }, 2000);
+        }
+
+        // Start timer
+        function startTimer() {
+            if (gameData.timerInterval) clearInterval(gameData.timerInterval);
+            
+            gameData.timerInterval = setInterval(() => {
+                gameData.timeElapsed++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        // Update timer display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameData.timeElapsed / 60).toString().padStart(2, '0');
+            const seconds = (gameData.timeElapsed % 60).toString().padStart(2, '0');
+            timerElement.textContent = `${minutes}:${seconds}`;
+        }
+
+        // Format time for display
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            const percentage = (gameData.matchedPairs / gameData.totalPairs) * 100;
+            progressFill.style.width = `${percentage}%`;
+        }
+
+        // Update all displays
+        function updateDisplay() {
+            matchesElement.textContent = `${gameData.matchedPairs}/${gameData.totalPairs}`;
+            movesElement.textContent = gameData.moves;
+            
+            // Calculate accuracy
+            const accuracy = gameData.moves > 0 
+                ? Math.round((gameData.correctMoves / gameData.moves) * 100)
+                : 100;
+            accuracyElement.textContent = `${accuracy}%`;
+            
+            // Update scores
+            levelScoreElement.textContent = gameData.levelScore;
+            totalScoreElement.textContent = gameData.totalScore;
+            
+            // Update timer
+            updateTimerDisplay();
+        }
+
+        // Show feedback
+        function showFeedback(element) {
+            element.style.display = 'block';
+            gameOverlay.style.display = 'block';
+        }
+
+        // Hide all feedback
+        function hideAllFeedback() {
+            levelCompleteFeedback.style.display = 'none';
+            gameCompleteFeedback.style.display = 'none';
+            gameOverlay.style.display = 'none';
+        }
+
+        // Initialize the game when page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

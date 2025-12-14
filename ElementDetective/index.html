@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Element Detective - Stage Progression</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0c0d1a 0%, #1a1b2e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(157, 78, 221, 0.15);
+            border-radius: 20px;
+            border: 3px solid #9d4edd;
+            box-shadow: 0 10px 30px rgba(157, 78, 221, 0.2);
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: #4ecdc4;
+            text-shadow: 0 2px 10px rgba(78, 205, 196, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            color: #ffd166;
+        }
+
+        .stage-progress {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(6, 214, 160, 0.1);
+            padding: 20px;
+            border-radius: 20px;
+            border: 3px solid #06d6a0;
+            margin-bottom: 30px;
+        }
+
+        .stage-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stage-badge {
+            background: #9d4edd;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(157, 78, 221, 0.4);
+        }
+
+        .stage-text {
+            color: #ffd166;
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        .stage-stats {
+            color: #4ecdc4;
+            font-size: 1rem;
+        }
+
+        .progress-container {
+            flex-grow: 1;
+            margin: 0 30px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #06d6a0, #4ecdc4);
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .score-display {
+            text-align: right;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffd166;
+        }
+
+        .score-label {
+            color: #4ecdc4;
+            font-size: 0.9rem;
+        }
+
+        .game-info {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .game-info {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .info-card {
+            background: rgba(17, 138, 178, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #118ab2;
+        }
+
+        .info-label {
+            font-size: 0.9rem;
+            color: #4ecdc4;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #ffd166;
+        }
+
+        .game-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 3px solid #ef476f;
+            box-shadow: 0 8px 25px rgba(239, 71, 111, 0.2);
+        }
+
+        .stage-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stage-btn {
+            padding: 12px 25px;
+            border: 3px solid;
+            border-radius: 15px;
+            background: transparent;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        .stage-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+        }
+
+        .stage-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stage-btn.easy {
+            border-color: #06d6a0;
+            color: #06d6a0;
+        }
+
+        .stage-btn.easy:hover:not(:disabled),
+        .stage-btn.easy.active {
+            background: #06d6a0;
+            color: white;
+        }
+
+        .stage-btn.medium {
+            border-color: #ffd166;
+            color: #ffd166;
+        }
+
+        .stage-btn.medium:hover:not(:disabled),
+        .stage-btn.medium.active {
+            background: #ffd166;
+            color: black;
+        }
+
+        .stage-btn.hard {
+            border-color: #ef476f;
+            color: #ef476f;
+        }
+
+        .stage-btn.hard:hover:not(:disabled),
+        .stage-btn.hard.active {
+            background: #ef476f;
+            color: white;
+        }
+
+        .stage-btn.completed {
+            background: #9d4edd;
+            border-color: #9d4edd;
+            color: white;
+        }
+
+        .elements-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .elements-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .element-card {
+            background: rgba(157, 78, 221, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            border: 3px solid #9d4edd;
+            position: relative;
+            min-height: 300px;
+        }
+
+        .element-number {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #ffd166;
+        }
+
+        .element-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #ffd166;
+            margin: 20px 0;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .element-display .hidden {
+            letter-spacing: 10px;
+            color: rgba(255, 209, 102, 0.3);
+        }
+
+        .element-display.solved {
+            color: #06d6a0;
+            animation: solvedPulse 0.5s ease 3;
+        }
+
+        @keyframes solvedPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .clues-container {
+            margin-top: 20px;
+        }
+
+        .clues-title {
+            color: #4ecdc4;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .clues-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        @media (max-width: 480px) {
+            .clues-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .clue-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #4ecdc4;
+        }
+
+        .clue-label {
+            color: #4ecdc4;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .clue-value {
+            color: #ffd166;
+            font-size: 1.1rem;
+            font-weight: bold;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        .clue-value.hidden {
+            color: rgba(255, 209, 102, 0.3);
+            font-style: italic;
+        }
+
+        .reveal-btn {
+            background: rgba(255, 209, 102, 0.2);
+            border: 2px solid #ffd166;
+            color: #ffd166;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .reveal-btn:hover:not(:disabled) {
+            background: rgba(255, 209, 102, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .reveal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .guess-container {
+            background: rgba(6, 214, 160, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            border: 2px solid #06d6a0;
+        }
+
+        .guess-title {
+            color: #06d6a0;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .guess-input-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        #guess-input {
+            flex-grow: 1;
+            padding: 15px 20px;
+            border: 3px solid #4ecdc4;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            outline: none;
+        }
+
+        #guess-input:focus {
+            border-color: #ffd166;
+            box-shadow: 0 0 15px rgba(255, 209, 102, 0.3);
+        }
+
+        .guess-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .guess-btn {
+            background: linear-gradient(to right, #06d6a0, #05b888);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .guess-btn:hover:not(:disabled) {
+            background: linear-gradient(to right, #05b888, #049c73);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(6, 214, 160, 0.4);
+        }
+
+        .guess-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .hint-btn {
+            background: linear-gradient(to right, #118ab2, #0d7799);
+            color: white;
+        }
+
+        .hint-btn:hover:not(:disabled) {
+            background: linear-gradient(to right, #0d7799, #0a6380);
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #next-stage-btn {
+            background: linear-gradient(to right, #9d4edd, #7b2cbf);
+            color: white;
+            display: none;
+        }
+
+        #next-stage-btn:hover:not(:disabled) {
+            background: linear-gradient(to right, #7b2cbf, #5a189a);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(157, 78, 221, 0.4);
+        }
+
+        #new-game-btn {
+            background: linear-gradient(to right, #ffd166, #ffc043);
+            color: white;
+        }
+
+        #new-game-btn:hover {
+            background: linear-gradient(to right, #ffc043, #ffb030);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 209, 102, 0.4);
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 30px;
+            border-left: 5px solid #4ecdc4;
+        }
+
+        .instructions h3 {
+            color: #4ecdc4;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .instructions ul {
+            padding-left: 25px;
+            margin-top: 10px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .instructions strong {
+            color: #ffd166;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            width: 500px;
+            max-width: 90%;
+            z-index: 1000;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+            border: 4px solid;
+            display: none;
+            text-align: center;
+        }
+
+        .feedback.success {
+            border-color: #06d6a0;
+        }
+
+        .feedback.stage-complete {
+            border-color: #9d4edd;
+        }
+
+        .feedback-title {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            color: inherit;
+        }
+
+        .success .feedback-title {
+            color: #06d6a0;
+        }
+
+        .stage-complete .feedback-title {
+            color: #9d4edd;
+        }
+
+        .feedback-content {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .feedback-btn {
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 1.1rem;
+            margin: 0 10px;
+        }
+
+        .continue-btn {
+            background: #06d6a0;
+            color: white;
+        }
+
+        .next-stage-btn {
+            background: #9d4edd;
+            color: white;
+        }
+
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+            display: none;
+        }
+
+        .element-fact {
+            color: #ffd166;
+            font-style: italic;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .current-stage {
+            color: #ff6b6b;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .stage-hint {
+            text-align: center;
+            color: #aaa;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        .win-celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            pointer-events: none;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--color);
+            border-radius: 50%;
+            animation: confettiFall 2s ease-out forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .clue-used {
+            color: #ff6b6b;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        .element-status {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-unsolved {
+            color: #ef476f;
+            border: 2px solid #ef476f;
+        }
+
+        .status-solved {
+            color: #06d6a0;
+            border: 2px solid #06d6a0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-overlay" id="game-overlay"></div>
+    
+    <div class="win-celebration" id="win-celebration"></div>
+    
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-search"></i> Element Detective</h1>
+            <p class="subtitle">Complete stages by guessing 2 elements in each stage!</p>
+        </header>
+        
+        <div class="stage-progress">
+            <div class="stage-info">
+                <div class="stage-badge" id="stage-badge">1</div>
+                <div>
+                    <div class="stage-text" id="stage-text">Stage 1: Easy Elements</div>
+                    <div class="stage-stats" id="stage-stats">2 elements to solve</div>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Progress</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="score-display">
+                <div class="score-value" id="total-score">0</div>
+                <div class="score-label">Total Score</div>
+            </div>
+        </div>
+        
+        <div class="stage-selector" id="stage-selector">
+            <!-- Stage buttons will be generated here -->
+        </div>
+        
+        <div class="game-info">
+            <div class="info-card">
+                <div class="info-label">Stage Score</div>
+                <div class="info-value" id="stage-score">0</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Elements Solved</div>
+                <div class="info-value" id="solved">0/2</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Clues Used</div>
+                <div class="info-value" id="clues-used">0</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Hints Used</div>
+                <div class="info-value" id="hints-used">0</div>
+            </div>
+        </div>
+        
+        <div class="current-stage">
+            <i class="fas fa-flag"></i> <span id="current-stage-text">Stage 1: Easy Elements</span>
+        </div>
+        
+        <div class="game-area">
+            <div class="elements-container" id="elements-container">
+                <!-- Two element cards will be generated here -->
+            </div>
+            
+            <div class="guess-container">
+                <h3 class="guess-title"><i class="fas fa-lightbulb"></i> Make Your Guess</h3>
+                <div class="guess-input-container">
+                    <input type="text" id="guess-input" placeholder="Type element symbol or name..." autocomplete="off">
+                    <div class="guess-buttons">
+                        <button class="guess-btn" id="submit-guess">
+                            <i class="fas fa-paper-plane"></i> Guess
+                        </button>
+                        <button class="guess-btn hint-btn" id="hint-btn">
+                            <i class="fas fa-lightbulb"></i> Hint
+                        </button>
+                    </div>
+                </div>
+                <div class="stage-hint">
+                    <i class="fas fa-info-circle"></i> Guess both elements to complete this stage
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="action-btn" id="next-stage-btn" disabled>
+                    <i class="fas fa-forward"></i> Next Stage
+                </button>
+                <button class="action-btn" id="new-game-btn">
+                    <i class="fas fa-redo"></i> New Game
+                </button>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-graduation-cap"></i> Game Rules</h3>
+            <ul>
+                <li><strong>Each stage has 2 mystery elements</strong> to solve</li>
+                <li><strong>Reveal clues</strong> to learn about each element</li>
+                <li><strong>Guess both elements</strong> to complete the stage</li>
+                <li><strong>Complete Easy stage</strong> to unlock Medium</li>
+                <li><strong>Complete Medium stage</strong> to unlock Hard</li>
+                <li><strong>Each clue costs points</strong> - solve with fewer clues for higher scores!</li>
+                <li><strong>Use hints</strong> when stuck, but they cost more points</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Element Detective - Progressive Stage Challenge</p>
+            <p>Made with <i class="fas fa-flask" style="color:#4ecdc4;"></i> for chemistry detectives</p>
+        </footer>
+    </div>
+    
+    <!-- Feedback Messages -->
+    <div class="feedback success" id="element-correct-feedback">
+        <h2 class="feedback-title"><i class="fas fa-check-circle"></i> Correct!</h2>
+        <div class="feedback-content" id="element-correct-content">
+            <!-- Content will be filled dynamically -->
+        </div>
+        <button class="feedback-btn continue-btn" id="continue-btn">Continue</button>
+    </div>
+    
+    <div class="feedback success" id="stage-complete-feedback">
+        <h2 class="feedback-title"><i class="fas fa-star"></i> Stage Complete!</h2>
+        <div class="feedback-content" id="stage-complete-content">
+            <!-- Content will be filled dynamically -->
+        </div>
+        <button class="feedback-btn next-stage-btn" id="next-stage-continue-btn">Next Stage</button>
+        <button class="feedback-btn continue-btn" id="replay-stage-btn">Replay Stage</button>
+    </div>
+
+    <div class="feedback success" id="game-complete-feedback">
+        <h2 class="feedback-title"><i class="fas fa-trophy"></i> Game Complete!</h2>
+        <div class="feedback-content" id="game-complete-content">
+            <!-- Content will be filled dynamically -->
+        </div>
+        <button class="feedback-btn continue-btn" id="play-again-btn">Play Again</button>
+    </div>
+
+    <div class="feedback error" id="error-feedback">
+        <h2 class="feedback-title"><i class="fas fa-times-circle"></i> Incorrect</h2>
+        <div class="feedback-content" id="error-content">That's not the right element.</div>
+        <button class="feedback-btn continue-btn" id="close-error-btn">Try Again</button>
+    </div>
+
+    <script>
+        // Game data
+        const gameData = {
+            currentStage: 1,
+            totalStages: 3,
+            stages: [
+                { 
+                    level: 1, 
+                    name: "Easy Elements", 
+                    difficulty: "easy", 
+                    completed: false, 
+                    score: 0,
+                    elements: [],
+                    solvedCount: 0
+                },
+                { 
+                    level: 2, 
+                    name: "Medium Elements", 
+                    difficulty: "medium", 
+                    completed: false, 
+                    score: 0,
+                    elements: [],
+                    solvedCount: 0
+                },
+                { 
+                    level: 3, 
+                    name: "Hard Elements", 
+                    difficulty: "hard", 
+                    completed: false, 
+                    score: 0,
+                    elements: [],
+                    solvedCount: 0
+                }
+            ],
+            totalScore: 0,
+            currentElementIndex: null,
+            cluesUsed: 0,
+            hintsUsed: 0,
+            gameActive: true,
+            clueCost: 10,
+            hintCost: 25
+        };
+
+        // Element database
+        const elements = [
+            // Easy elements (Stage 1)
+            {
+                symbol: "H",
+                name: "Hydrogen",
+                atomicNumber: 1,
+                atomicWeight: 1.008,
+                category: "Nonmetal",
+                discoveryYear: 1766,
+                meltingPoint: -259.1,
+                boilingPoint: -252.9,
+                uses: ["Fuel", "Rockets", "Ammonia production"],
+                fact: "The lightest and most abundant element in the universe",
+                difficulty: "easy"
+            },
+            {
+                symbol: "He",
+                name: "Helium",
+                atomicNumber: 2,
+                atomicWeight: 4.0026,
+                category: "Noble Gas",
+                discoveryYear: 1868,
+                meltingPoint: -272.2,
+                boilingPoint: -268.9,
+                uses: ["Balloons", "MRI machines", "Welding"],
+                fact: "Named after Helios, the Greek sun god",
+                difficulty: "easy"
+            },
+            {
+                symbol: "C",
+                name: "Carbon",
+                atomicNumber: 6,
+                atomicWeight: 12.011,
+                category: "Nonmetal",
+                discoveryYear: "Ancient",
+                meltingPoint: 3550,
+                boilingPoint: 4827,
+                uses: ["Diamonds", "Pencils", "Steel production"],
+                fact: "Forms more compounds than any other element",
+                difficulty: "easy"
+            },
+            {
+                symbol: "O",
+                name: "Oxygen",
+                atomicNumber: 8,
+                atomicWeight: 15.999,
+                category: "Nonmetal",
+                discoveryYear: 1774,
+                meltingPoint: -218.8,
+                boilingPoint: -183,
+                uses: ["Breathing", "Steelmaking", "Water"],
+                fact: "Makes up about 21% of Earth's atmosphere",
+                difficulty: "easy"
+            },
+            // Medium elements (Stage 2)
+            {
+                symbol: "Na",
+                name: "Sodium",
+                atomicNumber: 11,
+                atomicWeight: 22.990,
+                category: "Alkali Metal",
+                discoveryYear: 1807,
+                meltingPoint: 97.8,
+                boilingPoint: 883,
+                uses: ["Table salt", "Street lights", "Soap"],
+                fact: "Explodes violently when placed in water",
+                difficulty: "medium"
+            },
+            {
+                symbol: "Fe",
+                name: "Iron",
+                atomicNumber: 26,
+                atomicWeight: 55.845,
+                category: "Transition Metal",
+                discoveryYear: "Ancient",
+                meltingPoint: 1538,
+                boilingPoint: 2862,
+                uses: ["Steel", "Magnets", "Blood (hemoglobin)"],
+                fact: "Makes up most of Earth's core",
+                difficulty: "medium"
+            },
+            {
+                symbol: "Cu",
+                name: "Copper",
+                atomicNumber: 29,
+                atomicWeight: 63.546,
+                category: "Transition Metal",
+                discoveryYear: "Ancient",
+                meltingPoint: 1084.6,
+                boilingPoint: 2562,
+                uses: ["Electrical wires", "Coins", "Pipes"],
+                fact: "First metal to be worked by humans",
+                difficulty: "medium"
+            },
+            {
+                symbol: "Ag",
+                name: "Silver",
+                atomicNumber: 47,
+                atomicWeight: 107.868,
+                category: "Transition Metal",
+                discoveryYear: "Ancient",
+                meltingPoint: 961.8,
+                boilingPoint: 2162,
+                uses: ["Jewelry", "Photography", "Electronics"],
+                fact: "The best conductor of electricity",
+                difficulty: "medium"
+            },
+            // Hard elements (Stage 3)
+            {
+                symbol: "Au",
+                name: "Gold",
+                atomicNumber: 79,
+                atomicWeight: 196.967,
+                category: "Transition Metal",
+                discoveryYear: "Ancient",
+                meltingPoint: 1064,
+                boilingPoint: 2970,
+                uses: ["Jewelry", "Electronics", "Dentistry"],
+                fact: "One of the least reactive chemical elements",
+                difficulty: "hard"
+            },
+            {
+                symbol: "Hg",
+                name: "Mercury",
+                atomicNumber: 80,
+                atomicWeight: 200.59,
+                category: "Transition Metal",
+                discoveryYear: "Ancient",
+                meltingPoint: -38.8,
+                boilingPoint: 356.7,
+                uses: ["Thermometers", "Barometers", "Dental fillings"],
+                fact: "Only metal that is liquid at room temperature",
+                difficulty: "hard"
+            },
+            {
+                symbol: "Pb",
+                name: "Lead",
+                atomicNumber: 82,
+                atomicWeight: 207.2,
+                category: "Metal",
+                discoveryYear: "Ancient",
+                meltingPoint: 327.5,
+                boilingPoint: 1749,
+                uses: ["Batteries", "Radiation shielding", "Old paint"],
+                fact: "Very dense and toxic to humans",
+                difficulty: "hard"
+            },
+            {
+                symbol: "U",
+                name: "Uranium",
+                atomicNumber: 92,
+                atomicWeight: 238.029,
+                category: "Actinide",
+                discoveryYear: 1789,
+                meltingPoint: 1135,
+                boilingPoint: 4131,
+                uses: ["Nuclear power", "Nuclear weapons", "Dating rocks"],
+                fact: "Named after the planet Uranus",
+                difficulty: "hard"
+            }
+        ];
+
+        // DOM elements
+        const stageBadge = document.getElementById('stage-badge');
+        const stageText = document.getElementById('stage-text');
+        const stageStats = document.getElementById('stage-stats');
+        const progressFill = document.getElementById('progress-fill');
+        const progressPercent = document.getElementById('progress-percent');
+        const totalScore = document.getElementById('total-score');
+        const stageScoreElement = document.getElementById('stage-score');
+        const solvedElement = document.getElementById('solved');
+        const cluesUsedElement = document.getElementById('clues-used');
+        const hintsUsedElement = document.getElementById('hints-used');
+        const currentStageText = document.getElementById('current-stage-text');
+        const stageSelector = document.getElementById('stage-selector');
+        const elementsContainer = document.getElementById('elements-container');
+        const guessInput = document.getElementById('guess-input');
+        const submitGuessBtn = document.getElementById('submit-guess');
+        const hintBtn = document.getElementById('hint-btn');
+        const nextStageBtn = document.getElementById('next-stage-btn');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const elementCorrectFeedback = document.getElementById('element-correct-feedback');
+        const elementCorrectContent = document.getElementById('element-correct-content');
+        const stageCompleteFeedback = document.getElementById('stage-complete-feedback');
+        const stageCompleteContent = document.getElementById('stage-complete-content');
+        const gameCompleteFeedback = document.getElementById('game-complete-feedback');
+        const gameCompleteContent = document.getElementById('game-complete-content');
+        const errorFeedback = document.getElementById('error-feedback');
+        const errorContent = document.getElementById('error-content');
+        const continueBtn = document.getElementById('continue-btn');
+        const nextStageContinueBtn = document.getElementById('next-stage-continue-btn');
+        const replayStageBtn = document.getElementById('replay-stage-btn');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const closeErrorBtn = document.getElementById('close-error-btn');
+        const gameOverlay = document.getElementById('game-overlay');
+        const winCelebration = document.getElementById('win-celebration');
+
+        // Initialize the game
+        function initGame() {
+            // Event listeners
+            submitGuessBtn.addEventListener('click', submitGuess);
+            guessInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitGuess();
+            });
+            hintBtn.addEventListener('click', giveHint);
+            nextStageBtn.addEventListener('click', goToNextStage);
+            newGameBtn.addEventListener('click', newGame);
+            continueBtn.addEventListener('click', continueGame);
+            nextStageContinueBtn.addEventListener('click', goToNextStage);
+            replayStageBtn.addEventListener('click', replayStage);
+            playAgainBtn.addEventListener('click', newGame);
+            closeErrorBtn.addEventListener('click', closeErrorFeedback);
+            
+            // Initialize stage selector
+            initStageSelector();
+            
+            // Start first stage
+            loadStage(1);
+            
+            // Update display
+            updateDisplay();
+        }
+
+        // Initialize stage selector
+        function initStageSelector() {
+            stageSelector.innerHTML = '';
+            
+            gameData.stages.forEach((stage, index) => {
+                const stageBtn = document.createElement('button');
+                stageBtn.className = `stage-btn ${stage.difficulty}`;
+                stageBtn.textContent = `Stage ${stage.level}: ${stage.name}`;
+                stageBtn.dataset.stage = stage.level;
+                
+                // Set status
+                if (stage.level === gameData.currentStage) {
+                    stageBtn.classList.add('active');
+                } else if (stage.completed) {
+                    stageBtn.classList.add('completed');
+                } else if (index === 0 || gameData.stages[index-1].completed) {
+                    // Stage is available (first stage or previous stage completed)
+                    stageBtn.disabled = false;
+                } else {
+                    stageBtn.disabled = true;
+                }
+                
+                // Add click event for available stages
+                if (!stageBtn.disabled) {
+                    stageBtn.addEventListener('click', () => {
+                        loadStage(stage.level);
+                    });
+                }
+                
+                stageSelector.appendChild(stageBtn);
+            });
+        }
+
+        // Load a stage
+        function loadStage(stageNumber) {
+            gameData.currentStage = stageNumber;
+            const stage = gameData.stages[stageNumber - 1];
+            
+            // Update stage info display
+            stageBadge.textContent = stageNumber;
+            stageText.textContent = `Stage ${stageNumber}: ${stage.name}`;
+            stageStats.textContent = "2 elements to solve";
+            currentStageText.textContent = `Stage ${stageNumber}: ${stage.name}`;
+            
+            // Select 2 random elements for this stage based on difficulty
+            const stageElements = elements.filter(el => el.difficulty === stage.difficulty);
+            const shuffled = [...stageElements].sort(() => Math.random() - 0.5);
+            stage.elements = shuffled.slice(0, 2).map(el => ({
+                ...el,
+                solved: false,
+                revealedClues: [],
+                startTime: Date.now()
+            }));
+            
+            // Reset solved count for this stage
+            stage.solvedCount = 0;
+            
+            // Reset game data
+            gameData.currentElementIndex = null;
+            gameData.cluesUsed = 0;
+            gameData.hintsUsed = 0;
+            
+            // Generate element cards
+            generateElementCards();
+            
+            // Update progress
+            updateProgress();
+            
+            // Update buttons
+            nextStageBtn.disabled = true;
+            nextStageBtn.style.display = 'none';
+            
+            // Enable input
+            guessInput.disabled = false;
+            submitGuessBtn.disabled = false;
+            hintBtn.disabled = false;
+            guessInput.focus();
+            
+            // Update stage selector
+            initStageSelector();
+            
+            // Update display
+            updateDisplay();
+        }
+
+        // Generate element cards for current stage
+        function generateElementCards() {
+            elementsContainer.innerHTML = '';
+            const stage = gameData.stages[gameData.currentStage - 1];
+            
+            stage.elements.forEach((element, index) => {
+                const elementCard = document.createElement('div');
+                elementCard.className = 'element-card';
+                elementCard.dataset.index = index;
+                
+                elementCard.innerHTML = `
+                    <div class="element-status ${element.solved ? 'status-solved' : 'status-unsolved'}">
+                        ${element.solved ? 'SOLVED' : 'UNSOLVED'}
+                    </div>
+                    <div class="element-number">#${element.atomicNumber}</div>
+                    
+                    <div class="element-display ${element.solved ? 'solved' : ''}" id="element-display-${index}">
+                        ${element.solved ? 
+                            `${element.name} (${element.symbol})` : 
+                            `<span class="hidden">${'_ '.repeat(element.name.length)}</span>`
+                        }
+                    </div>
+                    
+                    <div class="clues-container">
+                        <h4 class="clues-title"><i class="fas fa-clue-sheet"></i> Clues</h4>
+                        <div class="clues-grid">
+                            <div class="clue-item">
+                                <div class="clue-label">Atomic Weight</div>
+                                <div class="clue-value ${element.solved || element.revealedClues.includes('weight') ? '' : 'hidden'}" 
+                                     id="clue-weight-${index}">
+                                    ${element.solved || element.revealedClues.includes('weight') ? element.atomicWeight : '???'}
+                                </div>
+                                ${!element.solved ? `
+                                    <button class="reveal-btn" data-element="${index}" data-clue="weight">
+                                        Reveal Clue (-10 pts)
+                                    </button>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="clue-item">
+                                <div class="clue-label">Category</div>
+                                <div class="clue-value ${element.solved || element.revealedClues.includes('category') ? '' : 'hidden'}" 
+                                     id="clue-category-${index}">
+                                    ${element.solved || element.revealedClues.includes('category') ? element.category : '???'}
+                                </div>
+                                ${!element.solved ? `
+                                    <button class="reveal-btn" data-element="${index}" data-clue="category">
+                                        Reveal Clue (-10 pts)
+                                    </button>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="clue-item">
+                                <div class="clue-label">Discovery Year</div>
+                                <div class="clue-value ${element.solved || element.revealedClues.includes('year') ? '' : 'hidden'}" 
+                                     id="clue-year-${index}">
+                                    ${element.solved || element.revealedClues.includes('year') ? element.discoveryYear : '???'}
+                                </div>
+                                ${!element.solved ? `
+                                    <button class="reveal-btn" data-element="${index}" data-clue="year">
+                                        Reveal Clue (-10 pts)
+                                    </button>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="clue-item">
+                                <div class="clue-label">Common Uses</div>
+                                <div class="clue-value ${element.solved || element.revealedClues.includes('uses') ? '' : 'hidden'}" 
+                                     id="clue-uses-${index}">
+                                    ${element.solved || element.revealedClues.includes('uses') ? element.uses.join(', ') : '???'}
+                                </div>
+                                ${!element.solved ? `
+                                    <button class="reveal-btn" data-element="${index}" data-clue="uses">
+                                        Reveal Clue (-10 pts)
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                elementsContainer.appendChild(elementCard);
+            });
+            
+            // Add event listeners to reveal buttons
+            document.querySelectorAll('.reveal-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const elementIndex = parseInt(e.target.dataset.element);
+                    const clueType = e.target.dataset.clue;
+                    revealClue(elementIndex, clueType);
+                });
+            });
+        }
+
+        // Reveal a clue for an element
+        function revealClue(elementIndex, clueType) {
+            const stage = gameData.stages[gameData.currentStage - 1];
+            const element = stage.elements[elementIndex];
+            
+            if (element.solved || element.revealedClues.includes(clueType)) return;
+            
+            // Deduct points for revealing clue
+            gameData.totalScore = Math.max(0, gameData.totalScore - gameData.clueCost);
+            gameData.cluesUsed++;
+            
+            // Add to revealed clues
+            element.revealedClues.push(clueType);
+            
+            // Update the clue display
+            const clueElement = document.getElementById(`clue-${clueType}-${elementIndex}`);
+            clueElement.classList.remove('hidden');
+            
+            switch(clueType) {
+                case 'weight':
+                    clueElement.textContent = element.atomicWeight;
+                    break;
+                case 'category':
+                    clueElement.textContent = element.category;
+                    break;
+                case 'year':
+                    clueElement.textContent = element.discoveryYear;
+                    break;
+                case 'uses':
+                    clueElement.textContent = element.uses.join(', ');
+                    break;
+            }
+            
+            // Disable the reveal button
+            event.target.disabled = true;
+            
+            updateDisplay();
+        }
+
+        // Give a hint (reveal a random clue for a random unsolved element)
+        function giveHint() {
+            const stage = gameData.stages[gameData.currentStage - 1];
+            const unsolvedElements = stage.elements.filter(el => !el.solved);
+            
+            if (unsolvedElements.length === 0) return;
+            
+            // Pick a random unsolved element
+            const randomElementIndex = stage.elements.findIndex(el => el === unsolvedElements[0]);
+            const element = stage.elements[randomElementIndex];
+            
+            // Get unrevealed clues for this element
+            const allClues = ['weight', 'category', 'year', 'uses'];
+            const unrevealedClues = allClues.filter(clue => !element.revealedClues.includes(clue));
+            
+            if (unrevealedClues.length > 0) {
+                // Deduct more points for hint
+                gameData.totalScore = Math.max(0, gameData.totalScore - gameData.hintCost);
+                gameData.hintsUsed++;
+                
+                // Reveal a random clue
+                const randomClue = unrevealedClues[Math.floor(Math.random() * unrevealedClues.length)];
+                revealClue(randomElementIndex, randomClue);
+            }
+            
+            updateDisplay();
+        }
+
+        // Submit a guess
+        function submitGuess() {
+            const guess = guessInput.value.trim();
+            if (!guess) return;
+            
+            const stage = gameData.stages[gameData.currentStage - 1];
+            let correctElementIndex = -1;
+            let correctElement = null;
+            
+            // Check each unsolved element
+            stage.elements.forEach((element, index) => {
+                if (!element.solved && 
+                    (guess.toLowerCase() === element.name.toLowerCase() || 
+                     guess.toLowerCase() === element.symbol.toLowerCase())) {
+                    correctElementIndex = index;
+                    correctElement = element;
+                }
+            });
+            
+            if (correctElementIndex !== -1) {
+                // Correct guess!
+                const timeTaken = (Date.now() - correctElement.startTime) / 1000;
+                const cluesUsed = correctElement.revealedClues.length;
+                
+                // Calculate points
+                let points = 100;
+                const timeBonus = Math.max(0, 300 - timeTaken);
+                points += Math.floor(timeBonus / 10);
+                const clueBonus = (4 - cluesUsed) * 25;
+                points += clueBonus;
+                
+                // Difficulty multiplier
+                const difficultyMultiplier = {
+                    'easy': 1,
+                    'medium': 1.5,
+                    'hard': 2
+                }[stage.difficulty];
+                points = Math.floor(points * difficultyMultiplier);
+                
+                // Update scores
+                gameData.totalScore += points;
+                stage.score += points;
+                stage.solvedCount++;
+                correctElement.solved = true;
+                
+                // Show correct feedback
+                showElementCorrect(correctElement, points, timeTaken, cluesUsed);
+                
+                // Check if stage is complete
+                if (stage.solvedCount === 2) {
+                    stage.completed = true;
+                    setTimeout(() => {
+                        showStageComplete(stage);
+                    }, 1500);
+                }
+                
+            } else {
+                // Incorrect guess
+                showErrorFeedback();
+            }
+            
+            // Clear input
+            guessInput.value = '';
+            guessInput.focus();
+            
+            // Update display
+            updateDisplay();
+            updateProgress();
+            
+            // Update element cards
+            generateElementCards();
+        }
+
+        // Show correct element feedback
+        function showElementCorrect(element, points, timeTaken, cluesUsed) {
+            elementCorrectContent.innerHTML = `
+                <p>🎉 Correct! You found <strong>${element.name} (${element.symbol})</strong></p>
+                <p>+${points} points!</p>
+                <p><strong>Time:</strong> ${timeTaken.toFixed(1)} seconds</p>
+                <p><strong>Clues used:</strong> ${cluesUsed}/4</p>
+                <p class="element-fact">💡 <em>${element.fact}</em></p>
+            `;
+            
+            showFeedback(elementCorrectFeedback);
+        }
+
+        // Show stage complete feedback
+        function showStageComplete(stage) {
+            // Check if all stages are completed
+            const allStagesCompleted = gameData.stages.every(s => s.completed);
+            
+            if (allStagesCompleted) {
+                // Game complete
+                showGameComplete();
+            } else {
+                // Stage complete
+                stageCompleteContent.innerHTML = `
+                    <p>🏆 Stage ${stage.level} Complete!</p>
+                    <p><strong>Stage Score:</strong> ${stage.score} points</p>
+                    <p><strong>Total Score:</strong> ${gameData.totalScore} points</p>
+                    <p>${stage.level < gameData.totalStages ? 
+                        `Stage ${stage.level + 1} unlocked!` : 
+                        'All stages completed!'}</p>
+                `;
+                
+                // Show next stage button if not last stage
+                nextStageContinueBtn.style.display = stage.level < gameData.totalStages ? 'inline-block' : 'none';
+                
+                // Show celebration
+                createConfetti();
+                
+                showFeedback(stageCompleteFeedback);
+                
+                // Enable next stage button
+                nextStageBtn.disabled = false;
+                nextStageBtn.style.display = 'flex';
+            }
+        }
+
+        // Show game complete feedback
+        function showGameComplete() {
+            // Calculate final score with bonus
+            const completionBonus = 1000;
+            const finalScore = gameData.totalScore + completionBonus;
+            
+            gameCompleteContent.innerHTML = `
+                <p>🎊 CONGRATULATIONS! 🎊</p>
+                <p>You've completed all ${gameData.totalStages} stages!</p>
+                <p><strong>Total Score:</strong> ${gameData.totalScore} points</p>
+                <p><strong>Completion Bonus:</strong> +${completionBonus} points</p>
+                <p style="font-size: 1.5rem; color: #ffd166; margin: 20px 0;">
+                    FINAL SCORE: ${finalScore}
+                </p>
+                <p>You are now a Master Element Detective! 🕵️‍♂️</p>
+            `;
+            
+            // Big celebration
+            createConfetti();
+            
+            showFeedback(gameCompleteFeedback);
+        }
+
+        // Show error feedback
+        function showErrorFeedback() {
+            errorContent.textContent = "That's not one of the mystery elements. Try again!";
+            showFeedback(errorFeedback);
+        }
+
+        // Go to next stage
+        function goToNextStage() {
+            if (gameData.currentStage < gameData.totalStages) {
+                hideAllFeedback();
+                loadStage(gameData.currentStage + 1);
+            }
+        }
+
+        // Replay current stage
+        function replayStage() {
+            hideAllFeedback();
+            loadStage(gameData.currentStage);
+        }
+
+        // Continue game after correct guess
+        function continueGame() {
+            hideAllFeedback();
+        }
+
+        // Start new game
+        function newGame() {
+            // Reset all stages
+            gameData.stages.forEach(stage => {
+                stage.completed = false;
+                stage.score = 0;
+                stage.solvedCount = 0;
+                stage.elements = [];
+            });
+            
+            // Reset game data
+            gameData.currentStage = 1;
+            gameData.totalScore = 0;
+            gameData.cluesUsed = 0;
+            gameData.hintsUsed = 0;
+            
+            // Hide feedback
+            hideAllFeedback();
+            
+            // Load first stage
+            loadStage(1);
+            
+            // Update display
+            updateDisplay();
+        }
+
+        // Update progress display
+        function updateProgress() {
+            const stage = gameData.stages[gameData.currentStage - 1];
+            const percentage = (stage.solvedCount / 2) * 100;
+            
+            progressFill.style.width = `${percentage}%`;
+            progressPercent.textContent = `${percentage}%`;
+            
+            // Update solved count display
+            solvedElement.textContent = `${stage.solvedCount}/2`;
+        }
+
+        // Update all displays
+        function updateDisplay() {
+            totalScore.textContent = gameData.totalScore;
+            stageScoreElement.textContent = gameData.stages[gameData.currentStage - 1].score;
+            cluesUsedElement.textContent = gameData.cluesUsed;
+            hintsUsedElement.textContent = gameData.hintsUsed;
+            
+            updateProgress();
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            winCelebration.style.display = 'flex';
+            winCelebration.innerHTML = '';
+            
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffd166', '#06d6a0', '#118ab2', '#9d4edd'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+                confetti.style.setProperty('--color', colors[Math.floor(Math.random() * colors.length)]);
+                winCelebration.appendChild(confetti);
+                
+                setTimeout(() => {
+                    confetti.remove();
+                }, 2000);
+            }
+            
+            setTimeout(() => {
+                winCelebration.style.display = 'none';
+            }, 2000);
+        }
+
+        // Show feedback
+        function showFeedback(element) {
+            element.style.display = 'block';
+            gameOverlay.style.display = 'block';
+        }
+
+        // Close error feedback
+        function closeErrorFeedback() {
+            errorFeedback.style.display = 'none';
+            gameOverlay.style.display = 'none';
+        }
+
+        // Hide all feedback
+        function hideAllFeedback() {
+            elementCorrectFeedback.style.display = 'none';
+            stageCompleteFeedback.style.display = 'none';
+            gameCompleteFeedback.style.display = 'none';
+            errorFeedback.style.display = 'none';
+            gameOverlay.style.display = 'none';
+        }
+
+        // Initialize the game when page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

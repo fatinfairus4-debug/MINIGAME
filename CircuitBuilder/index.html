@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circuit Builder Challenge</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            color: #f1f1f1;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 25px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #f7ff00, #db36a4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(219, 54, 164, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a9e4ff;
+            margin-bottom: 15px;
+        }
+        
+        .game-intro {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-left: 4px solid #f7ff00;
+        }
+        
+        .game-area {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1100px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .circuit-lab {
+            background: rgba(15, 20, 40, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(247, 255, 0, 0.2);
+        }
+        
+        .lab-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .lab-title h2 {
+            color: #f7ff00;
+            font-size: 1.8rem;
+        }
+        
+        .voltage {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            color: #00ff88;
+            font-size: 1.2rem;
+        }
+        
+        .circuit-board {
+            height: 500px;
+            background: rgba(5, 10, 30, 0.9);
+            border-radius: 10px;
+            position: relative;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .component-panel {
+            background: rgba(15, 20, 40, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(219, 54, 164, 0.2);
+        }
+        
+        .panel-title {
+            color: #db36a4;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .components {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .component {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: grab;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .component:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+            border-color: #f7ff00;
+        }
+        
+        .component-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .component-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .component-value {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        
+        .circuit-component {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: move;
+            z-index: 10;
+        }
+        
+        .wire {
+            position: absolute;
+            background: #ffdd59;
+            height: 4px;
+            transform-origin: 0 0;
+            z-index: 5;
+        }
+        
+        .connection-point {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #00ff88;
+            border-radius: 50%;
+            z-index: 15;
+            cursor: crosshair;
+            border: 2px solid #0f3460;
+        }
+        
+        /* REALISTIC COMPONENT VISUALS */
+        .battery-visual {
+            width: 50px;
+            height: 80px;
+            background: #ff9f1a;
+            border-radius: 5px;
+            position: relative;
+            border: 3px solid #cc7e15;
+        }
+        
+        .battery-visual::before {
+            content: '+';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .battery-visual::after {
+            content: '−';
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .resistor-visual {
+            width: 90px;
+            height: 30px;
+            background: linear-gradient(to right, 
+                #ff9f1a 10%, #ffd166 10%, #ffd166 20%,
+                #4cd137 20%, #4cd137 30%, #44bd32 30%, #44bd32 40%,
+                #2ecc71 40%, #2ecc71 50%, #ff9f1a 50%, #ff9f1a 60%,
+                #ffd166 60%, #ffd166 70%, #4cd137 70%, #4cd137 80%,
+                #44bd32 80%, #44bd32 90%, #2ecc71 90%, #2ecc71 100%);
+            border-radius: 5px;
+            position: relative;
+            border: 2px solid #333;
+        }
+        
+        .resistor-visual::before, .resistor-visual::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 10px;
+            background: #aaa;
+            top: 10px;
+        }
+        
+        .resistor-visual::before {
+            left: -15px;
+        }
+        
+        .resistor-visual::after {
+            right: -15px;
+        }
+        
+        .led-visual {
+            width: 40px;
+            height: 40px;
+            background: #ff3838;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 0 15px rgba(255, 56, 56, 0.5);
+        }
+        
+        .led-visual.green {
+            background: #00ff88;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+        }
+        
+        .led-visual::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 5px;
+            background: #aaa;
+            top: 17px;
+            left: -20px;
+        }
+        
+        .led-visual::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 5px;
+            background: #aaa;
+            top: 17px;
+            right: -20px;
+        }
+        
+        .led-visual.on {
+            animation: ledPulse 1s infinite;
+        }
+        
+        .led-visual.green.on {
+            animation: ledPulseGreen 1s infinite;
+        }
+        
+        @keyframes ledPulse {
+            0% { box-shadow: 0 0 15px rgba(255, 56, 56, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(255, 56, 56, 0.9); }
+            100% { box-shadow: 0 0 15px rgba(255, 56, 56, 0.5); }
+        }
+        
+        @keyframes ledPulseGreen {
+            0% { box-shadow: 0 0 15px rgba(0, 255, 136, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(0, 255, 136, 0.9); }
+            100% { box-shadow: 0 0 15px rgba(0, 255, 136, 0.5); }
+        }
+        
+        .switch-visual {
+            width: 70px;
+            height: 40px;
+            background: #718093;
+            border-radius: 20px;
+            position: relative;
+            border: 2px solid #555;
+        }
+        
+        .switch-visual.on {
+            background: #4cd137;
+        }
+        
+        .switch-knob {
+            position: absolute;
+            width: 34px;
+            height: 34px;
+            background: #fff;
+            border-radius: 50%;
+            top: 1px;
+            left: 1px;
+            transition: left 0.3s;
+            border: 2px solid #aaa;
+        }
+        
+        .switch-visual.on .switch-knob {
+            left: 31px;
+        }
+        
+        .bulb-visual {
+            width: 50px;
+            height: 70px;
+            background: #ffdd59;
+            border-radius: 50% 50% 30% 30%;
+            position: relative;
+            box-shadow: 0 0 20px rgba(255, 221, 89, 0.3);
+        }
+        
+        .bulb-visual::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 25px;
+            background: #aaa;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 0 0 5px 5px;
+        }
+        
+        .bulb-visual.on {
+            animation: bulbGlow 1.5s infinite;
+        }
+        
+        @keyframes bulbGlow {
+            0% { box-shadow: 0 0 20px rgba(255, 221, 89, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(255, 221, 89, 0.9); }
+            100% { box-shadow: 0 0 20px rgba(255, 221, 89, 0.3); }
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #f7ff00, #ff9f1a);
+            color: #333;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(247, 255, 0, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .challenge-info {
+            background: rgba(15, 20, 40, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(0, 255, 136, 0.2);
+        }
+        
+        .challenge-title {
+            color: #00ff88;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .challenge-desc {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .requirements {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .requirement {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .circuit-formula {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            border-left: 4px solid #f7ff00;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 4px solid #db36a4;
+        }
+        
+        .instructions h3 {
+            color: #db36a4;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(150%);
+            transition: transform 0.5s;
+            z-index: 100;
+        }
+        
+        .message.show {
+            transform: translateX(0);
+        }
+        
+        .success {
+            background: linear-gradient(90deg, #00b09b, #96c93d);
+            color: white;
+        }
+        
+        .error {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            color: white;
+        }
+        
+        .info {
+            background: linear-gradient(90deg, #2193b0, #6dd5ed);
+            color: white;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #f7ff00;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #a9e4ff;
+        }
+        
+        .component-details {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 0.8rem;
+            z-index: 20;
+            display: none;
+            border: 1px solid #f7ff00;
+            min-width: 120px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a9e4ff;
+            font-size: 0.9rem;
+        }
+        
+        .connection-mode {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .mode-active {
+            background: rgba(0, 255, 136, 0.2);
+        }
+        
+        .component-label {
+            margin-top: 5px;
+            font-size: 0.7rem;
+            color: #fff;
+            background: rgba(0,0,0,0.5);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-bolt"></i> Circuit Builder Challenge</h1>
+            <p class="subtitle">Build electrical circuits to solve challenges. Learn Ohm's Law and circuit design!</p>
+        </header>
+        
+        <div class="game-intro">
+            <p><strong>HOW TO PLAY:</strong> Drag components from the panel onto the circuit board. Connect them by dragging from connection points. Build circuits that meet the challenge requirements!</p>
+        </div>
+        
+        <div class="game-area">
+            <div class="circuit-lab">
+                <div class="lab-title">
+                    <h2><i class="fas fa-microchip"></i> Circuit Board</h2>
+                    <div class="voltage">Power: <span id="voltage">9V</span></div>
+                </div>
+                
+                <div class="circuit-board" id="circuitBoard">
+                    <!-- Circuit will be built here -->
+                    <div class="connection-point" style="left: 50px; top: 200px;" data-id="power-plus"></div>
+                    <div class="connection-point" style="left: 50px; top: 280px;" data-id="power-minus"></div>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="score">0</div>
+                        <div class="stat-label">Score</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="current">0 mA</div>
+                        <div class="stat-label">Current</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="resistance">0 Ω</div>
+                        <div class="stat-label">Resistance</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="level">1</div>
+                        <div class="stat-label">Level</div>
+                    </div>
+                </div>
+                
+                <div class="connection-mode" id="connectionMode">
+                    <i class="fas fa-plug"></i> Connection Mode: <strong>Click two connection points to connect them</strong>
+                </div>
+            </div>
+            
+            <div class="component-panel">
+                <h2 class="panel-title"><i class="fas fa-puzzle-piece"></i> Circuit Components</h2>
+                
+                <div class="components" id="components">
+                    <!-- Components will be added here by JavaScript -->
+                </div>
+                
+                <div class="controls">
+                    <button class="btn-secondary" id="clearBtn">
+                        <i class="fas fa-trash-alt"></i> Clear Board
+                    </button>
+                    <button class="btn-primary" id="testBtn">
+                        <i class="fas fa-play-circle"></i> Test Circuit
+                    </button>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                    <h4 style="color: #f7ff00; margin-bottom: 10px;"><i class="fas fa-lightbulb"></i> Tips:</h4>
+                    <ul style="font-size: 0.9rem; padding-left: 20px;">
+                        <li>Drag components from this panel</li>
+                        <li>Click green connection points to connect wires</li>
+                        <li>All circuits need a complete loop to work</li>
+                        <li>LEDs need resistors to prevent burning out</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="challenge-info">
+            <h2 class="challenge-title"><i class="fas fa-bullseye"></i> Current Challenge</h2>
+            <p class="challenge-desc" id="challengeDesc">Build a simple circuit that lights up the LED.</p>
+            
+            <div class="requirements" id="requirements">
+                <!-- Requirements will be added here -->
+            </div>
+            
+            <div class="circuit-formula">
+                <strong>Ohm's Law:</strong> V = I × R (Voltage = Current × Resistance)<br>
+                <strong>Power:</strong> P = V × I (Power = Voltage × Current)<br>
+                <strong>Series Resistance:</strong> R<sub>total</sub> = R<sub>1</sub> + R<sub>2</sub> + ...<br>
+                <strong>Parallel Resistance:</strong> 1/R<sub>total</sub> = 1/R<sub>1</sub> + 1/R<sub>2</sub> + ...
+            </div>
+            
+            <p><strong>Circuit Rules:</strong> <span id="circuitRules">All circuits must form a complete loop from positive to negative terminals.</span></p>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-graduation-cap"></i> How to Build Circuits</h3>
+            <ul>
+                <li><strong>Step 1:</strong> Read the challenge requirements carefully.</li>
+                <li><strong>Step 2:</strong> Drag needed components from the panel onto the circuit board.</li>
+                <li><strong>Step 3:</strong> Connect components by clicking on green connection points.</li>
+                <li><strong>Step 4:</strong> Make sure your circuit forms a complete loop from power (+) to (-).</li>
+                <li><strong>Step 5:</strong> Click "Test Circuit" to see if it works and meets requirements.</li>
+                <li><strong>Step 6:</strong> If components light up or switches work, you're on the right track!</li>
+                <li><strong>Circuit Tip:</strong> LEDs need a resistor in series to prevent burning out. Use Ohm's Law to calculate needed resistance.</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Circuit Builder Challenge | Learn Electronics Through Play</p>
+        </footer>
+    </div>
+    
+    <div class="message" id="message"></div>
+
+    <script>
+        // Game state
+        const gameState = {
+            score: 0,
+            level: 1,
+            voltage: 9, // 9V battery
+            current: 0,
+            totalResistance: 0,
+            components: [],
+            wires: [],
+            connectionPoints: [],
+            isConnecting: false,
+            firstConnectionPoint: null,
+            circuitComplete: false,
+            currentChallenge: null
+        };
+
+        // Circuit components data
+        const circuitComponents = [
+            { 
+                id: 'battery', 
+                name: '9V Battery', 
+                type: 'power',
+                voltage: 9,
+                resistance: 0,
+                icon: 'fas fa-battery-full',
+                color: '#ff9f1a',
+                width: 50,
+                height: 80,
+                connections: ['positive', 'negative']
+            },
+            { 
+                id: 'resistor-100', 
+                name: '100Ω Resistor', 
+                type: 'resistor',
+                resistance: 100,
+                maxCurrent: 0.1,
+                icon: 'fas fa-resistor',
+                color: '#4cd137',
+                width: 90,
+                height: 30,
+                connections: ['left', 'right']
+            },
+            { 
+                id: 'resistor-220', 
+                name: '220Ω Resistor', 
+                type: 'resistor',
+                resistance: 220,
+                maxCurrent: 0.05,
+                icon: 'fas fa-resistor',
+                color: '#44bd32',
+                width: 90,
+                height: 30,
+                connections: ['left', 'right']
+            },
+            { 
+                id: 'resistor-470', 
+                name: '470Ω Resistor', 
+                type: 'resistor',
+                resistance: 470,
+                maxCurrent: 0.02,
+                icon: 'fas fa-resistor',
+                color: '#2ecc71',
+                width: 90,
+                height: 30,
+                connections: ['left', 'right']
+            },
+            { 
+                id: 'led-red', 
+                name: 'Red LED', 
+                type: 'led',
+                voltageDrop: 1.8,
+                maxCurrent: 0.02,
+                color: 'red',
+                icon: 'fas fa-lightbulb',
+                componentColor: '#ff3838',
+                width: 40,
+                height: 40,
+                connections: ['anode', 'cathode']
+            },
+            { 
+                id: 'led-green', 
+                name: 'Green LED', 
+                type: 'led',
+                voltageDrop: 2.2,
+                maxCurrent: 0.02,
+                color: 'green',
+                icon: 'fas fa-lightbulb',
+                componentColor: '#00ff88',
+                width: 40,
+                height: 40,
+                connections: ['anode', 'cathode']
+            },
+            { 
+                id: 'switch', 
+                name: 'Toggle Switch', 
+                type: 'switch',
+                resistance: 0,
+                state: false,
+                icon: 'fas fa-toggle-on',
+                color: '#718093',
+                width: 70,
+                height: 40,
+                connections: ['input', 'output']
+            },
+            { 
+                id: 'bulb', 
+                name: 'Light Bulb', 
+                type: 'bulb',
+                resistance: 60,
+                voltage: 6,
+                icon: 'fas fa-lightbulb',
+                color: '#ffdd59',
+                width: 50,
+                height: 70,
+                connections: ['positive', 'negative']
+            }
+        ];
+
+        // Challenges for different levels
+        const challenges = {
+            1: {
+                name: "Simple LED Circuit",
+                description: "Build a circuit that lights up a red LED. Remember: LEDs need a resistor to limit current!",
+                requirements: [
+                    "Use the 9V battery",
+                    "Include the red LED",
+                    "Include at least one resistor",
+                    "Circuit must be complete (closed loop)",
+                    "LED should light up"
+                ],
+                requiredComponents: ['battery', 'led-red'],
+                minResistance: 100,
+                maxCurrent: 0.02,
+                hint: "Connect Battery (+) → Resistor → LED → Battery (-). Try the 470Ω resistor first."
+            },
+            2: {
+                name: "Series Circuit",
+                description: "Build a series circuit with two resistors and an LED.",
+                requirements: [
+                    "Use the 9V battery",
+                    "Include the green LED",
+                    "Include at least two resistors in series",
+                    "Circuit must be complete",
+                    "LED should light up"
+                ],
+                requiredComponents: ['battery', 'led-green'],
+                minComponents: 4,
+                minResistance: 300,
+                maxCurrent: 0.015,
+                hint: "Battery (+) → Resistor → Resistor → LED → Battery (-). Calculate total resistance."
+            },
+            3: {
+                name: "Circuit with Switch",
+                description: "Build a circuit with a switch to turn the light on and off.",
+                requirements: [
+                    "Use the 9V battery",
+                    "Include the light bulb",
+                    "Include a switch",
+                    "Circuit must be controllable by the switch",
+                    "Bulb should light when switch is on"
+                ],
+                requiredComponents: ['battery', 'bulb', 'switch'],
+                minComponents: 3,
+                hint: "Place the switch anywhere in the circuit. Click the switch to toggle it."
+            },
+            4: {
+                name: "Parallel LEDs",
+                description: "Build a circuit with two LEDs in parallel branches.",
+                requirements: [
+                    "Use the 9V battery",
+                    "Include both red and green LEDs",
+                    "LEDs must be in parallel (not series)",
+                    "Each LED needs its own resistor",
+                    "Both LEDs should light up"
+                ],
+                requiredComponents: ['battery', 'led-red', 'led-green'],
+                minComponents: 5,
+                parallelRequired: true,
+                hint: "Create two separate paths from positive to negative, each with resistor+LED."
+            },
+            5: {
+                name: "Complete Lighting System",
+                description: "Build a complex circuit with multiple components.",
+                requirements: [
+                    "Use the 9V battery",
+                    "Include light bulb and at least one LED",
+                    "Include a switch",
+                    "Include at least two resistors",
+                    "Everything should light up when switch is on"
+                ],
+                requiredComponents: ['battery', 'bulb', 'switch'],
+                minComponents: 6,
+                hint: "Combine everything you've learned. Use series and parallel as needed."
+            }
+        };
+
+        // DOM elements
+        const circuitBoard = document.getElementById('circuitBoard');
+        const componentsContainer = document.getElementById('components');
+        const scoreElement = document.getElementById('score');
+        const currentElement = document.getElementById('current');
+        const resistanceElement = document.getElementById('resistance');
+        const voltageElement = document.getElementById('voltage');
+        const levelElement = document.getElementById('level');
+        const challengeDesc = document.getElementById('challengeDesc');
+        const requirements = document.getElementById('requirements');
+        const circuitRules = document.getElementById('circuitRules');
+        const connectionMode = document.getElementById('connectionMode');
+        const clearBtn = document.getElementById('clearBtn');
+        const testBtn = document.getElementById('testBtn');
+        const messageElement = document.getElementById('message');
+
+        // Initialize the game
+        function initGame() {
+            renderComponents();
+            loadChallenge(1);
+            updateUI();
+            
+            // Set up event listeners
+            clearBtn.addEventListener('click', clearCircuitBoard);
+            testBtn.addEventListener('click', testCircuit);
+            
+            // Set up connection points
+            setupConnectionPoints();
+            
+            // Set up drag and drop
+            setupDragAndDrop();
+        }
+
+        // Render available components
+        function renderComponents() {
+            componentsContainer.innerHTML = '';
+            
+            circuitComponents.forEach(component => {
+                const componentElement = document.createElement('div');
+                componentElement.className = 'component';
+                componentElement.draggable = true;
+                componentElement.dataset.id = component.id;
+                
+                // Create visual representation
+                let visualHTML = '';
+                switch(component.type) {
+                    case 'power':
+                        visualHTML = '<div class="battery-visual"></div>';
+                        break;
+                    case 'resistor':
+                        visualHTML = '<div class="resistor-visual"></div>';
+                        break;
+                    case 'led':
+                        visualHTML = `<div class="led-visual ${component.color}"></div>`;
+                        break;
+                    case 'switch':
+                        visualHTML = '<div class="switch-visual"><div class="switch-knob"></div></div>';
+                        break;
+                    case 'bulb':
+                        visualHTML = '<div class="bulb-visual"></div>';
+                        break;
+                }
+                
+                componentElement.innerHTML = `
+                    <div class="component-icon">${visualHTML}</div>
+                    <div class="component-name">${component.name}</div>
+                    <div class="component-value">${getComponentValueText(component)}</div>
+                `;
+                
+                componentsContainer.appendChild(componentElement);
+            });
+        }
+
+        // Get text describing component value
+        function getComponentValueText(component) {
+            switch(component.type) {
+                case 'power': return `${component.voltage}V`;
+                case 'resistor': return `${component.resistance}Ω`;
+                case 'led': return `${component.voltageDrop}V drop`;
+                case 'switch': return 'Toggle';
+                case 'bulb': return `${component.resistance}Ω`;
+                default: return '';
+            }
+        }
+
+        // Load a challenge
+        function loadChallenge(level) {
+            gameState.level = level;
+            gameState.currentChallenge = challenges[level];
+            
+            // Update UI
+            levelElement.textContent = level;
+            challengeDesc.textContent = gameState.currentChallenge.description;
+            circuitRules.textContent = gameState.currentChallenge.hint;
+            
+            // Clear circuit board (but keep power connections)
+            clearCircuitBoard();
+            
+            // Update requirements display
+            renderRequirements();
+            
+            // Add default power connection points
+            addPowerConnectionPoints();
+            
+            showMessage(`Level ${level}: ${gameState.currentChallenge.name}`, 'info');
+        }
+
+        // Render challenge requirements
+        function renderRequirements() {
+            requirements.innerHTML = '';
+            
+            gameState.currentChallenge.requirements.forEach(req => {
+                const reqElement = document.createElement('div');
+                reqElement.className = 'requirement';
+                reqElement.textContent = req;
+                requirements.appendChild(reqElement);
+            });
+        }
+
+        // Add power connection points
+        function addPowerConnectionPoints() {
+            // Positive terminal
+            const positivePoint = {
+                id: 'power-plus',
+                x: 50,
+                y: 200,
+                type: 'power',
+                polarity: 'positive',
+                connectedTo: []
+            };
+            
+            // Negative terminal
+            const negativePoint = {
+                id: 'power-minus',
+                x: 50,
+                y: 280,
+                type: 'power',
+                polarity: 'negative',
+                connectedTo: []
+            };
+            
+            gameState.connectionPoints.push(positivePoint, negativePoint);
+        }
+
+        // Set up drag and drop
+        function setupDragAndDrop() {
+            // Make components draggable
+            document.querySelectorAll('.component').forEach(comp => {
+                comp.addEventListener('dragstart', handleDragStart);
+            });
+            
+            // Set up drop zone
+            circuitBoard.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+            });
+            
+            circuitBoard.addEventListener('drop', function(e) {
+                e.preventDefault();
+                
+                const componentId = e.dataTransfer.getData('text/plain');
+                const componentData = circuitComponents.find(c => c.id === componentId);
+                
+                if (!componentData) return;
+                
+                // Get drop position
+                const rect = circuitBoard.getBoundingClientRect();
+                const x = e.clientX - rect.left - componentData.width/2;
+                const y = e.clientY - rect.top - componentData.height/2;
+                
+                // Add component to circuit
+                placeComponent(componentData, x, y);
+            });
+        }
+
+        // Set up connection point interactions
+        function setupConnectionPoints() {
+            circuitBoard.addEventListener('click', function(e) {
+                const connectionPoint = e.target.closest('.connection-point');
+                if (connectionPoint) {
+                    handleConnectionPointClick(connectionPoint);
+                    return;
+                }
+                
+                // If clicking elsewhere while in connection mode, cancel
+                if (gameState.isConnecting) {
+                    gameState.isConnecting = false;
+                    gameState.firstConnectionPoint = null;
+                    connectionMode.classList.remove('mode-active');
+                    showMessage('Connection cancelled', 'info');
+                }
+            });
+        }
+
+        // Handle drag start for components
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.closest('.component').dataset.id);
+            e.dataTransfer.effectAllowed = 'copy';
+        }
+
+        // Handle connection point click
+        function handleConnectionPointClick(connectionPointElement) {
+            const pointId = connectionPointElement.dataset.id;
+            const connectionPoint = gameState.connectionPoints.find(p => p.id === pointId);
+            
+            if (!connectionPoint) return;
+            
+            if (!gameState.isConnecting) {
+                // Start a new connection
+                gameState.isConnecting = true;
+                gameState.firstConnectionPoint = connectionPoint;
+                connectionPointElement.style.boxShadow = '0 0 10px #00ff88';
+                connectionMode.classList.add('mode-active');
+                showMessage(`Selected ${pointId}. Now click another connection point to connect.`, 'info');
+            } else {
+                // Complete the connection
+                if (gameState.firstConnectionPoint === connectionPoint) {
+                    // Clicked the same point, cancel
+                    gameState.isConnecting = false;
+                    gameState.firstConnectionPoint = null;
+                    connectionPointElement.style.boxShadow = '';
+                    connectionMode.classList.remove('mode-active');
+                    showMessage('Connection cancelled', 'info');
+                    return;
+                }
+                
+                // Create wire between the two points
+                createWire(gameState.firstConnectionPoint, connectionPoint);
+                
+                // Reset connection mode
+                document.querySelectorAll('.connection-point').forEach(p => {
+                    p.style.boxShadow = '';
+                });
+                gameState.isConnecting = false;
+                gameState.firstConnectionPoint = null;
+                connectionMode.classList.remove('mode-active');
+            }
+        }
+
+        // Place a component on the circuit board
+        function placeComponent(componentData, x, y) {
+            // Create component element
+            const componentElement = document.createElement('div');
+            componentElement.className = 'circuit-component';
+            componentElement.style.left = `${x}px`;
+            componentElement.style.top = `${y}px`;
+            componentElement.style.width = `${componentData.width}px`;
+            componentElement.style.height = `${componentData.height}px`;
+            
+            // Create the visual component based on type
+            let visualElement;
+            switch(componentData.type) {
+                case 'power':
+                    visualElement = createBatteryElement(componentData);
+                    break;
+                case 'resistor':
+                    visualElement = createResistorElement(componentData);
+                    break;
+                case 'led':
+                    visualElement = createLEDElement(componentData);
+                    break;
+                case 'switch':
+                    visualElement = createSwitchElement(componentData);
+                    break;
+                case 'bulb':
+                    visualElement = createBulbElement(componentData);
+                    break;
+            }
+            
+            componentElement.appendChild(visualElement);
+            
+            // Add label
+            const label = document.createElement('div');
+            label.className = 'component-label';
+            label.textContent = componentData.name;
+            componentElement.appendChild(label);
+            
+            // Generate unique ID for this component instance
+            const instanceId = `${componentData.id}-${Date.now()}`;
+            componentElement.dataset.instanceId = instanceId;
+            
+            // Add connection points for this component
+            const connectionPoints = addComponentConnectionPoints(componentData, x, y, instanceId);
+            
+            // Store component in game state
+            const componentInstance = {
+                id: instanceId,
+                type: componentData.type,
+                data: componentData,
+                element: componentElement,
+                x: x,
+                y: y,
+                connectionPoints: connectionPoints,
+                state: componentData.type === 'switch' ? false : null,
+                visualElement: visualElement
+            };
+            
+            gameState.components.push(componentInstance);
+            
+            // Make component draggable
+            makeComponentDraggable(componentElement, componentInstance);
+            
+            // Add click events for switches
+            if (componentData.type === 'switch') {
+                visualElement.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent triggering connection point clicks
+                    toggleSwitch(componentInstance);
+                });
+            }
+            
+            circuitBoard.appendChild(componentElement);
+            showMessage(`Added ${componentData.name} to circuit board`, 'success');
+        }
+
+        // Create battery element
+        function createBatteryElement(componentData) {
+            const battery = document.createElement('div');
+            battery.className = 'battery-visual';
+            battery.title = `${componentData.voltage}V Battery\nDrag connection points to wire it`;
+            return battery;
+        }
+
+        // Create resistor element
+        function createResistorElement(componentData) {
+            const resistor = document.createElement('div');
+            resistor.className = 'resistor-visual';
+            resistor.title = `${componentData.resistance}Ω Resistor\nMax current: ${componentData.maxCurrent}A`;
+            return resistor;
+        }
+
+        // Create LED element
+        function createLEDElement(componentData) {
+            const led = document.createElement('div');
+            led.className = `led-visual ${componentData.color}`;
+            led.title = `${componentData.color.toUpperCase()} LED\nVoltage drop: ${componentData.voltageDrop}V`;
+            return led;
+        }
+
+        // Create switch element
+        function createSwitchElement(componentData) {
+            const switchDiv = document.createElement('div');
+            switchDiv.className = 'switch-visual';
+            switchDiv.title = 'Toggle Switch\nClick to turn on/off';
+            
+            const knob = document.createElement('div');
+            knob.className = 'switch-knob';
+            
+            switchDiv.appendChild(knob);
+            return switchDiv;
+        }
+
+        // Create bulb element
+        function createBulbElement(componentData) {
+            const bulb = document.createElement('div');
+            bulb.className = 'bulb-visual';
+            bulb.title = `Light Bulb\n${componentData.resistance}Ω, ${componentData.voltage}V`;
+            return bulb;
+        }
+
+        // Add connection points for a component
+        function addComponentConnectionPoints(componentData, x, y, instanceId) {
+            const points = [];
+            
+            // Different components have different connection point layouts
+            componentData.connections.forEach((conn, index) => {
+                let pointX, pointY;
+                
+                if (componentData.type === 'power') {
+                    // Battery: top (+) and bottom (-)
+                    pointX = x + componentData.width/2 - 7;
+                    pointY = index === 0 ? y + 15 : y + componentData.height - 15;
+                } else if (componentData.type === 'resistor') {
+                    // Resistor: left and right sides
+                    pointX = index === 0 ? x - 7 : x + componentData.width - 7;
+                    pointY = y + componentData.height/2 - 7;
+                } else if (componentData.type === 'led') {
+                    // LED: anode (left) and cathode (right)
+                    pointX = index === 0 ? x - 10 : x + componentData.width - 4;
+                    pointY = y + componentData.height/2 - 7;
+                } else if (componentData.type === 'switch') {
+                    // Switch: input and output
+                    pointX = index === 0 ? x - 7 : x + componentData.width - 7;
+                    pointY = y + componentData.height/2 - 7;
+                } else if (componentData.type === 'bulb') {
+                    // Bulb: positive and negative (bottom)
+                    pointX = x + componentData.width/2 - 7;
+                    pointY = index === 0 ? y + 10 : y + componentData.height - 10;
+                }
+                
+                const pointId = `${instanceId}-${conn}`;
+                
+                // Create visual connection point
+                const pointElement = document.createElement('div');
+                pointElement.className = 'connection-point';
+                pointElement.style.left = `${pointX}px`;
+                pointElement.style.top = `${pointY}px`;
+                pointElement.dataset.id = pointId;
+                
+                circuitBoard.appendChild(pointElement);
+                
+                // Store connection point data
+                const pointData = {
+                    id: pointId,
+                    x: pointX,
+                    y: pointY,
+                    componentId: instanceId,
+                    connectionType: conn,
+                    connectedTo: []
+                };
+                
+                gameState.connectionPoints.push(pointData);
+                points.push(pointData);
+            });
+            
+            return points;
+        }
+
+        // Make a component draggable
+        function makeComponentDraggable(element, componentInstance) {
+            let isDragging = false;
+            let offsetX, offsetY;
+            
+            element.addEventListener('mousedown', startDrag);
+            
+            function startDrag(e) {
+                if (e.target.closest('.connection-point')) return; // Don't drag when clicking connection point
+                
+                isDragging = true;
+                offsetX = e.clientX - element.getBoundingClientRect().left;
+                offsetY = e.clientY - element.getBoundingClientRect().top;
+                
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDrag);
+                
+                // Bring to front
+                element.style.zIndex = '100';
+            }
+            
+            function drag(e) {
+                if (!isDragging) return;
+                
+                const rect = circuitBoard.getBoundingClientRect();
+                let x = e.clientX - rect.left - offsetX;
+                let y = e.clientY - rect.top - offsetY;
+                
+                // Constrain to circuit board
+                x = Math.max(0, Math.min(x, circuitBoard.clientWidth - componentInstance.data.width));
+                y = Math.max(0, Math.min(y, circuitBoard.clientHeight - componentInstance.data.height));
+                
+                element.style.left = `${x}px`;
+                element.style.top = `${y}px`;
+                
+                // Update component position
+                componentInstance.x = x;
+                componentInstance.y = y;
+                
+                // Update connection point positions
+                updateConnectionPoints(componentInstance);
+                
+                // Update wire positions
+                updateWiresForComponent(componentInstance);
+            }
+            
+            function stopDrag() {
+                isDragging = false;
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('mouseup', stopDrag);
+                
+                // Reset z-index
+                setTimeout(() => {
+                    element.style.zIndex = '10';
+                }, 100);
+            }
+        }
+
+        // Update connection point positions when component moves
+        function updateConnectionPoints(componentInstance) {
+            const componentData = componentInstance.data;
+            
+            componentInstance.connectionPoints.forEach((point, index) => {
+                let pointX, pointY;
+                
+                if (componentData.type === 'power') {
+                    pointX = componentInstance.x + componentData.width/2 - 7;
+                    pointY = index === 0 ? componentInstance.y + 15 : componentInstance.y + componentData.height - 15;
+                } else if (componentData.type === 'resistor') {
+                    pointX = index === 0 ? componentInstance.x - 7 : componentInstance.x + componentData.width - 7;
+                    pointY = componentInstance.y + componentData.height/2 - 7;
+                } else if (componentData.type === 'led') {
+                    pointX = index === 0 ? componentInstance.x - 10 : componentInstance.x + componentData.width - 4;
+                    pointY = componentInstance.y + componentData.height/2 - 7;
+                } else if (componentData.type === 'switch') {
+                    pointX = index === 0 ? componentInstance.x - 7 : componentInstance.x + componentData.width - 7;
+                    pointY = componentInstance.y + componentData.height/2 - 7;
+                } else if (componentData.type === 'bulb') {
+                    pointX = componentInstance.x + componentData.width/2 - 7;
+                    pointY = index === 0 ? componentInstance.y + 10 : componentInstance.y + componentData.height - 10;
+                }
+                
+                point.x = pointX;
+                point.y = pointY;
+                
+                // Update visual point
+                const pointElement = document.querySelector(`.connection-point[data-id="${point.id}"]`);
+                if (pointElement) {
+                    pointElement.style.left = `${pointX}px`;
+                    pointElement.style.top = `${pointY}px`;
+                }
+            });
+        }
+
+        // Create a wire between two connection points
+        function createWire(point1, point2) {
+            // Check if wire already exists
+            const wireExists = gameState.wires.some(wire => 
+                (wire.point1 === point1 && wire.point2 === point2) ||
+                (wire.point1 === point2 && wire.point2 === point1)
+            );
+            
+            if (wireExists) {
+                showMessage('These points are already connected', 'error');
+                return;
+            }
+            
+            // Create wire element
+            const wireElement = document.createElement('div');
+            wireElement.className = 'wire';
+            
+            // Calculate wire position and rotation
+            const dx = point2.x - point1.x;
+            const dy = point2.y - point1.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            wireElement.style.width = `${length}px`;
+            wireElement.style.left = `${point1.x + 7}px`;
+            wireElement.style.top = `${point1.y + 7}px`;
+            wireElement.style.transform = `rotate(${angle}deg)`;
+            
+            circuitBoard.appendChild(wireElement);
+            
+            // Store wire data
+            const wireData = {
+                element: wireElement,
+                point1: point1,
+                point2: point2
+            };
+            
+            gameState.wires.push(wireData);
+            
+            // Update connection point data
+            point1.connectedTo.push(point2.id);
+            point2.connectedTo.push(point1.id);
+            
+            showMessage('Wire connected', 'success');
+        }
+
+        // Update wires when a component moves
+        function updateWiresForComponent(componentInstance) {
+            gameState.wires.forEach(wire => {
+                if (componentInstance.connectionPoints.includes(wire.point1) || 
+                    componentInstance.connectionPoints.includes(wire.point2)) {
+                    
+                    // Recalculate wire position
+                    const dx = wire.point2.x - wire.point1.x;
+                    const dy = wire.point2.y - wire.point1.y;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    
+                    wire.element.style.width = `${length}px`;
+                    wire.element.style.left = `${wire.point1.x + 7}px`;
+                    wire.element.style.top = `${wire.point1.y + 7}px`;
+                    wire.element.style.transform = `rotate(${angle}deg)`;
+                }
+            });
+        }
+
+        // Toggle a switch component
+        function toggleSwitch(componentInstance) {
+            componentInstance.state = !componentInstance.state;
+            
+            const switchElement = componentInstance.visualElement;
+            if (componentInstance.state) {
+                switchElement.classList.add('on');
+                showMessage('Switch turned ON', 'info');
+            } else {
+                switchElement.classList.remove('on');
+                showMessage('Switch turned OFF', 'info');
+            }
+        }
+
+        // Clear the circuit board
+        function clearCircuitBoard() {
+            // Remove all components
+            document.querySelectorAll('.circuit-component').forEach(el => el.remove());
+            
+            // Remove all wires
+            document.querySelectorAll('.wire').forEach(el => el.remove());
+            
+            // Remove all connection points except power
+            document.querySelectorAll('.connection-point').forEach(el => {
+                if (!el.dataset.id.startsWith('power-')) {
+                    el.remove();
+                }
+            });
+            
+            // Reset game state
+            gameState.components = [];
+            gameState.wires = [];
+            gameState.connectionPoints = gameState.connectionPoints.filter(p => 
+                p.id.startsWith('power-')
+            );
+            gameState.isConnecting = false;
+            gameState.firstConnectionPoint = null;
+            connectionMode.classList.remove('mode-active');
+            
+            // Reset circuit stats
+            gameState.current = 0;
+            gameState.totalResistance = 0;
+            updateCircuitStats();
+            
+            showMessage('Circuit board cleared', 'info');
+        }
+
+        // Test the circuit
+        function testCircuit() {
+            if (gameState.components.length === 0) {
+                showMessage('Build a circuit first! Drag components onto the board.', 'error');
+                return;
+            }
+            
+            // Check for required components
+            const missingComponents = checkRequiredComponents();
+            if (missingComponents.length > 0) {
+                showMessage(`Missing required components: ${missingComponents.join(', ')}`, 'error');
+                return;
+            }
+            
+            // Analyze the circuit
+            const analysis = analyzeCircuit();
+            
+            // Update circuit stats
+            gameState.current = analysis.current;
+            gameState.totalResistance = analysis.totalResistance;
+            updateCircuitStats();
+            
+            // Check if circuit works
+            if (analysis.circuitComplete) {
+                // Light up LEDs and bulbs
+                updateComponentStates(analysis);
+                
+                // Check challenge requirements
+                const passed = checkChallengeRequirements(analysis);
+                
+                if (passed) {
+                    // Success!
+                    const points = 200 * gameState.level;
+                    gameState.score += points;
+                    
+                    showMessage(`Circuit works! +${points} points`, 'success');
+                    
+                    // Next level or game complete
+                    setTimeout(() => {
+                        if (gameState.level < 5) {
+                            loadChallenge(gameState.level + 1);
+                        } else {
+                            showMessage(`Congratulations! You completed all circuit challenges! Final Score: ${gameState.score}`, 'success');
+                            setTimeout(() => {
+                                if (confirm(`You mastered circuit design! Final score: ${gameState.score}. Play again?`)) {
+                                    resetGame();
+                                }
+                            }, 1000);
+                        }
+                    }, 1500);
+                } else {
+                    showMessage('Circuit works but does not meet all requirements. Check the challenge details.', 'error');
+                }
+            } else {
+                showMessage('Circuit is incomplete or has a short circuit. Check your connections.', 'error');
+            }
+            
+            updateUI();
+        }
+
+        // Check for required components
+        function checkRequiredComponents() {
+            const required = gameState.currentChallenge.requiredComponents || [];
+            const missing = [];
+            
+            required.forEach(reqId => {
+                const hasComponent = gameState.components.some(comp => 
+                    comp.data.id === reqId
+                );
+                
+                if (!hasComponent) {
+                    const component = circuitComponents.find(c => c.id === reqId);
+                    missing.push(component ? component.name : reqId);
+                }
+            });
+            
+            return missing;
+        }
+
+        // Analyze the circuit
+        function analyzeCircuit() {
+            // Simple circuit analysis (for game purposes)
+            let totalResistance = 0;
+            let hasBattery = false;
+            let circuitComplete = false;
+            let switchesOn = true;
+            
+            // Check for battery
+            hasBattery = gameState.components.some(comp => comp.type === 'power');
+            
+            // Check if all switches are on
+            const switches = gameState.components.filter(comp => comp.type === 'switch');
+            switchesOn = switches.length === 0 || switches.every(sw => sw.state === true);
+            
+            // Calculate total resistance (simplified)
+            const resistors = gameState.components.filter(comp => comp.type === 'resistor');
+            resistors.forEach(res => {
+                totalResistance += res.data.resistance;
+            });
+            
+            // Add bulb resistance if present
+            const bulbs = gameState.components.filter(comp => comp.type === 'bulb');
+            bulbs.forEach(bulb => {
+                totalResistance += bulb.data.resistance;
+            });
+            
+            // Add minimum resistance for LEDs (simplified model)
+            const leds = gameState.components.filter(comp => comp.type === 'led');
+            leds.forEach(led => {
+                totalResistance += 220; // Approximate resistor needed for LED
+            });
+            
+            // Calculate current (I = V/R)
+            const voltage = 9; // Battery voltage
+            const current = totalResistance > 0 ? voltage / totalResistance : 0;
+            
+            // Circuit is complete if we have a battery and at least one other component
+            circuitComplete = hasBattery && gameState.components.length > 1 && switchesOn;
+            
+            return {
+                totalResistance,
+                current,
+                circuitComplete,
+                switchesOn,
+                hasBattery
+            };
+        }
+
+        // Update component visual states (light up LEDs/bulbs)
+        function updateComponentStates(analysis) {
+            gameState.components.forEach(comp => {
+                if (comp.type === 'led' && analysis.circuitComplete && analysis.current > 0) {
+                    comp.visualElement.classList.add('on');
+                } else if (comp.type === 'led') {
+                    comp.visualElement.classList.remove('on');
+                }
+                
+                if (comp.type === 'bulb' && analysis.circuitComplete && analysis.current > 0) {
+                    comp.visualElement.classList.add('on');
+                } else if (comp.type === 'bulb') {
+                    comp.visualElement.classList.remove('on');
+                }
+            });
+        }
+
+        // Check if circuit meets challenge requirements
+        function checkChallengeRequirements(analysis) {
+            const challenge = gameState.currentChallenge;
+            
+            // Check minimum components
+            if (challenge.minComponents && gameState.components.length < challenge.minComponents) {
+                return false;
+            }
+            
+            // Check minimum resistance
+            if (challenge.minResistance && analysis.totalResistance < challenge.minResistance) {
+                return false;
+            }
+            
+            // Check maximum current
+            if (challenge.maxCurrent && analysis.current > challenge.maxCurrent) {
+                return false;
+            }
+            
+            // Check parallel requirement (simplified)
+            if (challenge.parallelRequired) {
+                // Count wires from battery positive to see if we have multiple paths
+                const positivePoint = gameState.connectionPoints.find(p => p.id === 'power-plus');
+                if (positivePoint.connectedTo.length < 2) {
+                    return false;
+                }
+            }
+            
+            // Circuit must be complete
+            if (!analysis.circuitComplete) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Update circuit statistics display
+        function updateCircuitStats() {
+            currentElement.textContent = `${(gameState.current * 1000).toFixed(1)} mA`;
+            resistanceElement.textContent = `${gameState.totalResistance.toFixed(0)} Ω`;
+        }
+
+        // Update UI elements
+        function updateUI() {
+            scoreElement.textContent = gameState.score;
+            levelElement.textContent = gameState.level;
+        }
+
+        // Show a temporary message
+        function showMessage(text, type) {
+            messageElement.textContent = text;
+            messageElement.className = `message ${type} show`;
+            
+            setTimeout(() => {
+                messageElement.classList.remove('show');
+            }, 3000);
+        }
+
+        // Reset the entire game
+        function resetGame() {
+            gameState.score = 0;
+            gameState.level = 1;
+            gameState.components = [];
+            gameState.wires = [];
+            gameState.connectionPoints = [];
+            
+            loadChallenge(1);
+            updateUI();
+            updateCircuitStats();
+            
+            showMessage('Game reset. Good luck!', 'info');
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

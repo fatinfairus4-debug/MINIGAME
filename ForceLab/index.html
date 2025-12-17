@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Force Lab</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #f1f1f1;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 25px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(0, 114, 255, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a9e4ff;
+            margin-bottom: 15px;
+        }
+        
+        .game-intro {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-left: 4px solid #00c6ff;
+        }
+        
+        .game-area {
+            display: grid;
+            grid-template-columns: 3fr 2fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .physics-lab {
+            background: rgba(25, 25, 35, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 198, 255, 0.2);
+        }
+        
+        .lab-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .lab-title h2 {
+            color: #00c6ff;
+            font-size: 1.8rem;
+        }
+        
+        .level {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            color: #ffdd59;
+            font-size: 1.2rem;
+        }
+        
+        .simulation-area {
+            height: 400px;
+            background: rgba(10, 25, 47, 0.9);
+            border-radius: 10px;
+            position: relative;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .object {
+            position: absolute;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            transition: left 0.1s linear, top 0.1s linear;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .target {
+            position: absolute;
+            border-radius: 50%;
+            border: 3px dashed #4cd137;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4cd137;
+            font-weight: bold;
+            z-index: 5;
+        }
+        
+        .force-indicator {
+            position: absolute;
+            height: 4px;
+            background: linear-gradient(90deg, #ff3838, #ff9f1a);
+            transform-origin: 0 0;
+            z-index: 8;
+        }
+        
+        .force-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid #ff3838;
+            transform-origin: 50% 0;
+            z-index: 9;
+        }
+        
+        .controls-panel {
+            background: rgba(25, 25, 35, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 0, 128, 0.2);
+        }
+        
+        .controls-title {
+            color: #ff0080;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .force-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .force-control {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .force-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #a9e4ff;
+        }
+        
+        .force-name {
+            font-weight: bold;
+        }
+        
+        .force-value {
+            color: #ffdd59;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00c6ff;
+            cursor: pointer;
+        }
+        
+        .object-controls {
+            margin-top: 20px;
+        }
+        
+        .object-property {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .property-name {
+            color: #a9e4ff;
+        }
+        
+        .property-value {
+            color: #ffdd59;
+            font-weight: bold;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 198, 255, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .challenge-info {
+            background: rgba(25, 25, 35, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(76, 209, 55, 0.2);
+        }
+        
+        .challenge-title {
+            color: #4cd137;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .challenge-text {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .physics-formula {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            border-left: 4px solid #00c6ff;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 4px solid #ff0080;
+        }
+        
+        .instructions h3 {
+            color: #ff0080;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(150%);
+            transition: transform 0.5s;
+            z-index: 100;
+        }
+        
+        .message.show {
+            transform: translateX(0);
+        }
+        
+        .success {
+            background: linear-gradient(90deg, #00b09b, #96c93d);
+            color: white;
+        }
+        
+        .error {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            color: white;
+        }
+        
+        .info {
+            background: linear-gradient(90deg, #2193b0, #6dd5ed);
+            color: white;
+        }
+        
+        .gravity-line {
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1;
+        }
+        
+        .coordinate {
+            position: absolute;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.5);
+            z-index: 1;
+        }
+        
+        .trial-count {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a9e4ff;
+            font-size: 0.9rem;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #00c6ff;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #a9e4ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-rocket"></i> Physics Force Lab</h1>
+            <p class="subtitle">Apply forces to move objects to their targets. Master Newton's Laws!</p>
+        </header>
+        
+        <div class="game-intro">
+            <p><strong>HOW TO PLAY:</strong> Adjust the force sliders to apply physics forces to the object. Get it to land in the green target zone. Use as few attempts as possible to score higher!</p>
+        </div>
+        
+        <div class="game-area">
+            <div class="physics-lab">
+                <div class="lab-title">
+                    <h2><i class="fas fa-flask"></i> Physics Simulation</h2>
+                    <div class="level">Level: <span id="level">1</span></div>
+                </div>
+                
+                <div class="simulation-area" id="simulationArea">
+                    <!-- Physics simulation happens here -->
+                    <div class="gravity-line" style="top: 300px;" title="Ground Level"></div>
+                    <div class="coordinate" style="top: 5px; left: 5px;">(0,0)</div>
+                    <div class="coordinate" style="top: 5px; right: 5px;">(600,0)</div>
+                    <div class="coordinate" style="bottom: 5px; left: 5px;">(0,400)</div>
+                    <div class="coordinate" style="bottom: 5px; right: 5px;">(600,400)</div>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="score">0</div>
+                        <div class="stat-label">Score</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="attempts">0</div>
+                        <div class="stat-label">Attempts</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="time">0s</div>
+                        <div class="stat-label">Time</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls-panel">
+                <h2 class="controls-title"><i class="fas fa-sliders-h"></i> Force Controls</h2>
+                
+                <div class="force-controls">
+                    <div class="force-control">
+                        <div class="force-label">
+                            <span class="force-name">Horizontal Force</span>
+                            <span class="force-value" id="forceXValue">0 N</span>
+                        </div>
+                        <input type="range" id="forceX" min="-100" max="100" value="0" step="1">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #aaa; margin-top: 5px;">
+                            <span>Left ←</span>
+                            <span>→ Right</span>
+                        </div>
+                    </div>
+                    
+                    <div class="force-control">
+                        <div class="force-label">
+                            <span class="force-name">Vertical Force</span>
+                            <span class="force-value" id="forceYValue">0 N</span>
+                        </div>
+                        <input type="range" id="forceY" min="-100" max="100" value="0" step="1">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #aaa; margin-top: 5px;">
+                            <span>Down ↓</span>
+                            <span>↑ Up</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="object-controls">
+                    <h3 style="color: #a9e4ff; margin-bottom: 15px; font-size: 1.2rem;"><i class="fas fa-cube"></i> Object Properties</h3>
+                    
+                    <div class="object-property">
+                        <span class="property-name">Mass</span>
+                        <span class="property-value" id="massValue">5 kg</span>
+                    </div>
+                    
+                    <div class="object-property">
+                        <span class="property-name">Friction</span>
+                        <span class="property-value" id="frictionValue">0.2</span>
+                    </div>
+                    
+                    <div class="object-property">
+                        <span class="property-name">Gravity</span>
+                        <span class="property-value" id="gravityValue">9.8 m/s²</span>
+                    </div>
+                </div>
+                
+                <div class="trial-count">
+                    <span>Current Trial: <strong id="trial">1</strong></span>
+                    <span>Max Trials: <strong>3</strong></span>
+                </div>
+                
+                <button class="btn-primary" id="applyForceBtn">
+                    <i class="fas fa-play-circle"></i> Apply Force & Launch
+                </button>
+                
+                <button class="btn-secondary" id="resetBtn">
+                    <i class="fas fa-redo"></i> Reset Trial
+                </button>
+            </div>
+        </div>
+        
+        <div class="challenge-info">
+            <h2 class="challenge-title"><i class="fas fa-bullseye"></i> Current Challenge</h2>
+            <p class="challenge-text" id="challengeText">Launch the object into the target zone. Adjust horizontal and vertical forces to account for gravity and friction.</p>
+            
+            <div class="physics-formula">
+                <strong>Physics Formulas:</strong><br>
+                F = m × a (Force = mass × acceleration)<br>
+                v = u + at (Final velocity = initial velocity + acceleration × time)<br>
+                s = ut + ½at² (Distance = initial velocity × time + ½ × acceleration × time²)
+            </div>
+            
+            <p><strong>Target Position:</strong> <span id="targetPos">X: 450-550, Y: 280-320</span></p>
+            <p><strong>Object Start:</strong> <span id="startPos">X: 50, Y: 300</span></p>
+            <p><strong>Hint:</strong> <span id="hintText">Start with a moderate horizontal force and slight upward vertical force.</span></p>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-graduation-cap"></i> How to Play - Physics Lab</h3>
+            <ul>
+                <li><strong>Step 1:</strong> Examine the challenge - note where the object starts and where the target is.</li>
+                <li><strong>Step 2:</strong> Adjust the force sliders. Horizontal force moves left/right, vertical force moves up/down.</li>
+                <li><strong>Step 3:</strong> Click "Apply Force & Launch" to see the physics simulation.</li>
+                <li><strong>Step 4:</strong> If you miss, click "Reset Trial" and adjust your forces based on what you observed.</li>
+                <li><strong>Step 5:</strong> Land the object in the green target zone within 3 attempts to complete the level.</li>
+                <li><strong>Physics Tip:</strong> Remember gravity pulls down (9.8 m/s²), so you need upward force to counteract it!</li>
+                <li><strong>Scoring:</strong> Fewer attempts = higher score. Complete levels quickly for bonus points!</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Physics Force Lab | A Newtonian Physics Simulation Game</p>
+        </footer>
+    </div>
+    
+    <div class="message" id="message"></div>
+
+    <script>
+        // Game state
+        const gameState = {
+            score: 0,
+            level: 1,
+            attempts: 0,
+            maxAttempts: 3,
+            currentTrial: 1,
+            isSimulating: false,
+            simulationTime: 0,
+            object: null,
+            target: null,
+            currentChallenge: null
+        };
+
+        // Physics constants
+        const physics = {
+            gravity: 9.8,
+            friction: 0.2,
+            timeStep: 0.1,
+            pixelToMeter: 0.1 // 10 pixels = 1 meter
+        };
+
+        // Challenges for different levels
+        const challenges = {
+            1: {
+                name: "Basic Launch",
+                description: "Launch the object into the target. Get a feel for how forces work.",
+                object: { x: 50, y: 300, width: 40, height: 40, mass: 5, color: '#ff9f1a' },
+                target: { x: 450, y: 280, width: 100, height: 40 },
+                hint: "Try 60N horizontal force and 30N vertical force to start."
+            },
+            2: {
+                name: "Over the Hill",
+                description: "The target is on higher ground. You'll need more vertical force.",
+                object: { x: 50, y: 300, width: 40, height: 40, mass: 5, color: '#ff9f1a' },
+                target: { x: 450, y: 200, width: 100, height: 40 },
+                hint: "Increase vertical force to about 50N while keeping horizontal around 60N."
+            },
+            3: {
+                name: "Friction Challenge",
+                description: "Higher friction surface. You'll need more force to overcome resistance.",
+                object: { x: 50, y: 300, width: 40, height: 40, mass: 5, color: '#ff9f1a' },
+                target: { x: 500, y: 280, width: 100, height: 40 },
+                hint: "Friction is now 0.4. Increase horizontal force to compensate."
+            },
+            4: {
+                name: "Heavier Object",
+                description: "The object is now heavier (10kg). More force needed for same acceleration.",
+                object: { x: 50, y: 300, width: 50, height: 50, mass: 10, color: '#ff3838' },
+                target: { x: 450, y: 280, width: 100, height: 40 },
+                hint: "Remember F=ma. Double the mass means you need double the force for same acceleration."
+            },
+            5: {
+                name: "Precision Landing",
+                description: "Smaller target zone. Requires precise force adjustment.",
+                object: { x: 50, y: 300, width: 40, height: 40, mass: 5, color: '#ff9f1a' },
+                target: { x: 480, y: 290, width: 60, height: 30 },
+                hint: "Small adjustments make a big difference. Try 55N horizontal and 25N vertical."
+            }
+        };
+
+        // DOM elements
+        const simulationArea = document.getElementById('simulationArea');
+        const levelElement = document.getElementById('level');
+        const scoreElement = document.getElementById('score');
+        const attemptsElement = document.getElementById('attempts');
+        const timeElement = document.getElementById('time');
+        const forceX = document.getElementById('forceX');
+        const forceY = document.getElementById('forceY');
+        const forceXValue = document.getElementById('forceXValue');
+        const forceYValue = document.getElementById('forceYValue');
+        const massValue = document.getElementById('massValue');
+        const frictionValue = document.getElementById('frictionValue');
+        const gravityValue = document.getElementById('gravityValue');
+        const trialElement = document.getElementById('trial');
+        const applyForceBtn = document.getElementById('applyForceBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const challengeText = document.getElementById('challengeText');
+        const targetPos = document.getElementById('targetPos');
+        const startPos = document.getElementById('startPos');
+        const hintText = document.getElementById('hintText');
+        const messageElement = document.getElementById('message');
+
+        // Initialize the game
+        function initGame() {
+            loadChallenge(1);
+            updateUI();
+            
+            // Set up event listeners
+            applyForceBtn.addEventListener('click', applyForces);
+            resetBtn.addEventListener('click', resetTrial);
+            
+            forceX.addEventListener('input', updateForceDisplay);
+            forceY.addEventListener('input', updateForceDisplay);
+            
+            // Start the game timer
+            setInterval(updateTimer, 1000);
+        }
+
+        // Load a challenge
+        function loadChallenge(level) {
+            gameState.level = level;
+            gameState.currentTrial = 1;
+            gameState.attempts = 0;
+            gameState.currentChallenge = challenges[level];
+            
+            // Update challenge info
+            levelElement.textContent = level;
+            challengeText.textContent = gameState.currentChallenge.description;
+            hintText.textContent = gameState.currentChallenge.hint;
+            
+            // Update physics properties
+            physics.friction = level === 3 ? 0.4 : 0.2;
+            updatePhysicsDisplay();
+            
+            // Clear simulation area
+            simulationArea.innerHTML = '';
+            
+            // Add ground line and coordinates
+            simulationArea.innerHTML = `
+                <div class="gravity-line" style="top: 300px;" title="Ground Level"></div>
+                <div class="coordinate" style="top: 5px; left: 5px;">(0,0)</div>
+                <div class="coordinate" style="top: 5px; right: 5px;">(600,0)</div>
+                <div class="coordinate" style="bottom: 5px; left: 5px;">(0,400)</div>
+                <div class="coordinate" style="bottom: 5px; right: 5px;">(600,400)</div>
+            `;
+            
+            // Create target
+            const target = gameState.currentChallenge.target;
+            gameState.target = target;
+            
+            const targetElement = document.createElement('div');
+            targetElement.className = 'target';
+            targetElement.style.left = `${target.x}px`;
+            targetElement.style.top = `${target.y}px`;
+            targetElement.style.width = `${target.width}px`;
+            targetElement.style.height = `${target.height}px`;
+            targetElement.innerHTML = '<i class="fas fa-bullseye"></i>';
+            targetElement.title = `Target Zone: X:${target.x}-${target.x+target.width}, Y:${target.y}-${target.y+target.height}`;
+            
+            simulationArea.appendChild(targetElement);
+            
+            // Create object
+            const object = gameState.currentChallenge.object;
+            gameState.object = {
+                ...object,
+                element: null,
+                velocityX: 0,
+                velocityY: 0,
+                originalX: object.x,
+                originalY: object.y
+            };
+            
+            createObject();
+            
+            // Update position displays
+            targetPos.textContent = `X: ${target.x}-${target.x+target.width}, Y: ${target.y}-${target.y+target.height}`;
+            startPos.textContent = `X: ${object.x}, Y: ${object.y}`;
+            
+            // Reset force sliders
+            forceX.value = 0;
+            forceY.value = 0;
+            updateForceDisplay();
+            
+            showMessage(`Level ${level}: ${gameState.currentChallenge.name}`, 'info');
+        }
+
+        // Create the object in the simulation
+        function createObject() {
+            if (gameState.object.element) {
+                gameState.object.element.remove();
+            }
+            
+            const object = gameState.object;
+            const objectElement = document.createElement('div');
+            objectElement.className = 'object';
+            objectElement.style.left = `${object.x}px`;
+            objectElement.style.top = `${object.y}px`;
+            objectElement.style.width = `${object.width}px`;
+            objectElement.style.height = `${object.height}px`;
+            objectElement.style.backgroundColor = object.color;
+            objectElement.textContent = object.mass + 'kg';
+            objectElement.title = `Mass: ${object.mass}kg | Position: (${object.x}, ${object.y})`;
+            
+            simulationArea.appendChild(objectElement);
+            gameState.object.element = objectElement;
+        }
+
+        // Update force display values
+        function updateForceDisplay() {
+            forceXValue.textContent = `${forceX.value} N`;
+            forceYValue.textContent = `${forceY.value} N`;
+        }
+
+        // Update physics property displays
+        function updatePhysicsDisplay() {
+            massValue.textContent = `${gameState.currentChallenge.object.mass} kg`;
+            frictionValue.textContent = physics.friction;
+            gravityValue.textContent = `${physics.gravity} m/s²`;
+        }
+
+        // Apply forces and start simulation
+        function applyForces() {
+            if (gameState.isSimulating) return;
+            
+            gameState.isSimulating = true;
+            gameState.attempts++;
+            gameState.currentTrial++;
+            
+            // Disable controls during simulation
+            applyForceBtn.disabled = true;
+            forceX.disabled = true;
+            forceY.disabled = true;
+            
+            // Get force values
+            const forceXVal = parseFloat(forceX.value);
+            const forceYVal = parseFloat(forceY.value);
+            
+            // Calculate accelerations (F = ma => a = F/m)
+            const mass = gameState.object.mass;
+            const accelerationX = forceXVal / mass;
+            const accelerationY = (forceYVal / mass) - physics.gravity; // Gravity acts downward
+            
+            // Update object velocities
+            gameState.object.velocityX = accelerationX * physics.timeStep * 10; // Scale for visualization
+            gameState.object.velocityY = accelerationY * physics.timeStep * 10;
+            
+            // Show force indicators
+            showForceIndicators(forceXVal, forceYVal);
+            
+            // Start simulation
+            simulateMotion(forceXVal, forceYVal);
+            
+            updateUI();
+        }
+
+        // Show force direction indicators
+        function showForceIndicators(forceXVal, forceYVal) {
+            // Remove any existing indicators
+            document.querySelectorAll('.force-indicator, .force-arrow').forEach(el => el.remove());
+            
+            const object = gameState.object;
+            
+            // Horizontal force indicator
+            if (forceXVal !== 0) {
+                const indicatorX = document.createElement('div');
+                indicatorX.className = 'force-indicator';
+                
+                const length = Math.abs(forceXVal) / 2;
+                const left = forceXVal > 0 ? object.x + object.width : object.x - length;
+                
+                indicatorX.style.left = `${left}px`;
+                indicatorX.style.top = `${object.y + object.height/2 - 2}px`;
+                indicatorX.style.width = `${length}px`;
+                
+                simulationArea.appendChild(indicatorX);
+                
+                // Arrow
+                const arrowX = document.createElement('div');
+                arrowX.className = 'force-arrow';
+                arrowX.style.left = `${forceXVal > 0 ? left + length : left}px`;
+                arrowX.style.top = `${object.y + object.height/2 - 15}px`;
+                
+                if (forceXVal < 0) {
+                    arrowX.style.transform = 'rotate(180deg)';
+                }
+                
+                simulationArea.appendChild(arrowX);
+            }
+            
+            // Vertical force indicator
+            if (forceYVal !== 0) {
+                const indicatorY = document.createElement('div');
+                indicatorY.className = 'force-indicator';
+                
+                const length = Math.abs(forceYVal) / 2;
+                const top = forceYVal < 0 ? object.y - length : object.y + object.height;
+                
+                indicatorY.style.left = `${object.x + object.width/2 - 2}px`;
+                indicatorY.style.top = `${top}px`;
+                indicatorY.style.width = `${length}px`;
+                indicatorY.style.transform = 'rotate(90deg)';
+                indicatorY.style.transformOrigin = '0 0';
+                
+                simulationArea.appendChild(indicatorY);
+                
+                // Arrow
+                const arrowY = document.createElement('div');
+                arrowY.className = 'force-arrow';
+                arrowY.style.left = `${object.x + object.width/2 - 10}px`;
+                arrowY.style.top = `${forceYVal < 0 ? top : top + length}px`;
+                arrowY.style.transform = forceYVal < 0 ? 'rotate(0deg)' : 'rotate(180deg)';
+                
+                simulationArea.appendChild(arrowY);
+            }
+        }
+
+        // Simulate object motion
+        function simulateMotion(forceXVal, forceYVal) {
+            const object = gameState.object;
+            const target = gameState.target;
+            let time = 0;
+            
+            // Store original position for reset
+            const originalX = object.x;
+            const originalY = object.y;
+            
+            // Calculate accelerations
+            const mass = object.mass;
+            const accelerationX = forceXVal / mass;
+            const accelerationY = (forceYVal / mass) - physics.gravity;
+            
+            // Animation function
+            function animate() {
+                if (!gameState.isSimulating) return;
+                
+                time += physics.timeStep;
+                
+                // Calculate new position using physics equations
+                // s = ut + ½at² (but we're doing incremental updates)
+                object.velocityX += accelerationX * physics.timeStep;
+                object.velocityY += accelerationY * physics.timeStep;
+                
+                // Apply friction (only when on ground)
+                if (object.y >= 300 - object.height) {
+                    object.velocityX *= (1 - physics.friction * physics.timeStep);
+                }
+                
+                // Update position
+                object.x += object.velocityX * physics.timeStep * 10; // Scale for visualization
+                object.y += object.velocityY * physics.timeStep * 10;
+                
+                // Boundary checking
+                if (object.x < 0) {
+                    object.x = 0;
+                    object.velocityX *= -0.5; // Bounce with energy loss
+                }
+                
+                if (object.x > 600 - object.width) {
+                    object.x = 600 - object.width;
+                    object.velocityX *= -0.5; // Bounce with energy loss
+                }
+                
+                // Ground collision
+                if (object.y > 300 - object.height) {
+                    object.y = 300 - object.height;
+                    object.velocityY *= -0.3; // Bounce with energy loss
+                    
+                    // Stop if velocity is very small
+                    if (Math.abs(object.velocityY) < 0.5 && Math.abs(object.velocityX) < 0.5) {
+                        checkTargetHit();
+                        return;
+                    }
+                }
+                
+                // Ceiling collision
+                if (object.y < 0) {
+                    object.y = 0;
+                    object.velocityY *= -0.5;
+                }
+                
+                // Update object position
+                object.element.style.left = `${object.x}px`;
+                object.element.style.top = `${object.y}px`;
+                
+                // Check if object has come to rest or gone out of bounds
+                if (time > 10 || (Math.abs(object.velocityX) < 0.1 && Math.abs(object.velocityY) < 0.1 && object.y >= 300 - object.height)) {
+                    checkTargetHit();
+                    return;
+                }
+                
+                // Continue animation
+                requestAnimationFrame(animate);
+            }
+            
+            // Start animation
+            animate();
+        }
+
+        // Check if object hit the target
+        function checkTargetHit() {
+            gameState.isSimulating = false;
+            
+            const object = gameState.object;
+            const target = gameState.target;
+            
+            // Check if object is within target bounds
+            const objectCenterX = object.x + object.width/2;
+            const objectCenterY = object.y + object.height/2;
+            
+            const inTargetX = objectCenterX >= target.x && objectCenterX <= target.x + target.width;
+            const inTargetY = objectCenterY >= target.y && objectCenterY <= target.y + target.height;
+            
+            if (inTargetX && inTargetY) {
+                // Success!
+                const points = 100 * gameState.level;
+                const attemptBonus = Math.max(0, 50 - (gameState.attempts * 10));
+                gameState.score += points + attemptBonus;
+                
+                showMessage(`Target Hit! +${points} points +${attemptBonus} attempt bonus`, 'success');
+                
+                // Next level or game complete
+                setTimeout(() => {
+                    if (gameState.level < 5) {
+                        loadChallenge(gameState.level + 1);
+                    } else {
+                        showMessage(`Congratulations! You completed all levels! Final Score: ${gameState.score}`, 'success');
+                        setTimeout(() => {
+                            if (confirm(`You won! Final score: ${gameState.score}. Play again?`)) {
+                                resetGame();
+                            }
+                        }, 1000);
+                    }
+                }, 1500);
+            } else {
+                // Failure
+                if (gameState.attempts >= gameState.maxAttempts) {
+                    showMessage(`Out of attempts! The correct forces were around: ${gameState.currentChallenge.hint.split(": ")[1]}`, 'error');
+                    
+                    setTimeout(() => {
+                        if (confirm(`Level failed! Try again? Your score: ${gameState.score}`)) {
+                            loadChallenge(gameState.level);
+                        }
+                    }, 1500);
+                } else {
+                    showMessage(`Missed! Attempt ${gameState.attempts}/${gameState.maxAttempts}. Try adjusting your forces.`, 'error');
+                }
+            }
+            
+            // Re-enable controls
+            applyForceBtn.disabled = false;
+            forceX.disabled = false;
+            forceY.disabled = false;
+            
+            updateUI();
+        }
+
+        // Reset the current trial
+        function resetTrial() {
+            if (gameState.isSimulating) return;
+            
+            // Reset object to starting position
+            gameState.object.x = gameState.object.originalX;
+            gameState.object.y = gameState.object.originalY;
+            gameState.object.velocityX = 0;
+            gameState.object.velocityY = 0;
+            
+            // Remove force indicators
+            document.querySelectorAll('.force-indicator, .force-arrow').forEach(el => el.remove());
+            
+            // Reset object position
+            createObject();
+            
+            // Reset force sliders
+            forceX.value = 0;
+            forceY.value = 0;
+            updateForceDisplay();
+            
+            showMessage('Trial reset. Adjust your forces and try again.', 'info');
+        }
+
+        // Update the game timer
+        function updateTimer() {
+            gameState.simulationTime++;
+            timeElement.textContent = `${gameState.simulationTime}s`;
+        }
+
+        // Update UI elements
+        function updateUI() {
+            scoreElement.textContent = gameState.score;
+            attemptsElement.textContent = gameState.attempts;
+            trialElement.textContent = gameState.currentTrial;
+        }
+
+        // Show a temporary message
+        function showMessage(text, type) {
+            messageElement.textContent = text;
+            messageElement.className = `message ${type} show`;
+            
+            setTimeout(() => {
+                messageElement.classList.remove('show');
+            }, 3000);
+        }
+
+        // Reset the entire game
+        function resetGame() {
+            gameState.score = 0;
+            gameState.simulationTime = 0;
+            gameState.attempts = 0;
+            gameState.currentTrial = 1;
+            
+            loadChallenge(1);
+            updateUI();
+            
+            showMessage('Game reset. Good luck!', 'info');
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

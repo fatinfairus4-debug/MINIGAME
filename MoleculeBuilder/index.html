@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molecule Builder Challenge</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #f1f1f1;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 25px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00dbde, #fc00ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(0, 219, 222, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a9e4ff;
+            margin-bottom: 15px;
+        }
+        
+        .game-intro {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-left: 4px solid #00dbde;
+        }
+        
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .molecule-board {
+            background: rgba(25, 25, 35, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 219, 222, 0.2);
+        }
+        
+        .molecule-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .molecule-title h2 {
+            color: #00dbde;
+            font-size: 1.8rem;
+        }
+        
+        .score {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-weight: bold;
+            color: #ffdd59;
+            font-size: 1.2rem;
+        }
+        
+        .build-area {
+            height: 400px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            position: relative;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+        }
+        
+        .molecule {
+            position: absolute;
+            transition: all 0.3s;
+            cursor: move;
+        }
+        
+        .atom {
+            border-radius: 50%;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s;
+        }
+        
+        .bond {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            transform-origin: 0 0;
+        }
+        
+        .component-panel {
+            background: rgba(25, 25, 35, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(252, 0, 255, 0.2);
+        }
+        
+        .component-title {
+            color: #fc00ff;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .components {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        @media (max-width: 768px) {
+            .components {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .component {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: grab;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .component:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+            border-color: #00dbde;
+        }
+        
+        .component i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #a9e4ff;
+        }
+        
+        .component-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .component-desc {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #00dbde, #0099ff);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 219, 222, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .target-molecule {
+            background: rgba(25, 25, 35, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .target-title {
+            color: #ffdd59;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .target-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .progress-container {
+            margin-top: 15px;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #a9e4ff;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00dbde, #0099ff);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 4px solid #fc00ff;
+        }
+        
+        .instructions h3 {
+            color: #fc00ff;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(150%);
+            transition: transform 0.5s;
+            z-index: 100;
+        }
+        
+        .message.show {
+            transform: translateX(0);
+        }
+        
+        .success {
+            background: linear-gradient(90deg, #00b09b, #96c93d);
+            color: white;
+        }
+        
+        .error {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            color: white;
+        }
+        
+        .info {
+            background: linear-gradient(90deg, #2193b0, #6dd5ed);
+            color: white;
+        }
+        
+        .atom-H { background-color: #FF6B6B; }
+        .atom-C { background-color: #4ECDC4; }
+        .atom-O { background-color: #FFD166; }
+        .atom-N { background-color: #06D6A0; }
+        .atom-Cl { background-color: #118AB2; }
+        
+        .current-target {
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .target-components {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .target-component {
+            background: rgba(0, 219, 222, 0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a9e4ff;
+            font-size: 0.9rem;
+        }
+        
+        .connection-hint {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(0, 219, 222, 0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7rem;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .connection-line {
+            position: absolute;
+            background: rgba(0, 219, 222, 0.5);
+            height: 4px;
+            transform-origin: 0 0;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-atom"></i> Molecule Builder Challenge</h1>
+            <p class="subtitle">Build complex molecules from chemical components. Complete targets to advance!</p>
+        </header>
+        
+        <div class="game-intro">
+            <p><strong>HOW TO PLAY:</strong> Drag components from the right panel into the Build Area. Components will automatically connect when placed close to each other. Your goal is to build the exact molecule shown in the Target Molecule section using ONLY the components listed below it.</p>
+        </div>
+        
+        <div class="game-area">
+            <div class="molecule-board">
+                <div class="molecule-title">
+                    <h2><i class="fas fa-flask"></i> Build Area</h2>
+                    <div class="score">Score: <span id="score">0</span></div>
+                </div>
+                
+                <div class="build-area" id="buildArea">
+                    <!-- Molecules will be built here -->
+                    <div class="connection-hint" style="top: 10px; left: 10px;" title="Drop components here to connect them">+</div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn-secondary" id="clearBtn">
+                        <i class="fas fa-trash-alt"></i> Clear Board
+                    </button>
+                    <button class="btn-primary" id="submitBtn">
+                        <i class="fas fa-check-circle"></i> Check Molecule
+                    </button>
+                </div>
+            </div>
+            
+            <div class="component-panel">
+                <h2 class="component-title"><i class="fas fa-puzzle-piece"></i> Available Components</h2>
+                <div class="components" id="components">
+                    <!-- Components will be added here by JavaScript -->
+                </div>
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Level Progress</span>
+                        <span id="progressText">0/5 Targets</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="target-molecule">
+            <h2 class="target-title"><i class="fas fa-bullseye"></i> Current Target Molecule</h2>
+            <div class="target-display" id="targetDisplay">
+                <!-- Target molecule will be displayed here -->
+            </div>
+            <p id="targetName" style="font-size: 1.3rem; font-weight: bold; color: #ffdd59;">Methane (CH₄)</p>
+            <p id="targetFormula" style="color: #a9e4ff; margin-bottom: 10px;">Build this molecule using the components below:</p>
+            
+            <div class="current-target">
+                <div id="targetComponents">
+                    <!-- Target components will be listed here -->
+                </div>
+                <p id="targetHint" style="font-size: 0.9rem; color: #a9e4ff; margin-top: 10px; font-style: italic;"></p>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-graduation-cap"></i> Clear Step-by-Step Instructions</h3>
+            <ul>
+                <li><strong>Step 1:</strong> Look at the "Current Target Molecule" section. It shows what molecule you need to build.</li>
+                <li><strong>Step 2:</strong> Look at the list of components under the target. These are the EXACT components you need to use.</li>
+                <li><strong>Step 3:</strong> Drag each required component from the "Available Components" panel into the Build Area.</li>
+                <li><strong>Step 4:</strong> Components will automatically connect when you drop them close to each other (within 100 pixels).</li>
+                <li><strong>Step 5:</strong> Make sure you use ALL the listed components and NO extra ones.</li>
+                <li><strong>Step 6:</strong> Click "Check Molecule" to see if you've built the target correctly.</li>
+                <li><strong>Tip:</strong> If components don't connect, move them closer together. Connection points are at the edges.</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Chemistry Molecule Builder | Drag, Drop, Connect, and Build!</p>
+        </footer>
+    </div>
+    
+    <div class="message" id="message"></div>
+
+    <script>
+        // Game state
+        const gameState = {
+            score: 0,
+            level: 1,
+            completedTargets: 0,
+            totalTargets: 5,
+            currentTarget: null,
+            placedComponents: [],
+            connections: []
+        };
+
+        // Chemical components data
+        const components = [
+            { id: 'methane', name: 'Methane', formula: 'CH₄', atoms: ['C', 'H', 'H', 'H', 'H'], bonds: [[0,1],[0,2],[0,3],[0,4]], icon: 'fas fa-fire', color: '#4ECDC4' },
+            { id: 'water', name: 'Water', formula: 'H₂O', atoms: ['O', 'H', 'H'], bonds: [[0,1],[0,2]], icon: 'fas fa-tint', color: '#FFD166' },
+            { id: 'ammonia', name: 'Ammonia', formula: 'NH₃', atoms: ['N', 'H', 'H', 'H'], bonds: [[0,1],[0,2],[0,3]], icon: 'fas fa-wind', color: '#06D6A0' },
+            { id: 'carbon_dioxide', name: 'CO₂', formula: 'CO₂', atoms: ['C', 'O', 'O'], bonds: [[0,1],[0,2]], icon: 'fas fa-smog', color: '#4ECDC4' },
+            { id: 'hydroxyl', name: 'Hydroxyl', formula: 'OH', atoms: ['O', 'H'], bonds: [[0,1]], icon: 'fas fa-atom', color: '#FFD166' },
+            { id: 'methyl', name: 'Methyl', formula: 'CH₃', atoms: ['C', 'H', 'H', 'H'], bonds: [[0,1],[0,2],[0,3]], icon: 'fas fa-circle', color: '#4ECDC4' }
+        ];
+
+        // Target molecules for different levels
+        const targetMolecules = {
+            1: [
+                { 
+                    name: 'Ethane', 
+                    formula: 'C₂H₆', 
+                    components: ['methane', 'methyl'],
+                    hint: 'Connect the carbon atoms together. Methane + Methyl group makes Ethane.'
+                },
+                { 
+                    name: 'Methanol', 
+                    formula: 'CH₃OH', 
+                    components: ['methyl', 'hydroxyl'],
+                    hint: 'Connect the methyl group to the hydroxyl group. Methyl + OH makes Methanol.'
+                },
+                { 
+                    name: 'Formaldehyde', 
+                    formula: 'CH₂O', 
+                    components: ['methyl', 'carbon_dioxide'],
+                    hint: 'Replace two hydrogens from methyl with an oxygen. Methyl + CO₂ makes Formaldehyde.'
+                },
+                { 
+                    name: 'Ethanol', 
+                    formula: 'C₂H₅OH', 
+                    components: ['methane', 'methyl', 'hydroxyl'],
+                    hint: 'Create ethane first, then attach hydroxyl. Methane + Methyl + Hydroxyl makes Ethanol.'
+                },
+                { 
+                    name: 'Acetic Acid', 
+                    formula: 'CH₃COOH', 
+                    components: ['methyl', 'carbon_dioxide', 'hydroxyl'],
+                    hint: 'Combine methyl with CO₂, then add hydroxyl. This creates acetic acid (vinegar).'
+                }
+            ],
+            2: [
+                { 
+                    name: 'Propane', 
+                    formula: 'C₃H₈', 
+                    components: ['methane', 'methyl', 'methyl'],
+                    hint: 'Connect three carbon atoms in a chain.'
+                },
+                { 
+                    name: 'Acetone', 
+                    formula: 'C₃H₆O', 
+                    components: ['methyl', 'carbon_dioxide', 'methyl'],
+                    hint: 'Place CO₂ between two methyl groups.'
+                },
+                { 
+                    name: 'Urea', 
+                    formula: 'CH₄N₂O', 
+                    components: ['ammonia', 'carbon_dioxide', 'ammonia'],
+                    hint: 'Connect two ammonia molecules to a CO₂ molecule.'
+                },
+                { 
+                    name: 'Glycine', 
+                    formula: 'C₂H₅NO₂', 
+                    components: ['methyl', 'carbon_dioxide', 'ammonia', 'hydroxyl'],
+                    hint: 'Combine methyl, CO₂, ammonia, and hydroxyl to make this amino acid.'
+                },
+                { 
+                    name: 'Lactic Acid', 
+                    formula: 'C₃H₆O₃', 
+                    components: ['methyl', 'methyl', 'carbon_dioxide', 'hydroxyl', 'hydroxyl'],
+                    hint: 'Two methyls, one CO₂, and two hydroxyls create lactic acid.'
+                }
+            ]
+        };
+
+        // DOM elements
+        const buildArea = document.getElementById('buildArea');
+        const componentsContainer = document.getElementById('components');
+        const scoreElement = document.getElementById('score');
+        const progressText = document.getElementById('progressText');
+        const progressFill = document.getElementById('progressFill');
+        const targetDisplay = document.getElementById('targetDisplay');
+        const targetName = document.getElementById('targetName');
+        const targetFormula = document.getElementById('targetFormula');
+        const targetComponents = document.getElementById('targetComponents');
+        const targetHint = document.getElementById('targetHint');
+        const clearBtn = document.getElementById('clearBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const messageElement = document.getElementById('message');
+
+        // Initialize the game
+        function initGame() {
+            renderComponents();
+            setRandomTarget();
+            updateUI();
+            
+            // Set up event listeners
+            clearBtn.addEventListener('click', clearBuildArea);
+            submitBtn.addEventListener('click', checkMolecule);
+            
+            // Set up drag and drop
+            setupDragAndDrop();
+        }
+
+        // Render available components
+        function renderComponents() {
+            componentsContainer.innerHTML = '';
+            
+            components.forEach(component => {
+                const componentElement = document.createElement('div');
+                componentElement.className = 'component';
+                componentElement.draggable = true;
+                componentElement.dataset.id = component.id;
+                
+                componentElement.innerHTML = `
+                    <i class="${component.icon}"></i>
+                    <div class="component-name">${component.name}</div>
+                    <div class="component-desc">${component.formula}</div>
+                `;
+                
+                componentElement.style.borderColor = component.color;
+                
+                // Add drag event listeners
+                componentElement.addEventListener('dragstart', handleDragStart);
+                
+                componentsContainer.appendChild(componentElement);
+            });
+        }
+
+        // Set a random target molecule
+        function setRandomTarget() {
+            const levelTargets = targetMolecules[gameState.level];
+            const randomIndex = Math.floor(Math.random() * levelTargets.length);
+            gameState.currentTarget = levelTargets[randomIndex];
+            
+            // Update target display
+            targetName.textContent = `${gameState.currentTarget.name} (${gameState.currentTarget.formula})`;
+            targetFormula.textContent = `Build this molecule using the components below:`;
+            targetHint.textContent = gameState.currentTarget.hint;
+            
+            // Show which components to use
+            renderTargetComponents();
+            
+            // Create a visual representation of the target molecule
+            renderTargetMolecule();
+        }
+
+        // Render the target components list
+        function renderTargetComponents() {
+            targetComponents.innerHTML = '<div class="target-components">';
+            
+            gameState.currentTarget.components.forEach(compId => {
+                const component = components.find(c => c.id === compId);
+                if (component) {
+                    const compElement = document.createElement('div');
+                    compElement.className = 'target-component';
+                    compElement.textContent = `${component.name} (${component.formula})`;
+                    targetComponents.querySelector('.target-components').appendChild(compElement);
+                }
+            });
+            
+            targetComponents.innerHTML += '</div>';
+        }
+
+        // Render the target molecule visually
+        function renderTargetMolecule() {
+            targetDisplay.innerHTML = '';
+            
+            // Get all components in the target
+            const targetComps = gameState.currentTarget.components.map(id => 
+                components.find(c => c.id === id)
+            );
+            
+            // Create a simple visual representation
+            let x = 30;
+            let y = 60;
+            
+            targetComps.forEach((component, compIndex) => {
+                // Create component container
+                const compContainer = document.createElement('div');
+                compContainer.style.position = 'absolute';
+                compContainer.style.left = `${x}px`;
+                compContainer.style.top = `${y}px`;
+                compContainer.style.width = '80px';
+                compContainer.style.height = '80px';
+                
+                // Create atoms for this component
+                component.atoms.forEach((atom, atomIndex) => {
+                    const atomElement = document.createElement('div');
+                    atomElement.className = `atom atom-${atom}`;
+                    atomElement.textContent = atom;
+                    atomElement.style.width = '25px';
+                    atomElement.style.height = '25px';
+                    atomElement.style.position = 'absolute';
+                    
+                    // Position atoms in a circle
+                    const angle = (atomIndex / component.atoms.length) * 2 * Math.PI;
+                    const atomX = 40 + 30 * Math.cos(angle) - 12.5;
+                    const atomY = 40 + 30 * Math.sin(angle) - 12.5;
+                    
+                    atomElement.style.left = `${atomX}px`;
+                    atomElement.style.top = `${atomY}px`;
+                    
+                    compContainer.appendChild(atomElement);
+                });
+                
+                targetDisplay.appendChild(compContainer);
+                
+                // Add connection hint between components (except last one)
+                if (compIndex < targetComps.length - 1) {
+                    const connectionLine = document.createElement('div');
+                    connectionLine.className = 'bond';
+                    connectionLine.style.width = '30px';
+                    connectionLine.style.height = '4px';
+                    connectionLine.style.left = `${x + 80}px`;
+                    connectionLine.style.top = `${y + 38}px`;
+                    connectionLine.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+                    
+                    targetDisplay.appendChild(connectionLine);
+                }
+                
+                x += 110;
+                
+                // Wrap to next line if needed
+                if (x > 350 && compIndex < targetComps.length - 1) {
+                    x = 30;
+                    y += 100;
+                }
+            });
+        }
+
+        // Set up drag and drop functionality
+        function setupDragAndDrop() {
+            buildArea.addEventListener('dragover', handleDragOver);
+            buildArea.addEventListener('drop', handleDrop);
+        }
+
+        // Handle drag start
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.dataset.id);
+            e.dataTransfer.effectAllowed = 'copy';
+        }
+
+        // Handle drag over
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        }
+
+        // Handle drop
+        function handleDrop(e) {
+            e.preventDefault();
+            
+            const componentId = e.dataTransfer.getData('text/plain');
+            const component = components.find(c => c.id === componentId);
+            
+            if (!component) return;
+            
+            // Get drop position relative to build area
+            const rect = buildArea.getBoundingClientRect();
+            const x = e.clientX - rect.left - 60;
+            const y = e.clientY - rect.top - 60;
+            
+            // Check if we should connect to an existing component
+            let connectTo = null;
+            let minDistance = Infinity;
+            
+            gameState.placedComponents.forEach(placedComp => {
+                const distance = Math.sqrt(
+                    Math.pow(placedComp.x - x, 2) + Math.pow(placedComp.y - y, 2)
+                );
+                
+                if (distance < 100 && distance < minDistance) {
+                    minDistance = distance;
+                    connectTo = placedComp;
+                }
+            });
+            
+            // Add the component to the build area
+            placeComponent(component, x, y, connectTo);
+        }
+
+        // Place a component in the build area
+        function placeComponent(component, x, y, connectTo = null) {
+            // Create molecule container
+            const moleculeElement = document.createElement('div');
+            moleculeElement.className = 'molecule';
+            moleculeElement.style.left = `${x}px`;
+            moleculeElement.style.top = `${y}px`;
+            moleculeElement.dataset.id = component.id;
+            
+            // Store component data
+            const placedComponent = {
+                id: component.id,
+                element: moleculeElement,
+                x: x,
+                y: y,
+                atoms: component.atoms,
+                bonds: component.bonds,
+                connectedTo: []
+            };
+            
+            // If connecting to another component, create a bond
+            if (connectTo) {
+                placedComponent.connectedTo.push(connectTo.id);
+                connectTo.connectedTo.push(component.id);
+                
+                // Create a connection line
+                createConnectionLine(placedComponent, connectTo);
+                
+                showMessage(`${component.name} connected to ${connectTo.id === 'methane' ? 'Methane' : connectTo.id}`, 'info');
+            }
+            
+            gameState.placedComponents.push(placedComponent);
+            
+            // Create atoms
+            component.atoms.forEach((atom, index) => {
+                const atomElement = document.createElement('div');
+                atomElement.className = `atom atom-${atom}`;
+                atomElement.textContent = atom;
+                atomElement.style.width = '40px';
+                atomElement.style.height = '40px';
+                
+                // Position atoms in a circle around the center
+                const angle = (index / component.atoms.length) * 2 * Math.PI;
+                const atomX = 60 + 40 * Math.cos(angle);
+                const atomY = 60 + 40 * Math.sin(angle);
+                
+                atomElement.style.left = `${atomX}px`;
+                atomElement.style.top = `${atomY}px`;
+                
+                moleculeElement.appendChild(atomElement);
+            });
+            
+            // Create internal bonds
+            component.bonds.forEach(bond => {
+                const [atom1Index, atom2Index] = bond;
+                const angle1 = (atom1Index / component.atoms.length) * 2 * Math.PI;
+                const angle2 = (atom2Index / component.atoms.length) * 2 * Math.PI;
+                
+                const x1 = 60 + 40 * Math.cos(angle1) + 20;
+                const y1 = 60 + 40 * Math.sin(angle1) + 20;
+                const x2 = 60 + 40 * Math.cos(angle2) + 20;
+                const y2 = 60 + 40 * Math.sin(angle2) + 20;
+                
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                const bondElement = document.createElement('div');
+                bondElement.className = 'bond';
+                bondElement.style.width = `${length}px`;
+                bondElement.style.height = '4px';
+                bondElement.style.left = `${x1}px`;
+                bondElement.style.top = `${y1}px`;
+                bondElement.style.transform = `rotate(${angle}deg)`;
+                
+                moleculeElement.appendChild(bondElement);
+            });
+            
+            // Add delete button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+            deleteBtn.style.position = 'absolute';
+            deleteBtn.style.top = '5px';
+            deleteBtn.style.right = '5px';
+            deleteBtn.style.background = 'rgba(255, 0, 0, 0.7)';
+            deleteBtn.style.color = 'white';
+            deleteBtn.style.border = 'none';
+            deleteBtn.style.borderRadius = '50%';
+            deleteBtn.style.width = '25px';
+            deleteBtn.style.height = '25px';
+            deleteBtn.style.cursor = 'pointer';
+            deleteBtn.style.fontSize = '0.8rem';
+            
+            deleteBtn.addEventListener('click', () => {
+                removeComponent(placedComponent);
+            });
+            
+            moleculeElement.appendChild(deleteBtn);
+            
+            // Make component draggable
+            makeDraggable(moleculeElement, placedComponent);
+            
+            buildArea.appendChild(moleculeElement);
+            
+            // Show success message
+            showMessage(`Added ${component.name} to build area`, 'success');
+        }
+
+        // Create a connection line between two components
+        function createConnectionLine(comp1, comp2) {
+            const line = document.createElement('div');
+            line.className = 'connection-line';
+            
+            // Calculate positions
+            const x1 = comp1.x + 120;
+            const y1 = comp1.y + 60;
+            const x2 = comp2.x + 120;
+            const y2 = comp2.y + 60;
+            
+            // Calculate distance and angle
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            // Set line properties
+            line.style.width = `${length}px`;
+            line.style.height = '4px';
+            line.style.left = `${x1}px`;
+            line.style.top = `${y1}px`;
+            line.style.transform = `rotate(${angle}deg)`;
+            
+            // Store connection data
+            gameState.connections.push({
+                line: line,
+                comp1: comp1,
+                comp2: comp2
+            });
+            
+            buildArea.appendChild(line);
+        }
+
+        // Make a component draggable
+        function makeDraggable(element, componentData) {
+            let isDragging = false;
+            let offsetX, offsetY;
+            
+            element.addEventListener('mousedown', startDrag);
+            
+            function startDrag(e) {
+                if (e.target.tagName === 'BUTTON') return; // Don't drag when clicking delete button
+                
+                isDragging = true;
+                offsetX = e.clientX - element.getBoundingClientRect().left;
+                offsetY = e.clientY - element.getBoundingClientRect().top;
+                
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDrag);
+            }
+            
+            function drag(e) {
+                if (!isDragging) return;
+                
+                const rect = buildArea.getBoundingClientRect();
+                let x = e.clientX - rect.left - offsetX;
+                let y = e.clientY - rect.top - offsetY;
+                
+                // Constrain to build area
+                x = Math.max(0, Math.min(x, buildArea.clientWidth - 120));
+                y = Math.max(0, Math.min(y, buildArea.clientHeight - 120));
+                
+                element.style.left = `${x}px`;
+                element.style.top = `${y}px`;
+                
+                // Update component data
+                componentData.x = x;
+                componentData.y = y;
+                
+                // Update connection lines
+                updateConnectionLines(componentData);
+            }
+            
+            function stopDrag() {
+                isDragging = false;
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('mouseup', stopDrag);
+            }
+        }
+
+        // Update connection lines when a component moves
+        function updateConnectionLines(movedComponent) {
+            gameState.connections.forEach(connection => {
+                if (connection.comp1 === movedComponent || connection.comp2 === movedComponent) {
+                    const comp1 = connection.comp1;
+                    const comp2 = connection.comp2;
+                    
+                    // Calculate positions
+                    const x1 = comp1.x + 120;
+                    const y1 = comp1.y + 60;
+                    const x2 = comp2.x + 120;
+                    const y2 = comp2.y + 60;
+                    
+                    // Calculate distance and angle
+                    const dx = x2 - x1;
+                    const dy = y2 - y1;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    
+                    // Update line properties
+                    connection.line.style.width = `${length}px`;
+                    connection.line.style.left = `${x1}px`;
+                    connection.line.style.top = `${y1}px`;
+                    connection.line.style.transform = `rotate(${angle}deg)`;
+                }
+            });
+        }
+
+        // Remove a component from the build area
+        function removeComponent(component) {
+            // Remove connection lines
+            gameState.connections = gameState.connections.filter(connection => {
+                if (connection.comp1 === component || connection.comp2 === component) {
+                    connection.line.remove();
+                    return false;
+                }
+                return true;
+            });
+            
+            // Remove from connectedTo lists
+            gameState.placedComponents.forEach(comp => {
+                comp.connectedTo = comp.connectedTo.filter(id => id !== component.id);
+            });
+            
+            // Remove the component
+            component.element.remove();
+            gameState.placedComponents = gameState.placedComponents.filter(c => c !== component);
+            
+            showMessage(`Removed ${component.id === 'methane' ? 'Methane' : component.id}`, 'info');
+        }
+
+        // Clear the entire build area
+        function clearBuildArea() {
+            buildArea.innerHTML = '';
+            gameState.placedComponents = [];
+            gameState.connections = [];
+            
+            // Add connection hint back
+            const hint = document.createElement('div');
+            hint.className = 'connection-hint';
+            hint.style.top = '10px';
+            hint.style.left = '10px';
+            hint.title = 'Drop components here to connect them';
+            hint.textContent = '+';
+            buildArea.appendChild(hint);
+            
+            showMessage('Build area cleared', 'info');
+        }
+
+        // Check if the built molecule matches the target
+        function checkMolecule() {
+            if (gameState.placedComponents.length === 0) {
+                showMessage('Build a molecule first! Drag components into the build area.', 'error');
+                return;
+            }
+            
+            // Get list of placed component IDs
+            const placedIds = gameState.placedComponents.map(c => c.id).sort();
+            const targetIds = [...gameState.currentTarget.components].sort();
+            
+            // Check if we have the right components
+            const componentsMatch = JSON.stringify(placedIds) === JSON.stringify(targetIds);
+            
+            // Check if all components are connected
+            const allConnected = checkAllComponentsConnected();
+            
+            if (componentsMatch && allConnected) {
+                // Success!
+                gameState.score += 100 * gameState.level;
+                gameState.completedTargets++;
+                
+                // Check if level is complete
+                if (gameState.completedTargets >= gameState.totalTargets) {
+                    gameState.level++;
+                    gameState.completedTargets = 0;
+                    
+                    if (gameState.level > 2) {
+                        // Game complete
+                        showMessage(`Congratulations! You've completed all levels! Final score: ${gameState.score}`, 'success');
+                        setTimeout(() => {
+                            if (confirm(`You won! Final score: ${gameState.score}. Would you like to play again?`)) {
+                                resetGame();
+                            }
+                        }, 1000);
+                        return;
+                    } else {
+                        showMessage(`Level ${gameState.level - 1} complete! Advanced to level ${gameState.level}`, 'success');
+                    }
+                } else {
+                    showMessage(`Correct! ${gameState.currentTarget.name} created successfully! +${100 * gameState.level} points`, 'success');
+                }
+                
+                // Clear board and set new target
+                clearBuildArea();
+                setRandomTarget();
+                updateUI();
+            } else if (!componentsMatch) {
+                showMessage(`Wrong components! You need: ${gameState.currentTarget.components.join(', ')}. You used: ${placedIds.join(', ')}`, 'error');
+                gameState.score = Math.max(0, gameState.score - 20);
+                updateUI();
+            } else if (!allConnected) {
+                showMessage('Components are not connected! Move them closer together.', 'error');
+                gameState.score = Math.max(0, gameState.score - 10);
+                updateUI();
+            }
+        }
+
+        // Check if all components are connected to each other
+        function checkAllComponentsConnected() {
+            if (gameState.placedComponents.length <= 1) return true;
+            
+            // Simple check: are there enough connections?
+            // For n components, we need at least n-1 connections
+            const totalConnections = gameState.connections.length;
+            return totalConnections >= gameState.placedComponents.length - 1;
+        }
+
+        // Update UI elements
+        function updateUI() {
+            scoreElement.textContent = gameState.score;
+            progressText.textContent = `${gameState.completedTargets}/${gameState.totalTargets} Targets`;
+            progressFill.style.width = `${(gameState.completedTargets / gameState.totalTargets) * 100}%`;
+        }
+
+        // Show a temporary message
+        function showMessage(text, type) {
+            messageElement.textContent = text;
+            messageElement.className = `message ${type} show`;
+            
+            setTimeout(() => {
+                messageElement.classList.remove('show');
+            }, 3000);
+        }
+
+        // Reset the game
+        function resetGame() {
+            gameState.score = 0;
+            gameState.level = 1;
+            gameState.completedTargets = 0;
+            gameState.placedComponents = [];
+            gameState.connections = [];
+            
+            clearBuildArea();
+            setRandomTarget();
+            updateUI();
+            
+            showMessage('Game reset. Good luck!', 'info');
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

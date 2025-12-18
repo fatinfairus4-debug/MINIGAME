@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Balloon Pop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        header {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px 25px;
+            border-radius: 10px;
+            min-width: 150px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffcc00;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        #gameCanvas {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            cursor: crosshair;
+            display: block;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .control-group {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 200px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #ffcc00;
+            border-bottom: 2px solid rgba(255, 204, 0, 0.3);
+            padding-bottom: 8px;
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .value {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ff7e5f;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 126, 95, 0.7);
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 14px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        #launchBtn {
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            color: white;
+        }
+        
+        #resetBtn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .physics-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .concepts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .concept {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+            border-left: 4px solid #ffcc00;
+        }
+        
+        .concept h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #ffcc00;
+        }
+        
+        .concept p {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            opacity: 0.9;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+            border-left: 4px solid #ff7e5f;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .stats {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Physics Balloon Pop</h1>
+            <p class="subtitle">Launch projectiles with physics to pop balloons!</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="score">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="balloonsLeft">10</div>
+                <div class="stat-label">Balloons Left</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="shots">0</div>
+                <div class="stat-label">Shots Fired</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="accuracy">0%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <canvas id="gameCanvas" width="800" height="500"></canvas>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <h2>Projectile Settings</h2>
+                    <div class="slider-container">
+                        <label>Launch Angle: <span class="value" id="angleValue">45°</span></label>
+                        <input type="range" id="angleSlider" min="15" max="75" value="45" step="1">
+                    </div>
+                    <div class="slider-container">
+                        <label>Launch Power: <span class="value" id="powerValue">50%</span></label>
+                        <input type="range" id="powerSlider" min="10" max="100" value="50" step="1">
+                    </div>
+                    <div class="slider-container">
+                        <label>Gravity: <span class="value" id="gravityValue">9.8</span></label>
+                        <input type="range" id="gravitySlider" min="1" max="20" value="9.8" step="0.1">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h2>Game Controls</h2>
+                    <p style="margin-bottom: 20px; opacity: 0.9;">Adjust settings and click LAUNCH to shoot. Pop all balloons to win!</p>
+                    <div class="buttons">
+                        <button id="launchBtn">
+                            <span>🚀 LAUNCH</span>
+                        </button>
+                        <button id="resetBtn">
+                            <span>🔄 RESET</span>
+                        </button>
+                    </div>
+                    <p style="margin-top: 15px; font-size: 0.9rem; opacity: 0.8;">Click on the canvas to launch instantly!</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="physics-info">
+            <h2>Physics Concepts in Action</h2>
+            <div class="concepts">
+                <div class="concept">
+                    <h3>Projectile Motion</h3>
+                    <p>The projectile follows a parabolic path determined by its initial velocity and gravity.</p>
+                </div>
+                <div class="concept">
+                    <h3>Gravity</h3>
+                    <p>Gravity pulls the projectile downward, affecting its trajectory and range.</p>
+                </div>
+                <div class="concept">
+                    <h3>Angle of Launch</h3>
+                    <p>Different angles produce different trajectories. 45° gives maximum range.</p>
+                </div>
+                <div class="concept">
+                    <h3>Kinetic Energy</h3>
+                    <p>The projectile's speed determines how much energy it transfers to balloons.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <p><strong>How to Play:</strong> Adjust the launch angle, power, and gravity using the sliders. Click LAUNCH or click directly on the canvas to fire a projectile. Try to hit all the balloons with the fewest shots. Each popped balloon gives you 10 points. Complete the level by popping all balloons!</p>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameState = {
+            score: 0,
+            balloonsLeft: 10,
+            shots: 0,
+            hits: 0,
+            accuracy: 0,
+            projectiles: [],
+            balloons: [],
+            isLaunched: false,
+            gameActive: true
+        };
+        
+        // Physics constants
+        let gravity = 9.8 / 100; // Scaled down for canvas
+        let angle = 45;
+        let power = 50;
+        
+        // DOM elements
+        const scoreEl = document.getElementById('score');
+        const balloonsLeftEl = document.getElementById('balloonsLeft');
+        const shotsEl = document.getElementById('shots');
+        const accuracyEl = document.getElementById('accuracy');
+        const angleSlider = document.getElementById('angleSlider');
+        const powerSlider = document.getElementById('powerSlider');
+        const gravitySlider = document.getElementById('gravitySlider');
+        const angleValue = document.getElementById('angleValue');
+        const powerValue = document.getElementById('powerValue');
+        const gravityValue = document.getElementById('gravityValue');
+        const launchBtn = document.getElementById('launchBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        // Initialize game
+        function init() {
+            // Create balloons
+            createBalloons();
+            
+            // Update displays
+            updateDisplays();
+            
+            // Draw initial state
+            draw();
+            
+            // Start game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Create balloons at random positions
+        function createBalloons() {
+            gameState.balloons = [];
+            
+            for (let i = 0; i < 10; i++) {
+                gameState.balloons.push({
+                    x: 200 + Math.random() * (canvas.width - 400),
+                    y: 100 + Math.random() * (canvas.height - 200),
+                    radius: 20 + Math.random() * 15,
+                    color: getRandomColor(),
+                    popped: false,
+                    floating: 0
+                });
+            }
+        }
+        
+        // Get a random color for balloons
+        function getRandomColor() {
+            const colors = ['#FF5252', '#FF4081', '#E040FB', '#7C4DFF', '#536DFE', 
+                           '#448AFF', '#40C4FF', '#18FFFF', '#64FFDA', '#69F0AE'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        // Draw everything
+        function draw() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, 'rgba(106, 17, 203, 0.3)');
+            gradient.addColorStop(1, 'rgba(37, 117, 252, 0.3)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw ground
+            ctx.fillStyle = 'rgba(139, 195, 74, 0.7)';
+            ctx.fillRect(0, canvas.height - 30, canvas.width, 30);
+            ctx.fillStyle = 'rgba(104, 159, 56, 0.9)';
+            ctx.fillRect(0, canvas.height - 30, canvas.width, 10);
+            
+            // Draw launch platform
+            ctx.fillStyle = '#8D6E63';
+            ctx.fillRect(50, canvas.height - 60, 80, 30);
+            
+            // Draw balloons
+            gameState.balloons.forEach(balloon => {
+                if (!balloon.popped) {
+                    // Update floating animation
+                    balloon.floating += 0.05;
+                    
+                    // Draw balloon string
+                    ctx.beginPath();
+                    ctx.moveTo(balloon.x, balloon.y + balloon.radius);
+                    ctx.lineTo(balloon.x, balloon.y + balloon.radius + 30);
+                    ctx.strokeStyle = '#ccc';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    // Draw balloon with floating effect
+                    const floatOffset = Math.sin(balloon.floating) * 3;
+                    
+                    // Balloon body
+                    ctx.beginPath();
+                    ctx.ellipse(balloon.x, balloon.y + floatOffset, balloon.radius, balloon.radius * 1.2, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = balloon.color;
+                    ctx.fill();
+                    
+                    // Balloon highlight
+                    ctx.beginPath();
+                    ctx.ellipse(balloon.x - balloon.radius * 0.3, balloon.y - balloon.radius * 0.2 + floatOffset, 
+                               balloon.radius * 0.3, balloon.radius * 0.4, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.fill();
+                    
+                    // Balloon tip
+                    ctx.beginPath();
+                    ctx.ellipse(balloon.x, balloon.y + balloon.radius * 1.1 + floatOffset, 
+                               balloon.radius * 0.1, balloon.radius * 0.2, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = balloon.color;
+                    ctx.fill();
+                }
+            });
+            
+            // Draw projectiles
+            gameState.projectiles.forEach(projectile => {
+                ctx.beginPath();
+                ctx.arc(projectile.x, projectile.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#FF9800';
+                ctx.fill();
+                
+                // Draw projectile trail
+                if (projectile.trail && projectile.trail.length > 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(projectile.trail[0].x, projectile.trail[0].y);
+                    
+                    for (let i = 1; i < projectile.trail.length; i++) {
+                        ctx.lineTo(projectile.trail[i].x, projectile.trail[i].y);
+                    }
+                    
+                    ctx.strokeStyle = 'rgba(255, 152, 0, 0.5)';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+            });
+            
+            // Draw angle indicator when not launched
+            if (!gameState.isLaunched) {
+                const angleRad = angle * Math.PI / 180;
+                const indicatorLength = 60;
+                
+                ctx.beginPath();
+                ctx.moveTo(90, canvas.height - 75);
+                ctx.lineTo(
+                    90 + Math.cos(angleRad) * indicatorLength,
+                    canvas.height - 75 - Math.sin(angleRad) * indicatorLength
+                );
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Draw power indicator
+                const powerWidth = power / 2;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.fillRect(90 - powerWidth/2, canvas.height - 90, powerWidth, 10);
+            }
+            
+            // Draw game over message
+            if (!gameState.gameActive) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.font = 'bold 48px Arial';
+                ctx.fillStyle = '#FFCC00';
+                ctx.textAlign = 'center';
+                ctx.fillText('LEVEL COMPLETE!', canvas.width/2, canvas.height/2 - 50);
+                
+                ctx.font = 'bold 36px Arial';
+                ctx.fillStyle = 'white';
+                ctx.fillText(`Final Score: ${gameState.score}`, canvas.width/2, canvas.height/2 + 20);
+                ctx.fillText(`Accuracy: ${gameState.accuracy}%`, canvas.width/2, canvas.height/2 + 70);
+                
+                ctx.font = '24px Arial';
+                ctx.fillText('Click RESET to play again', canvas.width/2, canvas.height/2 + 130);
+            }
+        }
+        
+        // Launch projectile
+        function launchProjectile() {
+            if (!gameState.gameActive || gameState.isLaunched) return;
+            
+            gameState.isLaunched = true;
+            gameState.shots++;
+            
+            const angleRad = angle * Math.PI / 180;
+            const velocity = power / 10;
+            
+            const projectile = {
+                x: 90,
+                y: canvas.height - 75,
+                vx: Math.cos(angleRad) * velocity,
+                vy: -Math.sin(angleRad) * velocity,
+                radius: 8,
+                trail: [],
+                active: true
+            };
+            
+            gameState.projectiles.push(projectile);
+            updateDisplays();
+        }
+        
+        // Update projectile positions
+        function updateProjectiles() {
+            for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
+                const p = gameState.projectiles[i];
+                
+                if (!p.active) continue;
+                
+                // Add current position to trail
+                p.trail.push({x: p.x, y: p.y});
+                if (p.trail.length > 20) p.trail.shift();
+                
+                // Update position with velocity
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                // Apply gravity
+                p.vy += gravity;
+                
+                // Check collision with ground
+                if (p.y > canvas.height - 30 - p.radius) {
+                    p.y = canvas.height - 30 - p.radius;
+                    p.vy *= -0.6; // Bounce with energy loss
+                    p.vx *= 0.9; // Friction
+                    
+                    // Stop if velocity is very low
+                    if (Math.abs(p.vy) < 0.5 && Math.abs(p.vx) < 0.5) {
+                        p.active = false;
+                        gameState.isLaunched = false;
+                    }
+                }
+                
+                // Check collision with walls
+                if (p.x < p.radius || p.x > canvas.width - p.radius) {
+                    p.vx *= -0.8; // Bounce with energy loss
+                    p.x = p.x < p.radius ? p.radius : canvas.width - p.radius;
+                }
+                
+                // Check collision with ceiling
+                if (p.y < p.radius) {
+                    p.y = p.radius;
+                    p.vy *= -0.6;
+                }
+                
+                // Check collision with balloons
+                for (let j = 0; j < gameState.balloons.length; j++) {
+                    const balloon = gameState.balloons[j];
+                    
+                    if (!balloon.popped) {
+                        const dx = p.x - balloon.x;
+                        const dy = p.y - balloon.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < p.radius + balloon.radius) {
+                            // Pop the balloon
+                            balloon.popped = true;
+                            gameState.hits++;
+                            gameState.score += 10;
+                            gameState.balloonsLeft--;
+                            
+                            // Add explosion effect
+                            createExplosion(balloon.x, balloon.y, balloon.color);
+                            
+                            // Update displays
+                            updateDisplays();
+                            
+                            // Check if all balloons are popped
+                            if (gameState.balloonsLeft === 0) {
+                                gameState.gameActive = false;
+                                setTimeout(() => draw(), 100);
+                            }
+                            
+                            // Make projectile bounce
+                            p.vx *= 1.2;
+                            p.vy *= -0.8;
+                            
+                            break;
+                        }
+                    }
+                }
+                
+                // Remove projectiles that go off screen
+                if (p.x < -100 || p.x > canvas.width + 100 || p.y > canvas.height + 100) {
+                    gameState.projectiles.splice(i, 1);
+                    gameState.isLaunched = false;
+                }
+            }
+        }
+        
+        // Create explosion effect
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 15; i++) {
+                setTimeout(() => {
+                    const particle = {
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: (Math.random() - 0.5) * 10,
+                        radius: Math.random() * 4 + 2,
+                        color: color,
+                        life: 30
+                    };
+                    
+                    // Add particle temporarily to projectiles array for drawing
+                    gameState.projectiles.push({
+                        x: particle.x,
+                        y: particle.y,
+                        radius: particle.radius,
+                        color: particle.color,
+                        trail: [],
+                        isParticle: true,
+                        particleData: particle
+                    });
+                    
+                    // Remove particle after its lifetime
+                    setTimeout(() => {
+                        const index = gameState.projectiles.findIndex(p => p.isParticle && p.particleData === particle);
+                        if (index > -1) {
+                            gameState.projectiles.splice(index, 1);
+                        }
+                    }, particle.life * 16);
+                }, i * 20);
+            }
+        }
+        
+        // Update particle positions
+        function updateParticles() {
+            for (let i = gameState.projectiles.length - 1; i >= 0; i--) {
+                const p = gameState.projectiles[i];
+                
+                if (p.isParticle && p.particleData) {
+                    const particle = p.particleData;
+                    
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.vy += gravity * 0.5;
+                    particle.life--;
+                    
+                    p.x = particle.x;
+                    p.y = particle.y;
+                    p.radius = Math.max(0.5, particle.radius * (particle.life / 30));
+                    
+                    if (particle.life <= 0) {
+                        gameState.projectiles.splice(i, 1);
+                    }
+                }
+            }
+        }
+        
+        // Update displays
+        function updateDisplays() {
+            scoreEl.textContent = gameState.score;
+            balloonsLeftEl.textContent = gameState.balloonsLeft;
+            shotsEl.textContent = gameState.shots;
+            
+            // Calculate accuracy
+            if (gameState.shots > 0) {
+                gameState.accuracy = Math.round((gameState.hits / gameState.shots) * 100);
+            }
+            accuracyEl.textContent = gameState.accuracy + '%';
+        }
+        
+        // Reset game
+        function resetGame() {
+            gameState = {
+                score: 0,
+                balloonsLeft: 10,
+                shots: 0,
+                hits: 0,
+                accuracy: 0,
+                projectiles: [],
+                balloons: [],
+                isLaunched: false,
+                gameActive: true
+            };
+            
+            createBalloons();
+            updateDisplays();
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (gameState.gameActive) {
+                updateProjectiles();
+                updateParticles();
+            }
+            
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Event listeners
+        angleSlider.addEventListener('input', () => {
+            angle = parseInt(angleSlider.value);
+            angleValue.textContent = angle + '°';
+        });
+        
+        powerSlider.addEventListener('input', () => {
+            power = parseInt(powerSlider.value);
+            powerValue.textContent = power + '%';
+        });
+        
+        gravitySlider.addEventListener('input', () => {
+            gravity = parseFloat(gravitySlider.value) / 100;
+            gravityValue.textContent = parseFloat(gravitySlider.value).toFixed(1);
+        });
+        
+        launchBtn.addEventListener('click', launchProjectile);
+        resetBtn.addEventListener('click', resetGame);
+        
+        // Click on canvas to launch
+        canvas.addEventListener('click', (e) => {
+            if (!gameState.gameActive) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Only launch if click is not on controls area
+            if (y < canvas.height - 150) {
+                launchProjectile();
+            }
+        });
+        
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                launchProjectile();
+                e.preventDefault();
+            } else if (e.key === 'r' || e.key === 'R') {
+                resetGame();
+            }
+        });
+        
+        // Initialize the game
+        init();
+    </script>
+</body>
+</html>

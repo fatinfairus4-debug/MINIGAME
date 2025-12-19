@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Quest: Whole Number Adventure</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2980, #26d0ce);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px dashed #4a6bff;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0 #e0e7ff;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2rem;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(to right, #e0e7ff, #c3d9ff);
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 3px solid #4a6bff;
+        }
+        
+        .player-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .game-scene {
+            background-color: #f8f9ff;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #d1dcff;
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .scene-description {
+            font-size: 1.3rem;
+            line-height: 1.5;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #eef2ff;
+            border-radius: 10px;
+            border-left: 5px solid #4a6bff;
+        }
+        
+        .problem-display {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 2px solid #d1dcff;
+            font-size: 1.8rem;
+            text-align: center;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .option-btn {
+            padding: 18px;
+            background-color: #4a6bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 0 #2c3e50;
+        }
+        
+        .option-btn:hover {
+            background-color: #3a5be0;
+            transform: translateY(-3px);
+        }
+        
+        .option-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #2c3e50;
+        }
+        
+        .option-btn.correct {
+            background-color: #2ecc71;
+            box-shadow: 0 5px 0 #27ae60;
+        }
+        
+        .option-btn.incorrect {
+            background-color: #e74c3c;
+            box-shadow: 0 5px 0 #c0392b;
+        }
+        
+        .input-answer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .answer-input {
+            width: 80%;
+            padding: 18px;
+            font-size: 1.8rem;
+            text-align: center;
+            border: 3px solid #4a6bff;
+            border-radius: 10px;
+            outline: none;
+        }
+        
+        .answer-input:focus {
+            border-color: #3a5be0;
+            box-shadow: 0 0 10px rgba(58, 91, 224, 0.3);
+        }
+        
+        .submit-btn {
+            padding: 15px 40px;
+            background-color: #4a6bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 0 #2c3e50;
+        }
+        
+        .submit-btn:hover {
+            background-color: #3a5be0;
+            transform: translateY(-3px);
+        }
+        
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+        
+        .feedback.correct {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: #27ae60;
+            border: 2px solid #2ecc71;
+            display: block;
+        }
+        
+        .feedback.incorrect {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #c0392b;
+            border: 2px solid #e74c3c;
+            display: block;
+        }
+        
+        .next-btn {
+            padding: 15px 40px;
+            background-color: #9b59b6;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 0 #8e44ad;
+            margin: 20px auto 0;
+            display: none;
+        }
+        
+        .next-btn:hover {
+            background-color: #8e44ad;
+            transform: translateY(-3px);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(to right, #4a6bff, #26d0ce);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .level-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .game-complete {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+        
+        .game-complete h2 {
+            color: #2ecc71;
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .game-complete p {
+            font-size: 1.4rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .restart-btn {
+            padding: 15px 40px;
+            background-color: #4a6bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 0 #2c3e50;
+        }
+        
+        .restart-btn:hover {
+            background-color: #3a5be0;
+            transform: translateY(-3px);
+        }
+        
+        .operation-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background-color: #4a6bff;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin: 0 5px;
+        }
+        
+        .operation-badge.addition { background-color: #2ecc71; }
+        .operation-badge.subtraction { background-color: #e74c3c; }
+        .operation-badge.multiplication { background-color: #f39c12; }
+        .operation-badge.division { background-color: #9b59b6; }
+        
+        .level-progress {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .level-indicator-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: default;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+        }
+        
+        .level-indicator-circle.locked {
+            background-color: #ecf0f1;
+            color: #95a5a6;
+            border-color: #bdc3c7;
+        }
+        
+        .level-indicator-circle.current {
+            background-color: #4a6bff;
+            color: white;
+            border-color: #2c3e50;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(74, 107, 255, 0.5);
+        }
+        
+        .level-indicator-circle.completed {
+            background-color: #2ecc71;
+            color: white;
+            border-color: #27ae60;
+        }
+        
+        .level-name {
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 5px;
+            color: #7f8c8d;
+        }
+        
+        .level-complete-message {
+            background-color: rgba(46, 204, 113, 0.1);
+            border: 2px solid #2ecc71;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+        }
+        
+        .level-complete-message h3 {
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .options-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .problem-display {
+                font-size: 1.5rem;
+            }
+            
+            .player-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .level-indicator-circle {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-calculator"></i> Math Quest</h1>
+            <p class="subtitle">Whole Number Adventure - Grade 5</p>
+            
+            <div class="level-progress" id="level-progress">
+                <!-- Level indicators will be generated by JavaScript -->
+            </div>
+        </header>
+        
+        <div class="game-area">
+            <div class="player-info">
+                <div class="player-stat">
+                    <div class="stat-value" id="level">1</div>
+                    <div class="stat-label">Level</div>
+                </div>
+                <div class="player-stat">
+                    <div class="stat-value" id="score">0</div>
+                    <div class="stat-label">Score</div>
+                </div>
+                <div class="player-stat">
+                    <div class="stat-value" id="lives">3</div>
+                    <div class="stat-label">Lives</div>
+                </div>
+                <div class="player-stat">
+                    <div class="stat-value" id="streak">0</div>
+                    <div class="stat-label">Streak</div>
+                </div>
+            </div>
+            
+            <div class="level-complete-message" id="level-complete-message">
+                <h3><i class="fas fa-trophy"></i> Level Complete!</h3>
+                <p>Congratulations! You've completed this level. Get ready for the next challenge!</p>
+            </div>
+            
+            <div class="game-scene" id="game-scene">
+                <div class="scene-description" id="scene-description">
+                    Welcome to Math Quest! You're on an adventure to solve whole number problems. Help the explorer find the treasure by solving math challenges!
+                </div>
+                
+                <div class="problem-display" id="problem-display">
+                    245 + 178 = ?
+                </div>
+                
+                <div class="options-container" id="options-container">
+                    <!-- Options will be generated by JavaScript -->
+                </div>
+                
+                <div class="input-answer" id="input-answer" style="display: none;">
+                    <input type="number" class="answer-input" id="answer-input" placeholder="Enter your answer">
+                    <button class="submit-btn" id="submit-btn">Submit Answer</button>
+                </div>
+                
+                <div class="feedback" id="feedback"></div>
+                
+                <button class="next-btn" id="next-btn">Next Challenge <i class="fas fa-arrow-right"></i></button>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="level-indicator">
+                <span id="current-level-name">Level 1: Addition</span>
+                <span id="progress-text">0/5</span>
+                <span id="next-level-name">Complete 5 problems to unlock next level</span>
+            </div>
+        </div>
+        
+        <div class="game-complete" id="game-complete">
+            <h2><i class="fas fa-trophy"></i> Adventure Complete!</h2>
+            <p>Congratulations, math explorer! You've successfully completed the Whole Number Adventure.</p>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <p>You solved <span id="problems-solved">0</span> challenging problems!</p>
+            <p><strong>Levels Completed:</strong></p>
+            <ul id="levels-summary" style="text-align: left; margin: 15px 0; font-size: 1.2rem;">
+                <!-- Levels summary will be added here -->
+            </ul>
+            <button class="restart-btn" id="restart-btn">Play Again <i class="fas fa-redo"></i></button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            level: 1,
+            score: 0,
+            lives: 3,
+            streak: 0,
+            currentProblem: null,
+            problemsSolved: 0,
+            levelProgress: 0,
+            maxLevelProgress: 5,
+            gameComplete: false,
+            completedLevels: [],
+            levelScores: {}
+        };
+
+        // Operation types for different levels
+        const operations = [
+            { type: 'addition', symbol: '+', level: 1, name: 'Addition' },
+            { type: 'subtraction', symbol: '-', level: 2, name: 'Subtraction' },
+            { type: 'multiplication', symbol: '×', level: 3, name: 'Multiplication' },
+            { type: 'division', symbol: '÷', level: 4, name: 'Division' },
+            { type: 'mixed', level: 5, name: 'Mixed Operations' }
+        ];
+
+        // Adventure storylines for each level
+        const storylines = [
+            "You're at the entrance of the Number Forest. To cross the river, you need to add up the stones. Solve the addition problems to build a bridge!",
+            "Now you're in the Subtraction Cavern. To find your way through the dark tunnels, you need to subtract the glowing mushrooms. Solve the subtraction problems to light your path!",
+            "Welcome to the Multiplication Mountains! To climb the steep slopes, you need to multiply your climbing gear. Solve the multiplication problems to reach the peak!",
+            "You've reached the Division Desert. To find water in this dry land, you need to divide the oasis shares. Solve the division problems to stay hydrated!",
+            "Final challenge: The Mixed Operations Maze! To find the treasure, you need to solve various whole number problems. Use all your skills to navigate this maze!"
+        ];
+
+        // DOM elements
+        const levelEl = document.getElementById('level');
+        const scoreEl = document.getElementById('score');
+        const livesEl = document.getElementById('lives');
+        const streakEl = document.getElementById('streak');
+        const sceneDescriptionEl = document.getElementById('scene-description');
+        const problemDisplayEl = document.getElementById('problem-display');
+        const optionsContainerEl = document.getElementById('options-container');
+        const inputAnswerEl = document.getElementById('input-answer');
+        const answerInputEl = document.getElementById('answer-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const feedbackEl = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-btn');
+        const progressEl = document.getElementById('progress');
+        const progressTextEl = document.getElementById('progress-text');
+        const gameCompleteEl = document.getElementById('game-complete');
+        const gameSceneEl = document.getElementById('game-scene');
+        const finalScoreEl = document.getElementById('final-score');
+        const problemsSolvedEl = document.getElementById('problems-solved');
+        const restartBtn = document.getElementById('restart-btn');
+        const levelProgressEl = document.getElementById('level-progress');
+        const levelCompleteMessageEl = document.getElementById('level-complete-message');
+        const currentLevelNameEl = document.getElementById('current-level-name');
+        const nextLevelNameEl = document.getElementById('next-level-name');
+        const levelsSummaryEl = document.getElementById('levels-summary');
+
+        // Initialize game
+        function initGame() {
+            createLevelIndicators();
+            updateUI();
+            generateProblem();
+        }
+
+        // Create visual level indicators
+        function createLevelIndicators() {
+            levelProgressEl.innerHTML = '';
+            
+            operations.forEach((op, index) => {
+                const levelNumber = index + 1;
+                const levelItem = document.createElement('div');
+                levelItem.style.display = 'flex';
+                levelItem.style.flexDirection = 'column';
+                levelItem.style.alignItems = 'center';
+                
+                const circle = document.createElement('div');
+                circle.className = 'level-indicator-circle';
+                circle.textContent = levelNumber;
+                
+                // Set circle state
+                if (levelNumber < gameState.level) {
+                    circle.classList.add('completed');
+                } else if (levelNumber === gameState.level) {
+                    circle.classList.add('current');
+                } else {
+                    circle.classList.add('locked');
+                }
+                
+                const name = document.createElement('div');
+                name.className = 'level-name';
+                name.textContent = op.name;
+                
+                levelItem.appendChild(circle);
+                levelItem.appendChild(name);
+                levelProgressEl.appendChild(levelItem);
+            });
+        }
+
+        // Generate a math problem based on current level
+        function generateProblem() {
+            const operation = operations[gameState.level - 1];
+            let a, b, answer, problemText;
+            
+            // Generate numbers based on level difficulty
+            switch(gameState.level) {
+                case 1: // Addition (3-digit numbers)
+                    a = Math.floor(Math.random() * 500) + 200; // 200-699
+                    b = Math.floor(Math.random() * 500) + 200; // 200-699
+                    answer = a + b;
+                    problemText = `${a} + ${b} = ?`;
+                    break;
+                case 2: // Subtraction (3-digit with regrouping)
+                    a = Math.floor(Math.random() * 700) + 300; // 300-999
+                    b = Math.floor(Math.random() * 400) + 100; // 100-499
+                    // Ensure we get a positive result
+                    if (a < b) {
+                        [a, b] = [b, a]; // Swap if needed
+                    }
+                    answer = a - b;
+                    problemText = `${a} - ${b} = ?`;
+                    break;
+                case 3: // Multiplication (2-digit × 1-digit or 2-digit × 2-digit)
+                    const multiplicationType = Math.random() > 0.5 ? 'simple' : 'double';
+                    
+                    if (multiplicationType === 'simple') {
+                        // 2-digit × 1-digit
+                        a = Math.floor(Math.random() * 90) + 10; // 10-99
+                        b = Math.floor(Math.random() * 9) + 2;  // 2-10
+                    } else {
+                        // 2-digit × 2-digit (simpler ones)
+                        a = Math.floor(Math.random() * 40) + 10; // 10-49
+                        b = Math.floor(Math.random() * 9) + 2;  // 2-10
+                    }
+                    
+                    answer = a * b;
+                    problemText = `${a} × ${b} = ?`;
+                    break;
+                case 4: // Division (whole number results, 2-digit ÷ 1-digit or 3-digit ÷ 1-digit)
+                    // Generate divisor and quotient first
+                    b = Math.floor(Math.random() * 8) + 2;  // 2-9 (divisor)
+                    answer = Math.floor(Math.random() * 12) + 3; // 3-14 (quotient)
+                    a = b * answer; // dividend
+                    
+                    // Make sure numbers are appropriate for 5th grade
+                    while (a > 144) {
+                        b = Math.floor(Math.random() * 8) + 2;
+                        answer = Math.floor(Math.random() * 12) + 3;
+                        a = b * answer;
+                    }
+                    
+                    problemText = `${a} ÷ ${b} = ?`;
+                    break;
+                case 5: // Mixed operations
+                    const ops = ['+', '-', '×', '÷'];
+                    const op = ops[Math.floor(Math.random() * ops.length)];
+                    
+                    if (op === '+') {
+                        a = Math.floor(Math.random() * 500) + 200;
+                        b = Math.floor(Math.random() * 500) + 200;
+                        answer = a + b;
+                    } else if (op === '-') {
+                        a = Math.floor(Math.random() * 700) + 300;
+                        b = Math.floor(Math.random() * 400) + 100;
+                        if (a < b) {
+                            [a, b] = [b, a];
+                        }
+                        answer = a - b;
+                    } else if (op === '×') {
+                        a = Math.floor(Math.random() * 40) + 10;
+                        b = Math.floor(Math.random() * 9) + 2;
+                        answer = a * b;
+                    } else { // Division (op === '÷')
+                        b = Math.floor(Math.random() * 8) + 2;
+                        answer = Math.floor(Math.random() * 12) + 3;
+                        a = b * answer;
+                        while (a > 144) {
+                            b = Math.floor(Math.random() * 8) + 2;
+                            answer = Math.floor(Math.random() * 12) + 3;
+                            a = b * answer;
+                        }
+                    }
+                    
+                    // Use proper symbol for display
+                    const displayOp = op === '×' ? '×' : op === '÷' ? '÷' : op;
+                    problemText = `${a} ${displayOp} ${b} = ?`;
+                    break;
+            }
+            
+            gameState.currentProblem = {
+                problem: problemText,
+                answer: answer,
+                operation: operation.type
+            };
+            
+            // Update scene description with storyline
+            sceneDescriptionEl.innerHTML = `<span class="operation-badge ${operation.type}">${operation.name}</span> ${storylines[gameState.level - 1]}`;
+            
+            // Display the problem
+            problemDisplayEl.textContent = problemText;
+            
+            // For levels 1-3, show multiple choice options
+            if (gameState.level <= 3) {
+                generateMultipleChoiceOptions(answer);
+                optionsContainerEl.style.display = 'grid';
+                inputAnswerEl.style.display = 'none';
+            } else {
+                // For levels 4-5, show input field
+                optionsContainerEl.style.display = 'none';
+                inputAnswerEl.style.display = 'flex';
+                answerInputEl.value = '';
+                answerInputEl.focus();
+            }
+            
+            // Hide feedback and next button
+            feedbackEl.style.display = 'none';
+            nextBtn.style.display = 'none';
+            levelCompleteMessageEl.style.display = 'none';
+        }
+
+        // Generate multiple choice options for the answer
+        function generateMultipleChoiceOptions(correctAnswer) {
+            optionsContainerEl.innerHTML = '';
+            
+            // Create options array with correct answer
+            let options = [correctAnswer];
+            
+            // Generate 3 wrong answers that are close to the correct answer
+            while (options.length < 4) {
+                // Generate wrong answer with some variation
+                let wrongAnswer;
+                if (gameState.level === 1) { // Addition
+                    wrongAnswer = correctAnswer + (Math.floor(Math.random() * 40) - 20);
+                } else if (gameState.level === 2) { // Subtraction
+                    wrongAnswer = correctAnswer + (Math.floor(Math.random() * 30) - 15);
+                } else { // Multiplication
+                    wrongAnswer = correctAnswer + (Math.floor(Math.random() * 20) - 10);
+                }
+                
+                // Make sure wrong answer is different from correct and other wrong answers
+                if (wrongAnswer !== correctAnswer && !options.includes(wrongAnswer) && wrongAnswer > 0) {
+                    options.push(wrongAnswer);
+                }
+            }
+            
+            // Shuffle the options
+            options = shuffleArray(options);
+            
+            // Create buttons for each option
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.addEventListener('click', () => checkAnswer(option));
+                optionsContainerEl.appendChild(button);
+            });
+        }
+
+        // Check if the answer is correct
+        function checkAnswer(userAnswer) {
+            const correctAnswer = gameState.currentProblem.answer;
+            let isCorrect;
+            
+            // Parse user answer - handle both string and number inputs
+            if (typeof userAnswer === 'string') {
+                isCorrect = parseInt(userAnswer) === correctAnswer;
+            } else {
+                isCorrect = userAnswer === correctAnswer;
+            }
+            
+            // Update game state
+            if (isCorrect) {
+                gameState.score += 10 * gameState.level;
+                gameState.streak += 1;
+                gameState.problemsSolved += 1;
+                gameState.levelProgress += 1;
+                
+                // Bonus for streak
+                if (gameState.streak >= 3) {
+                    gameState.score += 5 * gameState.streak;
+                }
+                
+                // Show correct feedback
+                feedbackEl.textContent = `Excellent! ${gameState.currentProblem.problem.replace('?', correctAnswer)}`;
+                feedbackEl.className = 'feedback correct';
+                
+                // Mark correct button if multiple choice
+                if (gameState.level <= 3) {
+                    document.querySelectorAll('.option-btn').forEach(btn => {
+                        if (parseInt(btn.textContent) === correctAnswer) {
+                            btn.classList.add('correct');
+                        }
+                        btn.disabled = true;
+                    });
+                }
+                
+                // Check if level is complete
+                if (gameState.levelProgress >= gameState.maxLevelProgress) {
+                    completeLevel();
+                }
+            } else {
+                gameState.lives -= 1;
+                gameState.streak = 0;
+                
+                // Show incorrect feedback
+                feedbackEl.textContent = `Not quite. The correct answer is ${correctAnswer}.`;
+                feedbackEl.className = 'feedback incorrect';
+                
+                // Mark correct and incorrect buttons if multiple choice
+                if (gameState.level <= 3) {
+                    document.querySelectorAll('.option-btn').forEach(btn => {
+                        if (parseInt(btn.textContent) === correctAnswer) {
+                            btn.classList.add('correct');
+                        } else if (parseInt(btn.textContent) === parseInt(userAnswer)) {
+                            btn.classList.add('incorrect');
+                        }
+                        btn.disabled = true;
+                    });
+                }
+                
+                // Check if game is over (no lives left)
+                if (gameState.lives <= 0) {
+                    setTimeout(endGame, 1000);
+                    return;
+                }
+            }
+            
+            // Show feedback and next button
+            feedbackEl.style.display = 'block';
+            nextBtn.style.display = 'block';
+            
+            // Update UI
+            updateUI();
+        }
+
+        // Mark level as complete and prepare for next level
+        function completeLevel() {
+            // Store level completion
+            gameState.completedLevels.push(gameState.level);
+            gameState.levelScores[gameState.level] = gameState.score;
+            
+            // Show level complete message
+            levelCompleteMessageEl.style.display = 'block';
+            
+            // Update next button for level transition
+            if (gameState.level < 5) {
+                nextBtn.textContent = `Go to Level ${gameState.level + 1}: ${operations[gameState.level].name}`;
+            } else {
+                nextBtn.textContent = 'Finish Adventure!';
+            }
+        }
+
+        // Move to next problem or level
+        function nextStep() {
+            // If level is complete, move to next level
+            if (gameState.levelProgress >= gameState.maxLevelProgress) {
+                if (gameState.level < 5) {
+                    gameState.level += 1;
+                    gameState.levelProgress = 0;
+                    gameState.streak = 0;
+                    createLevelIndicators();
+                } else {
+                    // Game complete
+                    endGame();
+                    return;
+                }
+            }
+            
+            // Generate new problem
+            generateProblem();
+            updateUI();
+        }
+
+        // Update UI elements with current game state
+        function updateUI() {
+            levelEl.textContent = gameState.level;
+            scoreEl.textContent = gameState.score;
+            livesEl.textContent = gameState.lives;
+            streakEl.textContent = gameState.streak;
+            
+            // Update level names
+            const currentOp = operations[gameState.level - 1];
+            currentLevelNameEl.textContent = `Level ${gameState.level}: ${currentOp.name}`;
+            
+            if (gameState.level < 5) {
+                if (gameState.levelProgress >= gameState.maxLevelProgress) {
+                    nextLevelNameEl.textContent = `Level ${gameState.level + 1} unlocked!`;
+                } else {
+                    const remaining = gameState.maxLevelProgress - gameState.levelProgress;
+                    nextLevelNameEl.textContent = `Solve ${remaining} more to unlock next level`;
+                }
+            } else {
+                if (gameState.levelProgress >= gameState.maxLevelProgress) {
+                    nextLevelNameEl.textContent = "Complete the adventure!";
+                } else {
+                    const remaining = gameState.maxLevelProgress - gameState.levelProgress;
+                    nextLevelNameEl.textContent = `${remaining} problems to finish adventure`;
+                }
+            }
+            
+            // Update progress bar
+            const progressPercent = (gameState.levelProgress / gameState.maxLevelProgress) * 100;
+            progressEl.style.width = `${progressPercent}%`;
+            progressTextEl.textContent = `${gameState.levelProgress}/${gameState.maxLevelProgress}`;
+        }
+
+        // End game and show results
+        function endGame() {
+            gameSceneEl.style.display = 'none';
+            gameCompleteEl.style.display = 'flex';
+            
+            finalScoreEl.textContent = gameState.score;
+            problemsSolvedEl.textContent = gameState.problemsSolved;
+            
+            // Show levels summary
+            levelsSummaryEl.innerHTML = '';
+            operations.forEach((op, index) => {
+                const levelNumber = index + 1;
+                const li = document.createElement('li');
+                const isCompleted = gameState.completedLevels.includes(levelNumber);
+                li.innerHTML = `Level ${levelNumber}: ${op.name} - 
+                    ${isCompleted ? `<span style="color: #2ecc71;">✓ Completed</span>` : `<span style="color: #e74c3c;">✗ Not Completed</span>`}`;
+                levelsSummaryEl.appendChild(li);
+            });
+        }
+
+        // Restart game
+        function restartGame() {
+            // Reset game state
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.streak = 0;
+            gameState.problemsSolved = 0;
+            gameState.levelProgress = 0;
+            gameState.completedLevels = [];
+            gameState.levelScores = {};
+            
+            // Show game scene, hide completion screen
+            gameSceneEl.style.display = 'flex';
+            gameCompleteEl.style.display = 'none';
+            
+            // Initialize game
+            initGame();
+        }
+
+        // Utility function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Event listeners
+        submitBtn.addEventListener('click', () => {
+            const userAnswer = answerInputEl.value.trim();
+            if (userAnswer === '') {
+                alert('Please enter an answer!');
+                return;
+            }
+            checkAnswer(userAnswer);
+        });
+
+        answerInputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitBtn.click();
+            }
+        });
+
+        nextBtn.addEventListener('click', nextStep);
+        restartBtn.addEventListener('click', restartGame);
+
+        // Initialize the game
+        initGame();
+    </script>
+</body>
+</html>

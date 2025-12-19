@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Quest: Fractions, Decimals & Percentages</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Luckiest Guy', cursive;
+        }
+        
+        @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(232, 65, 24, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(155, 89, 182, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .floating-math {
+            position: fixed;
+            font-size: 2rem;
+            opacity: 0.1;
+            animation: float 20s infinite linear;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); }
+            100% { transform: translateY(-100vh) rotate(360deg); }
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(25, 25, 35, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5),
+                        0 0 0 1px rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 3px solid #8E44AD;
+            animation: containerGlow 4s infinite alternate;
+        }
+        
+        @keyframes containerGlow {
+            0% { box-shadow: 0 20px 50px rgba(142, 68, 173, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1); }
+            100% { box-shadow: 0 20px 50px rgba(142, 68, 173, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.2); }
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            position: relative;
+        }
+        
+        header::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            width: 80%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #8E44AD, #3498db, #2ecc71, #f39c12, transparent);
+            border-radius: 3px;
+        }
+        
+        h1 {
+            color: #fff;
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 
+                0 0 10px #8E44AD,
+                0 0 20px #8E44AD,
+                3px 3px 0 #000;
+            letter-spacing: 2px;
+            position: relative;
+            display: inline-block;
+            padding: 0 20px;
+        }
+        
+        h1::before, h1::after {
+            content: "✦";
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #f39c12;
+            animation: spin 4s linear infinite;
+        }
+        
+        h1::before { left: 0; }
+        h1::after { right: 0; }
+        
+        @keyframes spin {
+            0% { transform: translateY(-50%) rotate(0deg); }
+            100% { transform: translateY(-50%) rotate(360deg); }
+        }
+        
+        .subtitle {
+            color: #bdc3c7;
+            font-size: 1.3rem;
+            font-family: 'Nunito', sans-serif;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            margin-top: 5px;
+        }
+        
+        .character-container {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            z-index: 2;
+        }
+        
+        .character {
+            width: 80px;
+            height: 80px;
+            background: #3498db;
+            border-radius: 50%;
+            position: relative;
+            animation: bounce 2s infinite;
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .character::before {
+            content: "🧙‍♂️";
+            font-size: 40px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .character-hp {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .character-hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            width: 100%;
+            transition: width 0.3s;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(135deg, rgba(142, 68, 173, 0.3), rgba(52, 152, 219, 0.3));
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .player-info::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            100% { left: 100%; }
+        }
+        
+        .player-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+            position: relative;
+            padding: 10px;
+            min-width: 100px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .player-stat:hover {
+            transform: translateY(-5px);
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px currentColor;
+            line-height: 1;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #bdc3c7;
+            font-family: 'Nunito', sans-serif;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .level-indicator-circle {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #8E44AD, #3498db);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 0 20px rgba(142, 68, 173, 0.5);
+            border: 3px solid white;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 20px rgba(142, 68, 173, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(142, 68, 173, 0.8); }
+            100% { box-shadow: 0 0 20px rgba(142, 68, 173, 0.5); }
+        }
+        
+        .game-scene {
+            background: rgba(30, 30, 40, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid rgba(142, 68, 173, 0.5);
+            min-height: 450px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .scene-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.3;
+            z-index: 0;
+        }
+        
+        .scene-description {
+            font-size: 1.4rem;
+            line-height: 1.6;
+            color: #fff;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            border-left: 5px solid #f39c12;
+            position: relative;
+            z-index: 1;
+            font-family: 'Nunito', sans-serif;
+            backdrop-filter: blur(5px);
+        }
+        
+        .problem-area {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 0;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+        }
+        
+        .problem-display {
+            font-size: 2.5rem;
+            text-align: center;
+            color: #fff;
+            font-weight: bold;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 2px 2px 0 #000;
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        .fraction-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .fraction-box {
+            background: rgba(52, 152, 219, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid rgba(52, 152, 219, 0.5);
+            transition: all 0.3s;
+        }
+        
+        .fraction-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
+        }
+        
+        .visual-aid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .fraction-pizza {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            animation: rotatePizza 20s linear infinite;
+        }
+        
+        @keyframes rotatePizza {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .pizza-slice {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(50% 50%, 100% 0, 100% 100%);
+            background: #f39c12;
+            opacity: 0.7;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .option-btn {
+            padding: 20px;
+            background: linear-gradient(135deg, #8E44AD, #9b59b6);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.6rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 0 #6C3483;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        .option-btn::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .option-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(142, 68, 173, 0.4);
+            background: linear-gradient(135deg, #9b59b6, #8E44AD);
+        }
+        
+        .option-btn:hover::before {
+            left: 100%;
+        }
+        
+        .option-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 0 #6C3483;
+        }
+        
+        .option-btn.correct {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            box-shadow: 0 5px 0 #27ae60;
+            animation: correctGlow 0.5s;
+        }
+        
+        @keyframes correctGlow {
+            0% { box-shadow: 0 0 0 rgba(46, 204, 113, 0); }
+            50% { box-shadow: 0 0 30px rgba(46, 204, 113, 0.8); }
+            100% { box-shadow: 0 5px 0 #27ae60; }
+        }
+        
+        .option-btn.incorrect {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 5px 0 #c0392b;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .input-answer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .answer-input {
+            width: 80%;
+            padding: 20px;
+            font-size: 2rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid #8E44AD;
+            border-radius: 10px;
+            outline: none;
+            color: white;
+            font-family: 'Nunito', sans-serif;
+            transition: all 0.3s;
+        }
+        
+        .answer-input:focus {
+            border-color: #f39c12;
+            box-shadow: 0 0 20px rgba(243, 156, 18, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .submit-btn {
+            padding: 18px 50px;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.6rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 0 #d35400;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.4);
+            background: linear-gradient(135deg, #e67e22, #f39c12);
+        }
+        
+        .feedback {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            animation: slideIn 0.5s;
+            position: relative;
+            z-index: 2;
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .feedback.correct {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border: 2px solid #2ecc71;
+            display: block;
+        }
+        
+        .feedback.incorrect {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 2px solid #e74c3c;
+            display: block;
+        }
+        
+        .next-btn {
+            padding: 18px 50px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.6rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 0 #1f618d;
+            margin: 20px auto 0;
+            display: none;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Nunito', sans-serif;
+            animation: nextBtnGlow 2s infinite alternate;
+        }
+        
+        @keyframes nextBtnGlow {
+            0% { box-shadow: 0 5px 0 #1f618d, 0 0 10px rgba(52, 152, 219, 0.5); }
+            100% { box-shadow: 0 5px 0 #1f618d, 0 0 20px rgba(52, 152, 219, 0.8); }
+        }
+        
+        .next-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.4);
+            background: linear-gradient(135deg, #2980b9, #3498db);
+        }
+        
+        .progress-area {
+            margin-top: 20px;
+            position: relative;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #8E44AD, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: progressShine 2s infinite;
+        }
+        
+        @keyframes progressShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .level-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+        
+        .level-progress {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .level-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .level-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .level-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            position: relative;
+            transition: all 0.3s;
+            border: 3px solid;
+        }
+        
+        .level-circle.locked {
+            background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+            border-color: #bdc3c7;
+            color: #ecf0f1;
+            cursor: not-allowed;
+        }
+        
+        .level-circle.current {
+            background: linear-gradient(135deg, #8E44AD, #9b59b6);
+            border-color: #fff;
+            color: white;
+            box-shadow: 0 0 30px rgba(142, 68, 173, 0.7);
+            animation: currentLevel 2s infinite alternate;
+        }
+        
+        @keyframes currentLevel {
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(142, 68, 173, 0.5); }
+            100% { transform: scale(1.1); box-shadow: 0 0 40px rgba(142, 68, 173, 0.9); }
+        }
+        
+        .level-circle.completed {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            border-color: #fff;
+            color: white;
+        }
+        
+        .level-complete-message {
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(39, 174, 96, 0.2));
+            border: 2px solid #2ecc71;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+            animation: celebrate 1s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @keyframes celebrate {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .level-complete-message::before {
+            content: "🎉";
+            font-size: 3rem;
+            position: absolute;
+            animation: floatUp 3s infinite;
+        }
+        
+        @keyframes floatUp {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .game-complete {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 50px;
+            display: none;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            animation: gameCompleteEnter 1s;
+        }
+        
+        @keyframes gameCompleteEnter {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .game-complete::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, #8E44AD, transparent 30%);
+            animation: rotate 4s linear infinite;
+        }
+        
+        .game-complete-content {
+            position: relative;
+            z-index: 1;
+            background: rgba(25, 25, 35, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            width: 100%;
+        }
+        
+        .game-complete h2 {
+            color: #f39c12;
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #f39c12;
+        }
+        
+        .game-complete p {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            line-height: 1.6;
+            font-family: 'Nunito', sans-serif;
+            color: #ecf0f1;
+        }
+        
+        .action-btn {
+            padding: 18px 40px;
+            background: linear-gradient(135deg, #8E44AD, #9b59b6);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 0 #6C3483;
+            margin: 10px;
+            font-family: 'Nunito', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(142, 68, 173, 0.4);
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .options-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .problem-display {
+                font-size: 1.8rem;
+            }
+            
+            .player-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .visual-aid {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .character-container {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin: 0 auto 20px;
+            }
+        }
+        
+        .power-up {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #f39c12;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            animation: powerUpFloat 3s infinite;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 0 20px #f39c12;
+        }
+        
+        @keyframes powerUpFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .sound-toggle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #8E44AD;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: white;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        
+        .sound-toggle:hover {
+            background: rgba(142, 68, 173, 0.3);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating math symbols -->
+    <div class="floating-math" style="left: 10%; animation-delay: 0s;">½</div>
+    <div class="floating-math" style="left: 20%; animation-delay: -5s;">0.5</div>
+    <div class="floating-math" style="left: 30%; animation-delay: -10s;">50%</div>
+    <div class="floating-math" style="left: 40%; animation-delay: -15s;">¼</div>
+    <div class="floating-math" style="left: 50%; animation-delay: -2s;">0.25</div>
+    <div class="floating-math" style="left: 60%; animation-delay: -8s;">25%</div>
+    <div class="floating-math" style="left: 70%; animation-delay: -12s;">¾</div>
+    <div class="floating-math" style="left: 80%; animation-delay: -7s;">0.75</div>
+    <div class="floating-math" style="left: 90%; animation-delay: -14s;">75%</div>
+    
+    <div class="sound-toggle" id="sound-toggle">
+        <i class="fas fa-volume-up"></i>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>MATH QUEST</h1>
+            <p class="subtitle">Chapter 2: Fractions, Decimals & Percentages Adventure</p>
+            
+            <div class="level-progress" id="level-progress">
+                <!-- Level indicators will be generated by JavaScript -->
+            </div>
+        </header>
+        
+        <div class="character-container">
+            <div class="character" id="character"></div>
+            <div class="character-hp">
+                <div class="character-hp-fill" id="character-hp" style="width: 100%"></div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="player-info">
+                <div class="player-stat">
+                    <div class="stat-value" id="level">1</div>
+                    <div class="stat-label">LEVEL</div>
+                </div>
+                <div class="player-stat">
+                    <div class="stat-value" id="score">0</div>
+                    <div class="stat-label">SCORE</div>
+                </div>
+                <div class="player-stat">
+                    <div class="stat-value" id="lives">3</div>
+                    <div class="stat-label">LIVES</div>
+                </div>
+                <div class="player-stat">
+                    <div class="stat-value" id="streak">0</div>
+                    <div class="stat-label">STREAK</div>
+                </div>
+            </div>
+            
+            <div class="level-complete-message" id="level-complete-message">
+                <h3><i class="fas fa-trophy"></i> LEVEL COMPLETE!</h3>
+                <p>Amazing work! You've mastered this level! Ready for the next challenge?</p>
+            </div>
+            
+            <div class="game-scene" id="game-scene">
+                <div class="scene-background" id="scene-background"></div>
+                
+                <div class="scene-description" id="scene-description">
+                    Welcome to the Fraction Forest, brave adventurer! I'm Wizard Matheus, and I need your help to restore balance to the Math Kingdom. The evil Decimal Dragon has scattered mathematical treasures across five realms!
+                </div>
+                
+                <div class="problem-area">
+                    <div class="visual-aid" id="visual-aid">
+                        <!-- Visual aids will be generated by JavaScript -->
+                    </div>
+                    
+                    <div class="problem-display" id="problem-display">
+                        <!-- Problems will be generated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="options-container" id="options-container">
+                    <!-- Options will be generated by JavaScript -->
+                </div>
+                
+                <div class="input-answer" id="input-answer" style="display: none;">
+                    <input type="text" class="answer-input" id="answer-input" placeholder="Type your answer here...">
+                    <button class="submit-btn" id="submit-btn"><i class="fas fa-paper-plane"></i> CAST SPELL</button>
+                </div>
+                
+                <div class="feedback" id="feedback"></div>
+                
+                <button class="next-btn" id="next-btn">CONTINUE QUEST <i class="fas fa-arrow-right"></i></button>
+            </div>
+            
+            <div class="progress-area">
+                <div class="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+                <div class="level-indicator">
+                    <span id="current-level-name">REALM 1: FRACTION FOREST</span>
+                    <span id="progress-text">0/5</span>
+                    <span id="next-level-name">Solve problems to unlock next realm!</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-complete" id="game-complete">
+            <div class="game-complete-content">
+                <h2><i class="fas fa-crown"></i> KINGDOM RESTORED!</h2>
+                <p>Magnificent work, hero! You've defeated the Decimal Dragon and restored harmony to the Math Kingdom!</p>
+                <p>Final Score: <span id="final-score" style="color: #f39c12; font-weight: bold;">0</span></p>
+                <p>Problems Solved: <span id="problems-solved" style="color: #2ecc71; font-weight: bold;">0</span></p>
+                <p><strong>Realms Conquered:</strong></p>
+                <ul id="levels-summary" style="text-align: left; margin: 20px 0; font-size: 1.3rem; list-style: none;">
+                    <!-- Levels summary will be added here -->
+                </ul>
+                <button class="action-btn" id="restart-btn"><i class="fas fa-redo"></i> PLAY AGAIN</button>
+                <button class="action-btn" id="chapter-select-btn" style="background: linear-gradient(135deg, #3498db, #2980b9);">
+                    <i class="fas fa-book"></i> SELECT CHAPTER
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced Game state for Chapter 2 with game elements
+        const gameState = {
+            chapter: 2,
+            level: 1,
+            score: 0,
+            lives: 3,
+            streak: 0,
+            currentProblem: null,
+            problemsSolved: 0,
+            levelProgress: 0,
+            maxLevelProgress: 5,
+            gameComplete: false,
+            completedLevels: [],
+            levelScores: {},
+            soundEnabled: true,
+            characterState: 'happy',
+            collectedPowerUps: []
+        };
+
+        // Realms (Levels) with themes
+        const realms = [
+            { 
+                type: 'fractions', 
+                level: 1, 
+                name: 'Fraction Forest',
+                description: 'The Fraction Forest is overgrown with mathematical mysteries. Help clear the path by solving fraction puzzles!',
+                background: 'forest',
+                enemy: 'Fraction Goblins'
+            },
+            { 
+                type: 'decimals', 
+                level: 2, 
+                name: 'Decimal Desert',
+                description: 'Navigate the shifting sands of the Decimal Desert. Each correct answer creates an oasis!',
+                background: 'desert',
+                enemy: 'Decimal Scorpions'
+            },
+            { 
+                type: 'percentages', 
+                level: 3, 
+                name: 'Percentage Peaks',
+                description: 'Scale the Percentage Peaks! Each problem solved brings you closer to the summit.',
+                background: 'mountains',
+                enemy: 'Percentage Yetis'
+            },
+            { 
+                type: 'conversion', 
+                level: 4, 
+                name: 'Conversion Canyon',
+                description: 'Cross the treacherous Conversion Canyon by transforming numbers between different forms!',
+                background: 'canyon',
+                enemy: 'Conversion Chimeras'
+            },
+            { 
+                type: 'mixed', 
+                level: 5, 
+                name: 'Math Mountain',
+                description: 'The final challenge! Face the Decimal Dragon at the peak of Math Mountain!',
+                background: 'volcano',
+                enemy: 'Decimal Dragon'
+            }
+        ];
+
+        // Adventure storylines for each realm
+        const storylines = [
+            "The Fraction Forest is overgrown with confusing fractions! The Fraction Goblins have hidden the path. Solve their puzzles to clear the way!",
+            "Welcome to the scorching Decimal Desert! The Decimal Scorpions guard the oases. Solve decimal problems to find water and continue!",
+            "Brrr! It's cold up here on Percentage Peaks! The Percentage Yetis won't let you pass unless you solve their percentage puzzles!",
+            "Watch your step in Conversion Canyon! The Conversion Chimeras will only let you cross if you can transform numbers between fractions, decimals, and percentages!",
+            "The final showdown! The Decimal Dragon awaits at the peak. Use ALL your math skills to defeat it and restore balance to the Math Kingdom!"
+        ];
+
+        // Common fractions for Grade 5
+        const commonFractions = [
+            { num: 1, den: 2, decimal: 0.5, percent: "50%" },
+            { num: 1, den: 4, decimal: 0.25, percent: "25%" },
+            { num: 3, den: 4, decimal: 0.75, percent: "75%" },
+            { num: 1, den: 3, decimal: 0.33, percent: "33%" },
+            { num: 2, den: 3, decimal: 0.67, percent: "67%" },
+            { num: 1, den: 5, decimal: 0.2, percent: "20%" },
+            { num: 2, den: 5, decimal: 0.4, percent: "40%" },
+            { num: 3, den: 5, decimal: 0.6, percent: "60%" },
+            { num: 4, den: 5, decimal: 0.8, percent: "80%" },
+            { num: 1, den: 10, decimal: 0.1, percent: "10%" },
+            { num: 3, den: 10, decimal: 0.3, percent: "30%" },
+            { num: 7, den: 10, decimal: 0.7, percent: "70%" },
+            { num: 9, den: 10, decimal: 0.9, percent: "90%" }
+        ];
+
+        // Power-ups
+        const powerUps = [
+            { name: "Double Points", icon: "💰", effect: "score" },
+            { name: "Extra Life", icon: "❤️", effect: "life" },
+            { name: "Streak Booster", icon: "⚡", effect: "streak" },
+            { name: "Time Freeze", icon: "⏱️", effect: "time" }
+        ];
+
+        // DOM elements
+        const levelEl = document.getElementById('level');
+        const scoreEl = document.getElementById('score');
+        const livesEl = document.getElementById('lives');
+        const streakEl = document.getElementById('streak');
+        const sceneDescriptionEl = document.getElementById('scene-description');
+        const problemDisplayEl = document.getElementById('problem-display');
+        const optionsContainerEl = document.getElementById('options-container');
+        const inputAnswerEl = document.getElementById('input-answer');
+        const answerInputEl = document.getElementById('answer-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const feedbackEl = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-btn');
+        const progressEl = document.getElementById('progress');
+        const progressTextEl = document.getElementById('progress-text');
+        const gameCompleteEl = document.getElementById('game-complete');
+        const gameSceneEl = document.getElementById('game-scene');
+        const finalScoreEl = document.getElementById('final-score');
+        const problemsSolvedEl = document.getElementById('problems-solved');
+        const restartBtn = document.getElementById('restart-btn');
+        const levelProgressEl = document.getElementById('level-progress');
+        const levelCompleteMessageEl = document.getElementById('level-complete-message');
+        const currentLevelNameEl = document.getElementById('current-level-name');
+        const nextLevelNameEl = document.getElementById('next-level-name');
+        const levelsSummaryEl = document.getElementById('levels-summary');
+        const visualAidEl = document.getElementById('visual-aid');
+        const characterEl = document.getElementById('character');
+        const characterHpEl = document.getElementById('character-hp');
+        const sceneBackgroundEl = document.getElementById('scene-background');
+        const soundToggle = document.getElementById('sound-toggle');
+        const chapterSelectBtn = document.getElementById('chapter-select-btn');
+
+        // Initialize game
+        function initGame() {
+            createRealmIndicators();
+            updateUI();
+            generateProblem();
+            createFloatingPowerUps();
+            updateCharacter();
+        }
+
+        // Create visual realm indicators
+        function createRealmIndicators() {
+            levelProgressEl.innerHTML = '';
+            
+            realms.forEach((realm, index) => {
+                const realmNumber = index + 1;
+                const realmItem = document.createElement('div');
+                realmItem.className = 'level-item';
+                
+                const circle = document.createElement('div');
+                circle.className = 'level-circle';
+                circle.textContent = realmNumber;
+                
+                // Set circle state
+                if (realmNumber < gameState.level) {
+                    circle.classList.add('completed');
+                    circle.title = `${realm.name} - Completed!`;
+                } else if (realmNumber === gameState.level) {
+                    circle.classList.add('current');
+                    circle.title = `${realm.name} - Current Realm`;
+                } else {
+                    circle.classList.add('locked');
+                    circle.title = `${realm.name} - Locked`;
+                }
+                
+                const name = document.createElement('div');
+                name.className = 'level-name';
+                name.textContent = realm.name;
+                name.style.cssText = 'color: #fff; margin-top: 5px; font-size: 0.8rem; text-align: center; font-family: Nunito, sans-serif;';
+                
+                realmItem.appendChild(circle);
+                realmItem.appendChild(name);
+                levelProgressEl.appendChild(realmItem);
+            });
+        }
+
+        // Generate a math problem based on current realm
+        function generateProblem() {
+            const realm = realms[gameState.level - 1];
+            let problemText = '';
+            let correctAnswer = '';
+            let visualAidHTML = '';
+            
+            // Update background
+            updateBackground(realm.background);
+            
+            // Update scene description with storyline
+            sceneDescriptionEl.innerHTML = `
+                <strong style="color: #f39c12;">${realm.name}</strong><br>
+                ${storylines[gameState.level - 1]}<br>
+                <small style="color: #bdc3c7;">Enemy: ${realm.enemy}</small>
+            `;
+            
+            // Clear visual aid
+            visualAidEl.innerHTML = '';
+            
+            // Generate problem based on realm
+            switch(gameState.level) {
+                case 1: // Fraction Forest
+                    const fraction = commonFractions[Math.floor(Math.random() * commonFractions.length)];
+                    const problemType = Math.floor(Math.random() * 3);
+                    
+                    switch(problemType) {
+                        case 0: // Identify fraction from visual
+                            const totalParts = Math.floor(Math.random() * 8) + 2;
+                            const shadedParts = Math.floor(Math.random() * totalParts) + 1;
+                            
+                            visualAidHTML = createFractionVisual(totalParts, shadedParts);
+                            problemText = `What fraction of the pizza did the Fraction Goblins eat?`;
+                            correctAnswer = `${shadedParts}/${totalParts}`;
+                            break;
+                            
+                        case 1: // Simplify fraction
+                            let num = Math.floor(Math.random() * 8) + 2;
+                            let den = num * (Math.floor(Math.random() * 3) + 2);
+                            
+                            const gcd = findGCD(num, den);
+                            num /= gcd;
+                            den /= gcd;
+                            const originalNum = num * (Math.floor(Math.random() * 2) + 2);
+                            const originalDen = den * (Math.floor(Math.random() * 2) + 2);
+                            
+                            problemText = `Simplify the goblin's fraction: ${originalNum}/${originalDen}`;
+                            correctAnswer = `${num}/${den}`;
+                            break;
+                            
+                        case 2: // Compare fractions
+                            const frac1 = commonFractions[Math.floor(Math.random() * commonFractions.length)];
+                            const frac2 = commonFractions[Math.floor(Math.random() * commonFractions.length)];
+                            
+                            problemText = `Which fraction gives more treasure: ${frac1.num}/${frac1.den} or ${frac2.num}/${frac2.den}?`;
+                            correctAnswer = frac1.decimal > frac2.decimal ? `${frac1.num}/${frac1.den}` : `${frac2.num}/${frac2.den}`;
+                            break;
+                    }
+                    break;
+                    
+                case 2: // Decimal Desert
+                    const decimalProblemType = Math.floor(Math.random() * 3);
+                    
+                    switch(decimalProblemType) {
+                        case 0: // Decimal to fraction
+                            const decimal = (Math.random() * 0.9 + 0.1).toFixed(2);
+                            const decimalValue = parseFloat(decimal);
+                            
+                            problemText = `Convert oasis size ${decimal} to a fraction`;
+                            const closestFraction = findClosestFraction(decimalValue);
+                            correctAnswer = `${closestFraction.num}/${closestFraction.den}`;
+                            break;
+                            
+                        case 1: // Decimal addition/subtraction
+                            const num1 = (Math.random() * 10).toFixed(1);
+                            const num2 = (Math.random() * 10).toFixed(1);
+                            const operation = Math.random() > 0.5 ? '+' : '-';
+                            
+                            problemText = `Scorpion venom: ${num1}ml ${operation} ${num2}ml = ?`;
+                            correctAnswer = operation === '+' ? 
+                                (parseFloat(num1) + parseFloat(num2)).toFixed(1) : 
+                                (parseFloat(num1) - parseFloat(num2)).toFixed(1);
+                            break;
+                            
+                        case 2: // Decimal place value
+                            const decimalNumber = (Math.random() * 100).toFixed(2);
+                            const digitPosition = Math.random() > 0.5 ? 'tenths' : 'hundredths';
+                            
+                            problemText = `In treasure amount $${decimalNumber}, what digit is in the ${digitPosition} place?`;
+                            const parts = decimalNumber.toString().split('.');
+                            correctAnswer = digitPosition === 'tenths' ? parts[1][0] : parts[1][1];
+                            break;
+                    }
+                    break;
+                    
+                case 3: // Percentage Peaks
+                    const percentProblemType = Math.floor(Math.random() * 3);
+                    
+                    switch(percentProblemType) {
+                        case 0: // Percentage of a number
+                            const percent = Math.floor(Math.random() * 9 + 1) * 10;
+                            const number = Math.floor(Math.random() * 9 + 1) * 10;
+                            
+                            problemText = `Yeti needs ${percent}% of ${number} snowballs. How many?`;
+                            correctAnswer = (percent / 100 * number).toString();
+                            break;
+                            
+                        case 1: // Percentage from fraction
+                            const fraction = commonFractions[Math.floor(Math.random() * commonFractions.length)];
+                            
+                            problemText = `What percentage of the peak is covered by ${fraction.num}/${fraction.den} ice?`;
+                            correctAnswer = fraction.percent;
+                            break;
+                            
+                        case 2: // Discount calculation
+                            const price = Math.floor(Math.random() * 9 + 1) * 10;
+                            const discount = Math.floor(Math.random() * 4 + 1) * 10;
+                            
+                            problemText = `Climbing gear: $${price}, ${discount}% off for heroes! Sale price?`;
+                            correctAnswer = Math.round(price * (1 - discount/100)).toString();
+                            break;
+                    }
+                    break;
+                    
+                case 4: // Conversion Canyon
+                    const conversionProblemType = Math.floor(Math.random() * 3);
+                    const conversionFraction = commonFractions[Math.floor(Math.random() * commonFractions.length)];
+                    
+                    switch(conversionProblemType) {
+                        case 0: // Fraction to decimal
+                            problemText = `Convert bridge length ${conversionFraction.num}/${conversionFraction.den} to decimal`;
+                            correctAnswer = conversionFraction.decimal.toString();
+                            break;
+                            
+                        case 1: // Decimal to percentage
+                            const decimal = conversionFraction.decimal;
+                            problemText = `Convert ${decimal} of canyon crossed to percentage`;
+                            correctAnswer = `${(decimal * 100)}%`;
+                            break;
+                            
+                        case 2: // Percentage to fraction
+                            const percent = conversionFraction.decimal * 100;
+                            problemText = `${percent}% of chimera is friendly. As fraction?`;
+                            correctAnswer = `${conversionFraction.num}/${conversionFraction.den}`;
+                            break;
+                    }
+                    break;
+                    
+                case 5: // Math Mountain
+                    const mixedProblemType = Math.floor(Math.random() * 4);
+                    
+                    switch(mixedProblemType) {
+                        case 0: // Fraction addition
+                            const frac1 = commonFractions[Math.floor(Math.random() * 5)];
+                            const frac2 = commonFractions[Math.floor(Math.random() * 5)];
+                            
+                            problemText = `Dragon ate ${frac1.num}/${frac1.den} + ${frac2.num}/${frac2.den} of treasure. Total?`;
+                            if (frac1.den === frac2.den) {
+                                const sumNum = frac1.num + frac2.num;
+                                correctAnswer = sumNum === frac1.den ? "1" : `${sumNum}/${frac1.den}`;
+                            } else {
+                                const commonDen = frac1.den * frac2.den;
+                                const newNum1 = frac1.num * frac2.den;
+                                const newNum2 = frac2.num * frac1.den;
+                                const sumNum = newNum1 + newNum2;
+                                const gcd = findGCD(sumNum, commonDen);
+                                correctAnswer = `${sumNum/gcd}/${commonDen/gcd}`;
+                            }
+                            break;
+                            
+                        case 1: // Real-world percentage
+                            const totalItems = Math.floor(Math.random() * 9 + 1) * 10;
+                            const itemsUsed = Math.floor(Math.random() * totalItems) + 1;
+                            
+                            problemText = `You have ${totalItems} dragon scales. Use ${itemsUsed}. Percentage used?`;
+                            correctAnswer = `${Math.round((itemsUsed/totalItems) * 100)}%`;
+                            break;
+                            
+                        case 2: // Decimal multiplication
+                            const decimal1 = (Math.random() * 10).toFixed(1);
+                            const decimal2 = Math.floor(Math.random() * 9 + 1);
+                            
+                            problemText = `Dragon breath: ${decimal1}m × ${decimal2} = length?`;
+                            correctAnswer = (parseFloat(decimal1) * decimal2).toFixed(1);
+                            break;
+                            
+                        case 3: // Fraction of a whole
+                            const whole = Math.floor(Math.random() * 9 + 1) * 10;
+                            const fraction = commonFractions[Math.floor(Math.random() * commonFractions.length)];
+                            
+                            problemText = `Find ${fraction.num}/${fraction.den} of ${whole} gold coins`;
+                            correctAnswer = Math.round((fraction.num/fraction.den) * whole).toString();
+                            break;
+                    }
+                    break;
+            }
+            
+            gameState.currentProblem = {
+                problem: problemText,
+                answer: correctAnswer,
+                operation: realm.type
+            };
+            
+            // Display visual aid if generated
+            if (visualAidHTML) {
+                visualAidEl.innerHTML = visualAidHTML;
+                visualAidEl.style.display = 'flex';
+            } else {
+                visualAidEl.style.display = 'none';
+            }
+            
+            // Display the problem with styling
+            problemDisplayEl.innerHTML = `
+                <div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; border: 2px solid #f39c12;">
+                    <div style="font-size: 1.2rem; color: #f39c12; margin-bottom: 10px;">🧙‍♂️ Wizard Matheus asks:</div>
+                    <div>${problemText}</div>
+                </div>
+            `;
+            
+            // For realms 1-3, show multiple choice options
+            if (gameState.level <= 3) {
+                generateMultipleChoiceOptions(correctAnswer);
+                optionsContainerEl.style.display = 'grid';
+                inputAnswerEl.style.display = 'none';
+            } else {
+                // For realms 4-5, show input field
+                optionsContainerEl.style.display = 'none';
+                inputAnswerEl.style.display = 'flex';
+                answerInputEl.value = '';
+                answerInputEl.focus();
+                answerInputEl.placeholder = "Type your spell...";
+            }
+            
+            // Hide feedback and next button
+            feedbackEl.style.display = 'none';
+            nextBtn.style.display = 'none';
+            levelCompleteMessageEl.style.display = 'none';
+            
+            // Play sound
+            playSound('problem');
+        }
+
+        // Update background based on realm
+        function updateBackground(realmType) {
+            const backgrounds = {
+                'forest': 'linear-gradient(135deg, #1b5e20, #4caf50, #8bc34a)',
+                'desert': 'linear-gradient(135deg, #ff9800, #ffb74d, #ffcc80)',
+                'mountains': 'linear-gradient(135deg, #607d8b, #90a4ae, #b0bec5)',
+                'canyon': 'linear-gradient(135deg, #795548, #a1887f, #d7ccc8)',
+                'volcano': 'linear-gradient(135deg, #d50000, #ff5722, #ff9800)'
+            };
+            
+            sceneBackgroundEl.style.background = backgrounds[realmType] || backgrounds.forest;
+        }
+
+        // Create visual representation of a fraction
+        function createFractionVisual(totalParts, shadedParts) {
+            let html = '';
+            
+            // Create pizza visual
+            html += '<div class="fraction-pizza">';
+            const angle = 360 / totalParts;
+            for (let i = 0; i < totalParts; i++) {
+                const isShaded = i < shadedParts;
+                const color = isShaded ? '#f39c12' : '#7f8c8d';
+                html += `<div class="pizza-slice" style="transform: rotate(${i * angle}deg); background: ${color};"></div>`;
+            }
+            html += '</div>';
+            
+            // Add fraction display
+            html += `
+                <div class="fraction-box">
+                    <div style="font-size: 3rem; text-align: center;">
+                        <div style="border-bottom: 3px solid white; padding-bottom: 5px;">${shadedParts}</div>
+                        <div style="padding-top: 5px;">${totalParts}</div>
+                    </div>
+                </div>
+            `;
+            
+            return html;
+        }
+
+        // Generate multiple choice options for the answer
+        function generateMultipleChoiceOptions(correctAnswer) {
+            optionsContainerEl.innerHTML = '';
+            
+            // Create options array with correct answer
+            let options = [correctAnswer];
+            
+            // Generate 3 wrong answers
+            while (options.length < 4) {
+                let wrongAnswer;
+                
+                // Generate wrong answers based on realm type
+                if (gameState.level === 1) { // Fractions
+                    if (correctAnswer.includes('/')) {
+                        const parts = correctAnswer.split('/');
+                        const num = parseInt(parts[0]);
+                        const den = parseInt(parts[1]);
+                        
+                        // Generate wrong fractions
+                        const wrongNum = Math.max(1, num + (Math.floor(Math.random() * 3) - 1));
+                        const wrongDen = Math.max(1, den + (Math.floor(Math.random() * 3) - 1));
+                        wrongAnswer = `${wrongNum}/${wrongDen}`;
+                        
+                        // Make sure it's different and valid
+                        if (wrongAnswer !== correctAnswer && wrongNum <= wrongDen && !options.includes(wrongAnswer)) {
+                            options.push(wrongAnswer);
+                        }
+                    }
+                } else if (gameState.level === 2) { // Decimals
+                    if (correctAnswer.includes('.')) {
+                        const value = parseFloat(correctAnswer);
+                        // Generate close but wrong decimal
+                        wrongAnswer = (value + (Math.random() * 0.2 - 0.1)).toFixed(2);
+                    } else {
+                        wrongAnswer = (parseInt(correctAnswer) + (Math.floor(Math.random() * 3) - 1)).toString();
+                    }
+                } else if (gameState.level === 3) { // Percentages
+                    if (correctAnswer.includes('%')) {
+                        const percentValue = parseInt(correctAnswer);
+                        wrongAnswer = `${percentValue + (Math.floor(Math.random() * 20) - 10)}%`;
+                    }
+                }
+                
+                // Make sure wrong answer is different from correct and other wrong answers
+                if (wrongAnswer && wrongAnswer !== correctAnswer && !options.includes(wrongAnswer)) {
+                    options.push(wrongAnswer);
+                }
+            }
+            
+            // Shuffle the options
+            options = shuffleArray(options);
+            
+            // Create buttons for each option
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerHTML = `${getOptionEmoji()} ${option}`;
+                button.addEventListener('click', () => {
+                    playSound('click');
+                    checkAnswer(option);
+                });
+                optionsContainerEl.appendChild(button);
+            });
+        }
+
+        // Get random emoji for options
+        function getOptionEmoji() {
+            const emojis = ['🔮', '✨', '⭐', '🌟', '💎', '🔱', '⚔️', '🛡️'];
+            return emojis[Math.floor(Math.random() * emojis.length)];
+        }
+
+        // Check if the answer is correct
+        function checkAnswer(userAnswer) {
+            const correctAnswer = gameState.currentProblem.answer;
+            let isCorrect = false;
+            
+            // Special handling for different answer formats
+            if (gameState.level === 1 && correctAnswer.includes('/')) {
+                // For fractions, accept equivalent fractions
+                const userParts = userAnswer.split('/');
+                const correctParts = correctAnswer.split('/');
+                
+                if (userParts.length === 2 && correctParts.length === 2) {
+                    const userNum = parseInt(userParts[0]);
+                    const userDen = parseInt(userParts[1]);
+                    const correctNum = parseInt(correctParts[0]);
+                    const correctDen = parseInt(correctParts[1]);
+                    
+                    // Check if fractions are equivalent
+                    isCorrect = (userNum * correctDen === userDen * correctNum);
+                } else {
+                    isCorrect = (userAnswer === correctAnswer);
+                }
+            } else if (correctAnswer.includes('%')) {
+                // For percentages, accept without % sign or with different formatting
+                const cleanUser = userAnswer.replace('%', '').trim();
+                const cleanCorrect = correctAnswer.replace('%', '').trim();
+                isCorrect = (cleanUser === cleanCorrect);
+            } else if (!isNaN(correctAnswer)) {
+                // For numeric answers, accept different representations
+                const userNum = parseFloat(userAnswer);
+                const correctNum = parseFloat(correctAnswer);
+                isCorrect = Math.abs(userNum - correctNum) < 0.01;
+            } else {
+                // For text answers
+                isCorrect = (userAnswer.toString().toLowerCase() === correctAnswer.toString().toLowerCase());
+            }
+            
+            // Update game state
+            if (isCorrect) {
+                // Victory!
+                gameState.score += 100 * gameState.level;
+                gameState.streak += 1;
+                gameState.problemsSolved += 1;
+                gameState.levelProgress += 1;
+                
+                // Bonus for streak
+                if (gameState.streak >= 3) {
+                    gameState.score += 50 * gameState.streak;
+                }
+                
+                // Update character
+                gameState.characterState = 'victory';
+                updateCharacter();
+                
+                // Show correct feedback
+                feedbackEl.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                        <div style="font-size: 2rem;">🎉</div>
+                        <div>
+                            <div style="color: #2ecc71; font-size: 1.8rem;">PERFECT SPELL!</div>
+                            <div>The correct answer was ${correctAnswer}</div>
+                        </div>
+                        <div style="font-size: 2rem;">✨</div>
+                    </div>
+                `;
+                feedbackEl.className = 'feedback correct';
+                
+                // Create celebration effects
+                createCelebration();
+                playSound('correct');
+                
+                // Mark correct button if multiple choice
+                if (gameState.level <= 3) {
+                    document.querySelectorAll('.option-btn').forEach(btn => {
+                        if (btn.textContent.includes(correctAnswer) || 
+                            (gameState.level === 1 && checkEquivalentFractions(btn.textContent.trim().split(' ')[1], correctAnswer))) {
+                            btn.classList.add('correct');
+                        }
+                        btn.disabled = true;
+                    });
+                }
+                
+                // Check if level is complete
+                if (gameState.levelProgress >= gameState.maxLevelProgress) {
+                    completeLevel();
+                }
+            } else {
+                // Defeat!
+                gameState.lives -= 1;
+                gameState.streak = 0;
+                
+                // Update character
+                gameState.characterState = 'hurt';
+                updateCharacter();
+                
+                // Show incorrect feedback
+                feedbackEl.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                        <div style="font-size: 2rem;">💥</div>
+                        <div>
+                            <div style="color: #e74c3c; font-size: 1.8rem;">SPELL FAILED!</div>
+                            <div>The correct answer was ${correctAnswer}</div>
+                        </div>
+                        <div style="font-size: 2rem;">⚡</div>
+                    </div>
+                `;
+                feedbackEl.className = 'feedback incorrect';
+                
+                playSound('incorrect');
+                
+                // Mark correct and incorrect buttons if multiple choice
+                if (gameState.level <= 3) {
+                    document.querySelectorAll('.option-btn').forEach(btn => {
+                        const btnText = btn.textContent.trim().split(' ')[1];
+                        if (btnText === correctAnswer || 
+                            (gameState.level === 1 && checkEquivalentFractions(btnText, correctAnswer))) {
+                            btn.classList.add('correct');
+                        } else if (btnText === userAnswer) {
+                            btn.classList.add('incorrect');
+                        }
+                        btn.disabled = true;
+                    });
+                }
+                
+                // Check if game is over (no lives left)
+                if (gameState.lives <= 0) {
+                    setTimeout(endGame, 1500);
+                    return;
+                }
+            }
+            
+            // Show feedback and next button
+            feedbackEl.style.display = 'block';
+            nextBtn.style.display = 'block';
+            nextBtn.innerHTML = gameState.level < 5 ? 
+                `CONTINUE QUEST <i class="fas fa-arrow-right"></i>` : 
+                `FACE THE DRAGON! <i class="fas fa-dragon"></i>`;
+            
+            // Update UI
+            updateUI();
+        }
+
+        // Create celebration effects
+        function createCelebration() {
+            // Create confetti
+            for (let i = 0; i < 20; i++) {
+                createConfetti();
+            }
+        }
+
+        // Create confetti particle
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.background = getRandomColor();
+            confetti.style.width = Math.random() * 15 + 5 + 'px';
+            confetti.style.height = Math.random() * 15 + 5 + 'px';
+            confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+            
+            document.body.appendChild(confetti);
+            
+            // Animate confetti
+            const animation = confetti.animate([
+                { 
+                    transform: 'translateY(-100vh) rotate(0deg)',
+                    opacity: 1 
+                },
+                { 
+                    transform: `translateY(100vh) rotate(${Math.random() * 360}deg)`,
+                    opacity: 0 
+                }
+            ], {
+                duration: Math.random() * 3000 + 2000,
+                easing: 'cubic-bezier(0.215, 0.610, 0.355, 1)'
+            });
+            
+            animation.onfinish = () => confetti.remove();
+        }
+
+        // Get random color for confetti
+        function getRandomColor() {
+            const colors = ['#8E44AD', '#3498db', '#2ecc71', '#f39c12', '#e74c3c', '#1abc9c', '#9b59b6'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Check if two fractions are equivalent
+        function checkEquivalentFractions(frac1, frac2) {
+            if (!frac1 || !frac2 || !frac1.includes('/') || !frac2.includes('/')) return false;
+            
+            const parts1 = frac1.split('/');
+            const parts2 = frac2.split('/');
+            
+            if (parts1.length !== 2 || parts2.length !== 2) return false;
+            
+            const num1 = parseInt(parts1[0]);
+            const den1 = parseInt(parts1[1]);
+            const num2 = parseInt(parts2[0]);
+            const den2 = parseInt(parts2[1]);
+            
+            return (num1 * den2 === num2 * den1);
+        }
+
+        // Mark level as complete and prepare for next level
+        function completeLevel() {
+            // Store level completion
+            gameState.completedLevels.push(gameState.level);
+            gameState.levelScores[gameState.level] = gameState.score;
+            
+            // Show level complete message
+            levelCompleteMessageEl.style.display = 'block';
+            
+            // Update character
+            gameState.characterState = 'celebrate';
+            updateCharacter();
+            
+            // Play victory sound
+            playSound('levelComplete');
+            
+            // Update next button for level transition
+            if (gameState.level < 5) {
+                nextBtn.innerHTML = `ENTER ${realms[gameState.level].name.toUpperCase()} <i class="fas fa-door-open"></i>`;
+            } else {
+                nextBtn.innerHTML = 'CLAIM VICTORY! <i class="fas fa-crown"></i>';
+            }
+            
+            // Big celebration for level completion
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => createConfetti(), i * 50);
+            }
+        }
+
+        // Move to next problem or level
+        function nextStep() {
+            // Reset character state
+            gameState.characterState = 'happy';
+            updateCharacter();
+            
+            // If level is complete, move to next level
+            if (gameState.levelProgress >= gameState.maxLevelProgress) {
+                if (gameState.level < 5) {
+                    gameState.level += 1;
+                    gameState.levelProgress = 0;
+                    gameState.streak = 0;
+                    createRealmIndicators();
+                    playSound('levelUp');
+                } else {
+                    // Game complete
+                    endGame();
+                    return;
+                }
+            }
+            
+            // Generate new problem
+            generateProblem();
+            updateUI();
+        }
+
+        // Update UI elements with current game state
+        function updateUI() {
+            levelEl.textContent = gameState.level;
+            scoreEl.textContent = gameState.score;
+            livesEl.textContent = gameState.lives;
+            streakEl.textContent = gameState.streak;
+            
+            // Update character HP
+            characterHpEl.style.width = `${(gameState.lives / 3) * 100}%`;
+            
+            // Update level names
+            const currentRealm = realms[gameState.level - 1];
+            currentLevelNameEl.textContent = `REALM ${gameState.level}: ${currentRealm.name.toUpperCase()}`;
+            
+            if (gameState.level < 5) {
+                if (gameState.levelProgress >= gameState.maxLevelProgress) {
+                    nextLevelNameEl.textContent = `NEXT: ${realms[gameState.level].name.toUpperCase()} UNLOCKED!`;
+                } else {
+                    const remaining = gameState.maxLevelProgress - gameState.levelProgress;
+                    nextLevelNameEl.textContent = `${remaining} MORE TO UNLOCK NEXT REALM`;
+                }
+            } else {
+                if (gameState.levelProgress >= gameState.maxLevelProgress) {
+                    nextLevelNameEl.textContent = "DRAGON DEFEAT IMMINENT!";
+                } else {
+                    const remaining = gameState.maxLevelProgress - gameState.levelProgress;
+                    nextLevelNameEl.textContent = `${remaining} PROBLEMS TO DEFEAT DRAGON`;
+                }
+            }
+            
+            // Update progress bar
+            const progressPercent = (gameState.levelProgress / gameState.maxLevelProgress) * 100;
+            progressEl.style.width = `${progressPercent}%`;
+            progressTextEl.textContent = `${gameState.levelProgress}/${gameState.maxLevelProgress}`;
+        }
+
+        // Update character appearance
+        function updateCharacter() {
+            const states = {
+                'happy': '🧙‍♂️',
+                'victory': '🎉',
+                'hurt': '💥',
+                'celebrate': '🎊',
+                'thinking': '🤔'
+            };
+            
+            const emoji = states[gameState.characterState] || states.happy;
+            characterEl.innerHTML = emoji;
+            
+            // Add animation based on state
+            if (gameState.characterState === 'victory') {
+                characterEl.style.animation = 'bounce 0.5s infinite';
+            } else if (gameState.characterState === 'hurt') {
+                characterEl.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    characterEl.style.animation = 'bounce 2s infinite';
+                    gameState.characterState = 'happy';
+                    updateCharacter();
+                }, 500);
+            } else {
+                characterEl.style.animation = 'bounce 2s infinite';
+            }
+        }
+
+        // End game and show results
+        function endGame() {
+            gameSceneEl.style.display = 'none';
+            gameCompleteEl.style.display = 'block';
+            
+            finalScoreEl.textContent = gameState.score;
+            problemsSolvedEl.textContent = gameState.problemsSolved;
+            
+            // Show levels summary
+            levelsSummaryEl.innerHTML = '';
+            realms.forEach((realm, index) => {
+                const levelNumber = index + 1;
+                const li = document.createElement('li');
+                const isCompleted = gameState.completedLevels.includes(levelNumber);
+                li.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;">
+                        <div style="font-size: 1.5rem;">${isCompleted ? '✅' : '❌'}</div>
+                        <div>
+                            <div style="font-weight: bold;">${realm.name}</div>
+                            <div style="font-size: 0.9rem; color: #bdc3c7;">${realm.enemy}</div>
+                        </div>
+                    </div>
+                `;
+                levelsSummaryEl.appendChild(li);
+            });
+            
+            // Big celebration for game completion
+            playSound('gameComplete');
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => createConfetti(), i * 30);
+            }
+        }
+
+        // Create floating power-ups
+        function createFloatingPowerUps() {
+            // Clear existing power-ups
+            document.querySelectorAll('.power-up').forEach(p => p.remove());
+            
+            // Create 3 power-ups
+            for (let i = 0; i < 3; i++) {
+                const powerUp = document.createElement('div');
+                powerUp.className = 'power-up';
+                powerUp.style.left = Math.random() * 80 + 10 + '%';
+                powerUp.style.top = Math.random() * 80 + 10 + '%';
+                powerUp.innerHTML = powerUps[Math.floor(Math.random() * powerUps.length)].icon;
+                
+                powerUp.addEventListener('click', () => {
+                    collectPowerUp(powerUp);
+                });
+                
+                document.body.appendChild(powerUp);
+            }
+        }
+
+        // Collect power-up
+        function collectPowerUp(powerUp) {
+            const effect = powerUps.find(p => p.icon === powerUp.innerHTML)?.effect;
+            
+            if (effect === 'score') {
+                gameState.score += 500;
+                showMessage('+500 POINTS!', '#f39c12');
+            } else if (effect === 'life' && gameState.lives < 3) {
+                gameState.lives += 1;
+                showMessage('EXTRA LIFE!', '#2ecc71');
+            } else if (effect === 'streak') {
+                gameState.streak += 2;
+                showMessage('STREAK BOOST!', '#3498db');
+            }
+            
+            // Animate collection
+            powerUp.animate([
+                { transform: 'scale(1)', opacity: 1 },
+                { transform: 'scale(2)', opacity: 0 }
+            ], {
+                duration: 500,
+                easing: 'ease-out'
+            }).onfinish = () => powerUp.remove();
+            
+            playSound('powerUp');
+            updateUI();
+        }
+
+        // Show floating message
+        function showMessage(text, color) {
+            const message = document.createElement('div');
+            message.textContent = text;
+            message.style.position = 'fixed';
+            message.style.top = '50%';
+            message.style.left = '50%';
+            message.style.transform = 'translate(-50%, -50%)';
+            message.style.color = color;
+            message.style.fontSize = '3rem';
+            message.style.fontWeight = 'bold';
+            message.style.textShadow = '0 0 10px rgba(0,0,0,0.5)';
+            message.style.zIndex = '1000';
+            message.style.pointerEvents = 'none';
+            
+            document.body.appendChild(message);
+            
+            // Animate message
+            message.animate([
+                { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0 },
+                { transform: 'translate(-50%, -100%) scale(1.5)', opacity: 1 },
+                { transform: 'translate(-50%, -150%) scale(1)', opacity: 0 }
+            ], {
+                duration: 1500,
+                easing: 'ease-out'
+            }).onfinish = () => message.remove();
+        }
+
+        // Play sound effects
+        function playSound(type) {
+            if (!gameState.soundEnabled) return;
+            
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            switch(type) {
+                case 'correct':
+                    playBeep(523.25, 0.3); // C5
+                    setTimeout(() => playBeep(659.25, 0.3), 100); // E5
+                    setTimeout(() => playBeep(783.99, 0.5), 200); // G5
+                    break;
+                case 'incorrect':
+                    playBeep(220, 0.5); // A3
+                    setTimeout(() => playBeep(196, 0.8), 100); // G3
+                    break;
+                case 'click':
+                    playBeep(330, 0.1); // E4
+                    break;
+                case 'levelComplete':
+                    // Victory fanfare
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                        setTimeout(() => playBeep(freq, 0.2), i * 150);
+                    });
+                    break;
+                case 'levelUp':
+                    playBeep(783.99, 0.2); // G5
+                    setTimeout(() => playBeep(1046.50, 0.4), 150); // C6
+                    break;
+                case 'gameComplete':
+                    // Epic victory
+                    [392, 523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                        setTimeout(() => playBeep(freq, 0.3), i * 100);
+                    });
+                    break;
+                case 'powerUp':
+                    playBeep(659.25, 0.2); // E5
+                    setTimeout(() => playBeep(830.61, 0.3), 100); // G#5
+                    break;
+                case 'problem':
+                    playBeep(440, 0.1); // A4
+                    break;
+            }
+        }
+
+        // Play a beep sound
+        function playBeep(frequency, duration) {
+            if (!gameState.soundEnabled) return;
+            
+            try {
+                const oscillator = new OscillatorNode(audioContext, {
+                    type: 'sine',
+                    frequency: frequency
+                });
+                
+                const gainNode = new GainNode(audioContext);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (e) {
+                console.log("Audio not supported");
+            }
+        }
+
+        // Toggle sound
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            const icon = soundToggle.querySelector('i');
+            icon.className = gameState.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+        }
+
+        // Restart game
+        function restartGame() {
+            // Reset game state
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.streak = 0;
+            gameState.problemsSolved = 0;
+            gameState.levelProgress = 0;
+            gameState.completedLevels = [];
+            gameState.levelScores = {};
+            gameState.characterState = 'happy';
+            gameState.collectedPowerUps = [];
+            
+            // Show game scene, hide completion screen
+            gameSceneEl.style.display = 'block';
+            gameCompleteEl.style.display = 'none';
+            
+            // Initialize game
+            initGame();
+        }
+
+        // Go back to chapter selection
+        function goToChapterSelection() {
+            alert("🏰 In a full game, this would take you to the Chapter Selection screen!\n\nFor now, refresh the page to start over.");
+        }
+
+        // Utility function to find greatest common divisor
+        function findGCD(a, b) {
+            return b === 0 ? a : findGCD(b, a % b);
+        }
+
+        // Utility function to find closest fraction to a decimal
+        function findClosestFraction(decimal) {
+            let closestFraction = commonFractions[0];
+            let smallestDiff = Math.abs(decimal - closestFraction.decimal);
+            
+            for (let i = 1; i < commonFractions.length; i++) {
+                const diff = Math.abs(decimal - commonFractions[i].decimal);
+                if (diff < smallestDiff) {
+                    smallestDiff = diff;
+                    closestFraction = commonFractions[i];
+                }
+            }
+            
+            return closestFraction;
+        }
+
+        // Utility function to shuffle array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Initialize audio context
+        let audioContext;
+        
+        // Event listeners
+        submitBtn.addEventListener('click', () => {
+            const userAnswer = answerInputEl.value.trim();
+            if (userAnswer === '') {
+                showMessage('ENTER A SPELL!', '#e74c3c');
+                return;
+            }
+            checkAnswer(userAnswer);
+        });
+
+        answerInputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitBtn.click();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            playSound('click');
+            nextStep();
+        });
+        
+        restartBtn.addEventListener('click', () => {
+            playSound('click');
+            restartGame();
+        });
+        
+        chapterSelectBtn.addEventListener('click', () => {
+            playSound('click');
+            goToChapterSelection();
+        });
+        
+        soundToggle.addEventListener('click', toggleSound);
+
+        // Initialize the game
+        initGame();
+    </script>
+</body>
+</html>

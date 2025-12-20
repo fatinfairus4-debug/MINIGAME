@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galactic Cargo Loader: Length, Mass, Volume</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #1a1a2e;
+            font-family: 'Orbitron', sans-serif;
+            color: white;
+            touch-action: none;
+        }
+
+        #ui-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Top HUD */
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+        }
+
+        .hud-panel {
+            text-align: center;
+            text-shadow: 0 0 10px cyan;
+        }
+
+        .label { font-size: 14px; color: #aaa; letter-spacing: 2px; }
+        .value { font-size: 32px; font-weight: bold; color: #00d2ff; }
+        .danger { color: #ff4b4b !important; text-shadow: 0 0 10px red; }
+        .success { color: #00ff88 !important; text-shadow: 0 0 10px green; }
+
+        /* The Order Display */
+        #order-panel {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 20, 40, 0.8);
+            border: 2px solid #00d2ff;
+            padding: 10px 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px #00d2ff;
+            text-align: center;
+        }
+
+        #target-text { font-size: 40px; color: #fff; }
+        #current-text { font-size: 20px; color: #aaa; margin-top: 5px; }
+
+        /* Start / Game Over Screens */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 13, 26, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            pointer-events: auto;
+        }
+        
+        .hidden { display: none !important; }
+
+        h1 { font-size: 48px; margin-bottom: 10px; color: #00d2ff; text-align: center; }
+        p { font-size: 18px; color: #ccc; text-align: center; max-width: 600px; line-height: 1.5; }
+
+        button {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 24px;
+            font-family: 'Orbitron', sans-serif;
+            background: #00d2ff;
+            border: none;
+            color: #000;
+            cursor: pointer;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+            transition: 0.2s;
+        }
+        button:hover { transform: scale(1.1); background: #fff; box-shadow: 0 0 20px #00d2ff; }
+
+        /* Canvas */
+        canvas { display: block; width: 100%; height: 100%; }
+
+    </style>
+</head>
+<body>
+
+    <div id="ui-container">
+        <div class="hud-top">
+            <div class="hud-panel">
+                <div class="label">SCORE</div>
+                <div class="value" id="score-val">0</div>
+            </div>
+            <div class="hud-panel">
+                <div class="label">TIME LEFT</div>
+                <div class="value danger" id="timer-val">30</div>
+            </div>
+        </div>
+
+        <div id="order-panel">
+            <div class="label">CURRENT ORDER</div>
+            <div id="target-text">LOAD: 2.5 kg</div>
+            <div id="current-text">Current: 0 kg</div>
+        </div>
+    </div>
+
+    <div id="start-screen" class="screen">
+        <h1>GALACTIC LOADER</h1>
+        <p>
+            Standard 5 Crew Member needed!<br>
+            Fill the cargo ship to the <strong>EXACT</strong> amount requested.<br>
+            <br>
+            <span style="color:#00ff88">Correct Unit</span> = Good<br>
+            <span style="color:#ff4b4b">Wrong Unit</span> = Penalty<br>
+            <br>
+            Watch out! Don't mix up Length (m), Mass (kg), and Volume (l).
+        </p>
+        <button onclick="startGame()">START SHIFT</button>
+    </div>
+
+    <div id="game-over-screen" class="screen hidden">
+        <h1 id="go-title">MISSION FAILED</h1>
+        <p id="go-reason">You overloaded the ship.</p>
+        <div class="value" id="final-score">Score: 0</div>
+        <button onclick="startGame()">RETRY</button>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <script>
+        /**
+         * STANDARD 5 MATH LOGIC
+         * We need to handle:
+         * 1. Length: km, m, cm, mm
+         * 2. Mass: kg, g
+         * 3. Volume: l, ml
+         * * Key skill: Decimal conversions (e.g., 500g = 0.5kg)
+         */
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game Configuration
+        const TYPES = {
+            MASS: { id: 'mass', units: ['kg', 'g'], color: '#ff9900', targetUnit: 'kg', ratio: 1000 },
+            LENGTH: { id: 'length', units: ['m', 'cm'], color: '#00d2ff', targetUnit: 'm', ratio: 100 },
+            VOLUME: { id: 'volume', units: ['l', 'ml'], color: '#00ff88', targetUnit: 'l', ratio: 1000 }
+        };
+
+        // Item values (displayed vs normalized value)
+        // Normalized value is always in the Base Unit (kg, m, l)
+        const ITEMS_DB = [
+            // MASS Items
+            { type: 'mass', label: '500 g', val: 0.5 },
+            { type: 'mass', label: '250 g', val: 0.25 },
+            { type: 'mass', label: '100 g', val: 0.1 },
+            { type: 'mass', label: '1 kg', val: 1.0 },
+            { type: 'mass', label: '0.5 kg', val: 0.5 },
+            
+            // LENGTH Items (Base: meter)
+            { type: 'length', label: '50 cm', val: 0.5 },
+            { type: 'length', label: '25 cm', val: 0.25 },
+            { type: 'length', label: '1 m', val: 1.0 },
+            { type: 'length', label: '20 cm', val: 0.2 },
+            { type: 'length', label: '1.5 m', val: 1.5 },
+
+            // VOLUME Items (Base: liter)
+            { type: 'volume', label: '500 ml', val: 0.5 },
+            { type: 'volume', label: '250 ml', val: 0.25 },
+            { type: 'volume', label: '100 ml', val: 0.1 },
+            { type: 'volume', label: '1 l', val: 1.0 },
+            { type: 'volume', label: '200 ml', val: 0.2 },
+        ];
+
+        let state = {
+            running: false,
+            score: 0,
+            timer: 45,
+            currentType: null, // MASS, LENGTH, or VOLUME
+            targetValue: 0,
+            currentValue: 0,
+            boxes: [], // Falling/Moving items
+            spawnTimer: 0,
+            gameSpeed: 3
+        };
+
+        // Resize Canvas
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Input Handling
+        canvas.addEventListener('mousedown', handleInput);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); 
+            handleInput(e.touches[0]);
+        }, {passive: false});
+
+        function handleInput(e) {
+            if (!state.running) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // Check if clicked a box
+            for (let i = state.boxes.length - 1; i >= 0; i--) {
+                const b = state.boxes[i];
+                if (clickX >= b.x && clickX <= b.x + b.w &&
+                    clickY >= b.y && clickY <= b.y + b.h) {
+                    
+                    collectBox(b, i);
+                    return; // Only one click per frame
+                }
+            }
+        }
+
+        function generateMission() {
+            // Pick a random type (Mass, Length, or Volume)
+            const typeKeys = Object.keys(TYPES);
+            const randKey = typeKeys[Math.floor(Math.random() * typeKeys.length)];
+            state.currentType = TYPES[randKey];
+
+            // Generate a target divisible by 0.25 or 0.1 to make it solvable
+            // Range: 1.0 to 5.0
+            let raw = Math.floor(Math.random() * 16) + 4; // 4 to 20
+            state.targetValue = raw * 0.25; 
+            state.currentValue = 0;
+
+            updateHUD();
+        }
+
+        function updateHUD() {
+            const t = state.currentType;
+            document.getElementById('target-text').innerText = `LOAD: ${state.targetValue} ${t.targetUnit}`;
+            document.getElementById('target-text').style.color = t.color;
+            
+            // Format current value to max 2 decimals to avoid floating point weirdness (0.30000004)
+            let displayCurr = parseFloat(state.currentValue.toFixed(2));
+            document.getElementById('current-text').innerText = `Current: ${displayCurr} ${t.targetUnit}`;
+            
+            document.getElementById('score-val').innerText = state.score;
+
+            // Color feedback
+            if(state.currentValue > state.targetValue) {
+                document.getElementById('current-text').style.color = '#ff4b4b';
+            } else {
+                document.getElementById('current-text').style.color = '#fff';
+            }
+        }
+
+        function spawnBox() {
+            const margin = 100;
+            const w = 120;
+            const h = 80;
+            
+            // Pick a random item from DB
+            const itemTemplate = ITEMS_DB[Math.floor(Math.random() * ITEMS_DB.length)];
+            
+            // Create Box Object
+            let box = {
+                x: canvas.width, // Start off-screen right
+                y: canvas.height / 2 - 40 + (Math.random() * 100 - 50), // Slight vertical jitter
+                w: w,
+                h: h,
+                ...itemTemplate,
+                color: '#333'
+            };
+
+            // Visual styling based on type
+            if(box.type === 'mass') box.color = '#bd7b00'; // Dark Orange
+            if(box.type === 'length') box.color = '#007ea7'; // Dark Blue
+            if(box.type === 'volume') box.color = '#008f4c'; // Dark Green
+
+            state.boxes.push(box);
+        }
+
+        function collectBox(box, index) {
+            // Visual feedback (Flash)
+            createExplosion(box.x + box.w/2, box.y + box.h/2, box.color);
+            state.boxes.splice(index, 1);
+
+            // Logic
+            // 1. Check if Type Matches
+            if (box.type !== state.currentType.id) {
+                // Wrong Unit Penalty!
+                state.score = Math.max(0, state.score - 50);
+                showFloatingText(box.x, box.y, "WRONG UNIT!", "#ff4b4b");
+                updateHUD();
+                return;
+            }
+
+            // 2. Add Value
+            state.currentValue += box.val;
+            state.currentValue = parseFloat(state.currentValue.toFixed(2)); // Fix JS math
+            updateHUD();
+
+            // 3. Check Win/Loss
+            if (state.currentValue === state.targetValue) {
+                // Success!
+                state.score += 200;
+                state.timer += 5; // Bonus time
+                state.gameSpeed += 0.5; // Difficulty up
+                showFloatingText(canvas.width/2, canvas.height/2, "LOAD COMPLETE!", "#00ff88");
+                generateMission();
+            } else if (state.currentValue > state.targetValue) {
+                // Overload!
+                gameOver("Ship Overloaded! You exceeded the limit.");
+            }
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+            state.running = true;
+            state.score = 0;
+            state.timer = 60;
+            state.boxes = [];
+            state.gameSpeed = 4;
+            state.currentValue = 0;
+            
+            generateMission();
+            requestAnimationFrame(gameLoop);
+            
+            // Timer countdown logic
+            if(state.timerInterval) clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(() => {
+                if(!state.running) return;
+                state.timer--;
+                document.getElementById('timer-val').innerText = state.timer;
+                if(state.timer <= 0) {
+                    gameOver("Time's Up! The ship left without the cargo.");
+                }
+            }, 1000);
+        }
+
+        function gameOver(reason) {
+            state.running = false;
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            document.getElementById('go-title').innerText = "MISSION FAILED";
+            document.getElementById('go-reason').innerText = reason;
+            document.getElementById('final-score').innerText = "Score: " + state.score;
+            clearInterval(state.timerInterval);
+        }
+
+        // --- Visual Effects ---
+        let particles = [];
+        function createExplosion(x, y, color) {
+            for(let i=0; i<10; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 1.0,
+                    color: color
+                });
+            }
+        }
+
+        let floaters = [];
+        function showFloatingText(x, y, text, color) {
+            floaters.push({x, y, text, color, life: 1.0});
+        }
+
+        // --- Main Loop ---
+        function gameLoop() {
+            if(!state.running) return;
+
+            // Clear
+            ctx.fillStyle = "#1a1a2e";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Conveyor Belt (Background lines)
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height/2 + 50);
+            ctx.lineTo(canvas.width, canvas.height/2 + 50);
+            ctx.stroke();
+
+            // Spawn Logic
+            state.spawnTimer++;
+            if(state.spawnTimer > 120 / (state.gameSpeed/2)) {
+                spawnBox();
+                state.spawnTimer = 0;
+            }
+
+            // Update & Draw Boxes
+            for(let i = state.boxes.length - 1; i >= 0; i--) {
+                let b = state.boxes[i];
+                b.x -= state.gameSpeed; // Move Left
+
+                // Draw Box
+                ctx.fillStyle = b.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = b.color;
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+                
+                // Border
+                ctx.strokeStyle = "#fff";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(b.x, b.y, b.w, b.h);
+                ctx.shadowBlur = 0;
+
+                // Text
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 18px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(b.label, b.x + b.w/2, b.y + b.h/2 + 6);
+
+                // Remove if off screen
+                if(b.x + b.w < 0) {
+                    state.boxes.splice(i, 1);
+                }
+            }
+
+            // Particles
+            for(let i=particles.length-1; i>=0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.05;
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI*2);
+                ctx.fill();
+                if(p.life <= 0) particles.splice(i,1);
+            }
+            ctx.globalAlpha = 1.0;
+
+            // Floating Text
+            for(let i=floaters.length-1; i>=0; i--) {
+                let f = floaters[i];
+                f.y -= 1;
+                f.life -= 0.02;
+                ctx.globalAlpha = f.life;
+                ctx.fillStyle = f.color;
+                ctx.font = "bold 24px Arial";
+                ctx.fillText(f.text, f.x, f.y);
+                if(f.life <= 0) floaters.splice(i,1);
+            }
+            ctx.globalAlpha = 1.0;
+
+            requestAnimationFrame(gameLoop);
+        }
+
+    </script>
+</body>
+</html>

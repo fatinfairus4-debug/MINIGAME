@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket Cashier Challenge - Standard 5 Mathematics</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #2c3e50, #4a6491);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #3498db;
+            background: linear-gradient(to right, #2ecc71, #3498db);
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .game-area {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        @media (max-width: 900px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .supermarket-section {
+            background: linear-gradient(to bottom, #f9f9f9, #eaeaea);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .customer-display {
+            background-color: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid #3498db;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .customer-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .customer-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .customer-text {
+            flex: 1;
+        }
+        
+        .customer-text p {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .customer-items {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .item-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            border: 2px solid #ddd;
+            background-color: white;
+            transition: transform 0.2s;
+        }
+        
+        .item-box:hover {
+            transform: scale(1.05);
+        }
+        
+        .item-icon {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .item-price {
+            font-size: 0.9rem;
+            color: #2ecc71;
+            background-color: #f0f9f0;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        
+        .scanner-area {
+            background-color: #34495e;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .scanner-light {
+            width: 80%;
+            height: 60px;
+            background: #2c3e50;
+            border-radius: 5px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+            border: 3px solid #7f8c8d;
+        }
+        
+        .scan-btn {
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+        
+        .scan-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .scan-btn:disabled {
+            background: linear-gradient(to right, #95a5a6, #7f8c8d);
+            cursor: not-allowed;
+        }
+        
+        .cashier-section {
+            background: linear-gradient(to bottom, #ecf0f1, #bdc3c7);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .cash-register {
+            background-color: #d35400;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+            text-align: center;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+            border: 5px solid #a04000;
+        }
+        
+        .register-display {
+            background-color: #0f3c0f;
+            color: #7fff00;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-size: 1.5rem;
+            text-align: right;
+            letter-spacing: 2px;
+            border: 2px solid #2ecc71;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .money-tray {
+            background-color: #7f8c8d;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+            min-height: 200px;
+        }
+        
+        .money-item {
+            width: 100px;
+            height: 50px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            position: relative;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .money-item:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .money-item:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+        
+        .note {
+            background: linear-gradient(135deg, #27ae60, #219653);
+            border: 2px solid #1e8449;
+        }
+        
+        .coin {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #f1c40f, #f39c12);
+            border: 3px solid #d68910;
+        }
+        
+        .money-value {
+            position: absolute;
+            bottom: 3px;
+            right: 5px;
+            font-size: 0.7rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        
+        .selected-money-area {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 2px dashed #3498db;
+            min-height: 120px;
+        }
+        
+        .selected-money-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .selected-money-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 60px;
+        }
+        
+        .selected-money-item {
+            width: 45px;
+            height: 25px;
+            border-radius: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .selected-coin {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #f39c12;
+        }
+        
+        .customer-money-area {
+            background-color: #e8f6f3;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 2px solid #1abc9c;
+            min-height: 100px;
+        }
+        
+        .customer-money-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .customer-money-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 60px;
+            align-items: center;
+        }
+        
+        .customer-money-item {
+            width: 45px;
+            height: 25px;
+            border-radius: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        }
+        
+        button:active:not(:disabled) {
+            transform: translateY(-1px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+        }
+        
+        .btn-reset {
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+            color: white;
+        }
+        
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+        
+        .feedback {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            opacity: 0;
+            transition: opacity 0.5s;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            opacity: 1;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            opacity: 1;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .receipt {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #2ecc71;
+            display: none;
+        }
+        
+        .receipt-header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 10px;
+        }
+        
+        .receipt-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .receipt-total {
+            border-top: 2px solid #333;
+            padding-top: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        .instructions {
+            background-color: #e8f4fc;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 25px;
+            font-size: 1.05rem;
+            line-height: 1.5;
+            border-left: 5px solid #3498db;
+        }
+        
+        .instructions h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        
+        .level-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .cashier-title {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .scanned-items {
+            background-color: #f0f7ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            min-height: 100px;
+        }
+        
+        .scanned-item {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .customer-payment-display {
+            background-color: #fff3cd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 2px solid #ffc107;
+        }
+        
+        .payment-amount {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #856404;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><i class="fas fa-cash-register"></i> Supermarket Cashier Challenge</h1>
+        <p>Standard 5 Mathematics - Topic 3: Money</p>
+        <p>Be the cashier! Scan items, accept payment, and give correct change!</p>
+    </header>
+    
+    <div class="container">
+        <div class="stats-panel">
+            <div class="stat-box">
+                <div class="stat-value" id="score">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="level">1</div>
+                <div class="stat-label">Level</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="customers">0</div>
+                <div class="stat-label">Customers Served</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="accuracy">100%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="supermarket-section">
+                <div class="customer-display">
+                    <div class="customer-info">
+                        <div class="customer-avatar" id="customer-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="customer-text">
+                            <p id="customer-greeting">Hello! I'd like to buy these items:</p>
+                            <div class="customer-items" id="customer-items">
+                                <!-- Customer's items will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="customer-cart">
+                        <div class="scanned-items" id="scanned-items">
+                            <p>Scanned items will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="customer-payment-display" id="customer-payment-display" style="display: none;">
+                    <h3><i class="fas fa-money-bill-wave"></i> Customer Gives You:</h3>
+                    <div class="customer-money-display" id="customer-money">
+                        <!-- Customer's money will appear here -->
+                    </div>
+                    <div class="payment-amount" id="customer-payment-amount">
+                        Total: RM 0.00
+                    </div>
+                </div>
+                
+                <div class="scanner-area">
+                    <h3><i class="fas fa-barcode"></i> Item Scanner</h3>
+                    <div class="scanner-light" id="scanner-light">
+                        READY TO SCAN
+                    </div>
+                    <button class="scan-btn" id="scan-btn">
+                        <i class="fas fa-camera"></i> Scan Next Item
+                    </button>
+                    <p style="margin-top: 15px; color: white; text-align: center;">Click scan to add items to the register</p>
+                </div>
+                
+                <div class="feedback" id="feedback"></div>
+                
+                <div class="receipt" id="receipt">
+                    <div class="receipt-header">SUPERMART RECEIPT</div>
+                    <div id="receipt-items">
+                        <!-- Receipt items will appear here -->
+                    </div>
+                    <div class="receipt-line receipt-total">
+                        <span>TOTAL:</span>
+                        <span id="receipt-total">RM 0.00</span>
+                    </div>
+                    <div class="receipt-line">
+                        <span>CASH:</span>
+                        <span id="receipt-cash">RM 0.00</span>
+                    </div>
+                    <div class="receipt-line receipt-total">
+                        <span>CHANGE:</span>
+                        <span id="receipt-change">RM 0.00</span>
+                    </div>
+                    <div style="text-align: center; margin-top: 15px; font-size: 0.9rem;">
+                        Thank you for shopping with us!
+                    </div>
+                </div>
+            </div>
+            
+            <div class="cashier-section">
+                <h2 class="cashier-title"><i class="fas fa-user-tie"></i> Cashier Station</h2>
+                
+                <div class="cash-register">
+                    <h3><i class="fas fa-calculator"></i> Cash Register</h3>
+                    <div class="register-display" id="register-display">
+                        <div>TOTAL: <span id="register-total">RM 0.00</span></div>
+                        <div>CASH: <span id="register-cash">RM 0.00</span></div>
+                        <div>CHANGE: <span id="register-change">RM 0.00</span></div>
+                    </div>
+                    
+                    <div class="selected-money-area">
+                        <div class="selected-money-title">
+                            <span>Change to Give Back:</span>
+                            <span id="change-total">RM 0.00</span>
+                        </div>
+                        <div class="selected-money-display" id="selected-money">
+                            <!-- Selected change money will appear here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-money-bill-wave"></i> Your Money Tray</h3>
+                <div class="money-tray" id="money-tray">
+                    <!-- Cashier's money will be generated here -->
+                </div>
+                
+                <div class="controls">
+                    <button class="btn-primary" id="calculate-btn">
+                        <i class="fas fa-calculator"></i> Calculate Total
+                    </button>
+                    <button class="btn-secondary" id="give-change-btn" disabled>
+                        <i class="fas fa-hand-holding-usd"></i> Give Change
+                    </button>
+                    <button class="btn-reset" id="reset-btn">
+                        <i class="fas fa-redo"></i> Reset Change
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3><i class="fas fa-info-circle"></i> How to Play: Supermarket Cashier</h3>
+            <ol>
+                <li><strong>Scan Items:</strong> Click "Scan Next Item" to add each item from the customer's cart to the register.</li>
+                <li><strong>Calculate Total:</strong> When all items are scanned, click "Calculate Total" to get the bill amount.</li>
+                <li><strong>Accept Payment:</strong> The customer will give you money. See how much they paid.</li>
+                <li><strong>Give Change:</strong> Select the correct coins/notes from YOUR money tray to give back as change.</li>
+                <li><strong>Complete Transaction:</strong> Click "Give Change" to complete the transaction and get your receipt.</li>
+                <li>Earn points for each correct transaction. Level up to get more challenging customers!</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            score: 0,
+            level: 1,
+            customersServed: 0,
+            correctTransactions: 0,
+            totalTransactions: 0,
+            currentCustomer: null,
+            scannedItems: [],
+            selectedMoney: [],
+            customerPayment: [],
+            transactionState: 'scanning' // scanning, calculated, giving_change, completed
+        };
+
+        // Malaysian currency denominations (paper money focus)
+        const moneyDenominations = [
+            { value: 0.05, name: "5 sen", type: "coin", colorClass: "coin" },
+            { value: 0.10, name: "10 sen", type: "coin", colorClass: "coin" },
+            { value: 0.20, name: "20 sen", type: "coin", colorClass: "coin" },
+            { value: 0.50, name: "50 sen", type: "coin", colorClass: "coin" },
+            { value: 1.00, name: "RM 1", type: "coin", colorClass: "coin" },
+            { value: 5.00, name: "RM 5", type: "note", colorClass: "note" },
+            { value: 10.00, name: "RM 10", type: "note", colorClass: "note" },
+            { value: 20.00, name: "RM 20", type: "note", colorClass: "note" },
+            { value: 50.00, name: "RM 50", type: "note", colorClass: "note" }
+        ];
+
+        // Supermarket items with icons
+        const supermarketItems = [
+            { name: "Milk", price: 6.50, icon: "fas fa-wine-bottle", category: "dairy" },
+            { name: "Bread", price: 3.20, icon: "fas fa-bread-slice", category: "bakery" },
+            { name: "Eggs", price: 8.90, icon: "fas fa-egg", category: "dairy" },
+            { name: "Rice", price: 12.50, icon: "fas fa-weight", category: "groceries" },
+            { name: "Sugar", price: 4.30, icon: "fas fa-cube", category: "groceries" },
+            { name: "Oil", price: 9.80, icon: "fas fa-oil-can", category: "groceries" },
+            { name: "Biscuits", price: 5.50, icon: "fas fa-cookie", category: "snacks" },
+            { name: "Chocolate", price: 7.20, icon: "fas fa-candy-cane", category: "snacks" },
+            { name: "Soap", price: 3.80, icon: "fas fa-soap", category: "toiletries" },
+            { name: "Shampoo", price: 15.90, icon: "fas fa-pump-soap", category: "toiletries" },
+            { name: "Toothpaste", price: 6.40, icon: "fas fa-tooth", category: "toiletries" },
+            { name: "Tissue", price: 4.70, icon: "fas fa-box-tissue", category: "toiletries" },
+            { name: "Apple", price: 1.20, icon: "fas fa-apple-alt", category: "fruits" },
+            { name: "Banana", price: 0.80, icon: "fas fa-ban", category: "fruits" },
+            { name: "Orange", price: 1.50, icon: "fas fa-lemon", category: "fruits" },
+            { name: "Chicken", price: 10.50, icon: "fas fa-drumstick-bite", category: "meat" },
+            { name: "Fish", price: 12.80, icon: "fas fa-fish", category: "meat" },
+            { name: "Vegetables", price: 3.50, icon: "fas fa-carrot", category: "vegetables" },
+            { name: "Juice", price: 5.90, icon: "fas fa-glass-whiskey", category: "beverages" },
+            { name: "Water", price: 1.50, icon: "fas fa-wine-bottle", category: "beverages" }
+        ];
+
+        // Customer avatars and names
+        const customerAvatars = [
+            { icon: "fas fa-female", name: "Mrs. Lim", color: "#9b59b6" },
+            { icon: "fas fa-male", name: "Mr. Ahmad", color: "#3498db" },
+            { icon: "fas fa-female", name: "Aunty Rosnah", color: "#e74c3c" },
+            { icon: "fas fa-male", name: "Uncle Tan", color: "#2ecc71" },
+            { icon: "fas fa-female", name: "Miss Sara", color: "#1abc9c" },
+            { icon: "fas fa-male", name: "Encik Ali", color: "#f39c12" }
+        ];
+
+        // DOM elements
+        const customerAvatarEl = document.getElementById('customer-avatar');
+        const customerGreetingEl = document.getElementById('customer-greeting');
+        const customerItemsEl = document.getElementById('customer-items');
+        const scannedItemsEl = document.getElementById('scanned-items');
+        const scannerLightEl = document.getElementById('scanner-light');
+        const customerPaymentDisplayEl = document.getElementById('customer-payment-display');
+        const customerMoneyEl = document.getElementById('customer-money');
+        const customerPaymentAmountEl = document.getElementById('customer-payment-amount');
+        const moneyTrayEl = document.getElementById('money-tray');
+        const selectedMoneyEl = document.getElementById('selected-money');
+        const changeTotalEl = document.getElementById('change-total');
+        const registerDisplayEl = document.getElementById('register-display');
+        const registerTotalEl = document.getElementById('register-total');
+        const registerCashEl = document.getElementById('register-cash');
+        const registerChangeEl = document.getElementById('register-change');
+        const scanBtn = document.getElementById('scan-btn');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const giveChangeBtn = document.getElementById('give-change-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const feedbackEl = document.getElementById('feedback');
+        const receiptEl = document.getElementById('receipt');
+        const receiptItemsEl = document.getElementById('receipt-items');
+        const receiptTotalEl = document.getElementById('receipt-total');
+        const receiptCashEl = document.getElementById('receipt-cash');
+        const receiptChangeEl = document.getElementById('receipt-change');
+        const scoreEl = document.getElementById('score');
+        const levelEl = document.getElementById('level');
+        const customersEl = document.getElementById('customers');
+        const accuracyEl = document.getElementById('accuracy');
+
+        // Initialize the game
+        function initGame() {
+            generateMoneyTray();
+            generateNewCustomer();
+            updateGameDisplay();
+            
+            // Event listeners
+            scanBtn.addEventListener('click', handleScanItem);
+            calculateBtn.addEventListener('click', handleCalculateTotal);
+            giveChangeBtn.addEventListener('click', handleGiveChange);
+            resetBtn.addEventListener('click', handleResetChange);
+        }
+
+        // Generate money tray with cashier's money
+        function generateMoneyTray() {
+            moneyTrayEl.innerHTML = '';
+            
+            // Show fewer denominations at lower levels
+            const maxDenominations = Math.min(4 + gameState.level, moneyDenominations.length);
+            
+            for (let i = 0; i < maxDenominations; i++) {
+                const money = moneyDenominations[i];
+                const moneyEl = document.createElement('div');
+                moneyEl.className = `money-item ${money.type} ${money.colorClass}`;
+                moneyEl.textContent = money.name;
+                moneyEl.dataset.value = money.value;
+                
+                // Add value indicator
+                const valueSpan = document.createElement('span');
+                valueSpan.className = 'money-value';
+                valueSpan.textContent = `RM ${money.value.toFixed(2)}`;
+                moneyEl.appendChild(valueSpan);
+                
+                moneyEl.addEventListener('click', () => selectMoney(money));
+                moneyTrayEl.appendChild(moneyEl);
+            }
+        }
+
+        // Generate a new customer with random items
+        function generateNewCustomer() {
+            gameState.transactionState = 'scanning';
+            gameState.scannedItems = [];
+            gameState.selectedMoney = [];
+            gameState.customerPayment = [];
+            
+            // Select a random customer
+            const customerIndex = Math.floor(Math.random() * customerAvatars.length);
+            gameState.currentCustomer = customerAvatars[customerIndex];
+            
+            // Update customer display
+            customerAvatarEl.innerHTML = `<i class="${gameState.currentCustomer.icon}"></i>`;
+            customerAvatarEl.style.background = `linear-gradient(135deg, ${gameState.currentCustomer.color}, #2c3e50)`;
+            
+            // Generate random items for the customer (2-4 items based on level)
+            const numItems = Math.min(2 + Math.floor(gameState.level / 2), 5);
+            gameState.currentCustomer.items = [];
+            
+            for (let i = 0; i < numItems; i++) {
+                const randomIndex = Math.floor(Math.random() * supermarketItems.length);
+                gameState.currentCustomer.items.push({...supermarketItems[randomIndex]});
+            }
+            
+            // Calculate total (for verification)
+            gameState.currentCustomer.totalCost = gameState.currentCustomer.items.reduce((sum, item) => sum + item.price, 0);
+            gameState.currentCustomer.totalCost = Math.round(gameState.currentCustomer.totalCost * 100) / 100;
+            
+            // Generate random payment (always higher than total)
+            const minPayment = Math.ceil(gameState.currentCustomer.totalCost) + 1;
+            const maxPayment = minPayment + 10;
+            gameState.currentCustomer.paymentAmount = Math.round(
+                (Math.random() * (maxPayment - minPayment) + minPayment) * 2
+            ) / 2; // Round to nearest 0.50
+            
+            gameState.currentCustomer.changeNeeded = Math.round(
+                (gameState.currentCustomer.paymentAmount - gameState.currentCustomer.totalCost) * 100
+            ) / 100;
+            
+            // Generate customer's payment (what they give you)
+            generateCustomerPayment();
+            
+            // Update customer display
+            customerGreetingEl.textContent = `Hello! I'm ${gameState.currentCustomer.name}. I'd like to buy these items:`;
+            
+            // Show customer's items
+            customerItemsEl.innerHTML = '';
+            gameState.currentCustomer.items.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'item-box';
+                itemEl.innerHTML = `
+                    <div class="item-icon"><i class="${item.icon}"></i></div>
+                    <div>${item.name}</div>
+                    <div class="item-price">RM ${item.price.toFixed(2)}</div>
+                `;
+                customerItemsEl.appendChild(itemEl);
+            });
+            
+            // Reset scanned items display
+            scannedItemsEl.innerHTML = '<p>Scanned items will appear here...</p>';
+            
+            // Reset scanner light
+            scannerLightEl.textContent = 'READY TO SCAN';
+            scannerLightEl.style.background = '#2c3e50';
+            
+            // Hide customer payment display
+            customerPaymentDisplayEl.style.display = 'none';
+            
+            // Reset register display
+            registerTotalEl.textContent = 'RM 0.00';
+            registerCashEl.textContent = 'RM 0.00';
+            registerChangeEl.textContent = 'RM 0.00';
+            
+            // Reset selected money (change)
+            selectedMoneyEl.innerHTML = '';
+            changeTotalEl.textContent = 'RM 0.00';
+            
+            // Reset buttons
+            scanBtn.disabled = false;
+            calculateBtn.disabled = true;
+            giveChangeBtn.disabled = true;
+            
+            // Hide receipt
+            receiptEl.style.display = 'none';
+            
+            // Clear feedback
+            feedbackEl.textContent = '';
+            feedbackEl.className = 'feedback';
+        }
+
+        // Generate customer's payment (what they give to cashier)
+        function generateCustomerPayment() {
+            gameState.customerPayment = [];
+            let remaining = gameState.currentCustomer.paymentAmount;
+            
+            // Start with larger denominations
+            const sortedDenominations = [...moneyDenominations].sort((a, b) => b.value - a.value);
+            
+            for (const money of sortedDenominations) {
+                if (money.value <= remaining) {
+                    const count = Math.floor(remaining / money.value);
+                    for (let i = 0; i < count; i++) {
+                        gameState.customerPayment.push(money);
+                        remaining = Math.round((remaining - money.value) * 100) / 100;
+                    }
+                }
+                if (remaining === 0) break;
+            }
+            
+            // Display customer's payment
+            customerMoneyEl.innerHTML = '';
+            const moneyCounts = {};
+            gameState.customerPayment.forEach(money => {
+                const key = money.value;
+                moneyCounts[key] = (moneyCounts[key] || 0) + 1;
+            });
+            
+            Object.entries(moneyCounts).forEach(([value, count]) => {
+                const money = moneyDenominations.find(m => m.value === parseFloat(value));
+                const moneyElement = document.createElement('div');
+                
+                moneyElement.className = `customer-money-item`;
+                moneyElement.textContent = count > 1 ? `${count}×${money.name}` : money.name;
+                moneyElement.title = `${money.name} (RM ${money.value.toFixed(2)})`;
+                customerMoneyEl.appendChild(moneyElement);
+            });
+            
+            customerPaymentAmountEl.textContent = `Total: RM ${gameState.currentCustomer.paymentAmount.toFixed(2)}`;
+        }
+
+        // Handle scanning an item
+        function handleScanItem() {
+            if (gameState.transactionState !== 'scanning') return;
+            
+            // Check if there are more items to scan
+            if (gameState.scannedItems.length < gameState.currentCustomer.items.length) {
+                const nextItem = gameState.currentCustomer.items[gameState.scannedItems.length];
+                gameState.scannedItems.push(nextItem);
+                
+                // Update scanned items display
+                if (scannedItemsEl.innerHTML.includes('will appear here')) {
+                    scannedItemsEl.innerHTML = '';
+                }
+                
+                const scannedItemEl = document.createElement('div');
+                scannedItemEl.className = 'scanned-item';
+                scannedItemEl.textContent = `${nextItem.name} - RM ${nextItem.price.toFixed(2)}`;
+                scannedItemsEl.appendChild(scannedItemEl);
+                
+                // Update scanner light
+                scannerLightEl.textContent = `SCANNED: ${nextItem.name}`;
+                scannerLightEl.style.background = '#27ae60';
+                
+                // Show feedback
+                showFeedback(`Scanned: ${nextItem.name} for RM ${nextItem.price.toFixed(2)}`, 'success');
+                
+                // If all items are scanned, enable calculate button
+                if (gameState.scannedItems.length === gameState.currentCustomer.items.length) {
+                    scanBtn.disabled = true;
+                    calculateBtn.disabled = false;
+                    scannerLightEl.textContent = 'ALL ITEMS SCANNED';
+                    scannerLightEl.style.background = '#f39c12';
+                    showFeedback('All items scanned! Click "Calculate Total" to get the bill.', 'success');
+                }
+            }
+        }
+
+        // Handle calculating total
+        function handleCalculateTotal() {
+            if (gameState.transactionState !== 'scanning') return;
+            
+            // Calculate total from scanned items
+            const scannedTotal = gameState.scannedItems.reduce((sum, item) => sum + item.price, 0);
+            const scannedTotalRounded = Math.round(scannedTotal * 100) / 100;
+            
+            // Verify total matches expected total
+            if (Math.abs(scannedTotalRounded - gameState.currentCustomer.totalCost) < 0.01) {
+                gameState.transactionState = 'calculated';
+                
+                // Update register display
+                registerTotalEl.textContent = `RM ${scannedTotalRounded.toFixed(2)}`;
+                registerCashEl.textContent = `RM ${gameState.currentCustomer.paymentAmount.toFixed(2)}`;
+                registerChangeEl.textContent = `RM ${gameState.currentCustomer.changeNeeded.toFixed(2)}`;
+                
+                // Show customer payment
+                customerPaymentDisplayEl.style.display = 'block';
+                
+                // Update buttons
+                calculateBtn.disabled = true;
+                giveChangeBtn.disabled = false;
+                calculateBtn.innerHTML = '<i class="fas fa-check-circle"></i> Total Calculated';
+                
+                // Show feedback
+                showFeedback(`Total: RM ${scannedTotalRounded.toFixed(2)}. Customer gives you: RM ${gameState.currentCustomer.paymentAmount.toFixed(2)}. Select change to give back.`, 'success');
+                
+                // Update customer greeting
+                customerGreetingEl.textContent = `Here is RM ${gameState.currentCustomer.paymentAmount.toFixed(2)} for my items.`;
+            } else {
+                showFeedback(`Incorrect total! Expected RM ${gameState.currentCustomer.totalCost.toFixed(2)} but calculated RM ${scannedTotalRounded.toFixed(2)}. Please rescan items.`, 'error');
+            }
+        }
+
+        // Select money from the money tray (cashier gives change)
+        function selectMoney(money) {
+            if (gameState.transactionState !== 'calculated') return;
+            
+            gameState.selectedMoney.push(money);
+            updateSelectedMoneyDisplay();
+        }
+
+        // Update the display of selected money (change)
+        function updateSelectedMoneyDisplay() {
+            selectedMoneyEl.innerHTML = '';
+            
+            // Group identical denominations
+            const moneyCounts = {};
+            gameState.selectedMoney.forEach(money => {
+                const key = money.value;
+                moneyCounts[key] = (moneyCounts[key] || 0) + 1;
+            });
+            
+            // Display each denomination with count
+            Object.entries(moneyCounts).forEach(([value, count]) => {
+                const money = moneyDenominations.find(m => m.value === parseFloat(value));
+                const moneyElement = document.createElement('div');
+                
+                if (money.type === 'coin') {
+                    moneyElement.className = `selected-money-item selected-coin`;
+                } else {
+                    moneyElement.className = `selected-money-item`;
+                }
+                
+                moneyElement.textContent = count > 1 ? `${count}×${money.name}` : money.name;
+                moneyElement.title = `${money.name} (RM ${money.value.toFixed(2)})`;
+                selectedMoneyEl.appendChild(moneyElement);
+            });
+            
+            // Calculate and display total
+            const total = gameState.selectedMoney.reduce((sum, money) => sum + money.value, 0);
+            changeTotalEl.textContent = `RM ${total.toFixed(2)}`;
+        }
+
+        // Handle giving change
+        function handleGiveChange() {
+            if (gameState.transactionState !== 'calculated') return;
+            
+            const selectedTotal = gameState.selectedMoney.reduce((sum, money) => sum + money.value, 0);
+            const targetChange = gameState.currentCustomer.changeNeeded;
+            const difference = Math.abs(selectedTotal - targetChange);
+            
+            // Check if the change is correct
+            if (difference < 0.01) {
+                gameState.transactionState = 'completed';
+                
+                // Update game stats
+                gameState.score += 20 * gameState.level;
+                gameState.customersServed++;
+                gameState.correctTransactions++;
+                gameState.totalTransactions++;
+                
+                // Level up every 3 customers
+                if (gameState.customersServed % 3 === 0) {
+                    gameState.level++;
+                    showFeedback(`Level Up! Now at Level ${gameState.level}. More items and higher values!`, 'success');
+                }
+                
+                // Show success message
+                showFeedback(`Perfect! You gave correct change of RM ${targetChange.toFixed(2)}. Transaction completed!`, 'success');
+                
+                // Update buttons
+                giveChangeBtn.disabled = true;
+                giveChangeBtn.innerHTML = '<i class="fas fa-check-circle"></i> Change Given';
+                
+                // Generate receipt
+                generateReceipt();
+                
+                // Update game display
+                updateGameDisplay();
+                
+                // Next customer after a delay
+                setTimeout(() => {
+                    generateNewCustomer();
+                    generateMoneyTray();
+                }, 4000);
+            } else {
+                gameState.totalTransactions++;
+                showFeedback(`Incorrect change! You selected RM ${selectedTotal.toFixed(2)}, but the change needed is RM ${targetChange.toFixed(2)}. Try again!`, 'error');
+                updateGameDisplay();
+            }
+        }
+
+        // Handle reset change selection
+        function handleResetChange() {
+            if (gameState.transactionState === 'calculated') {
+                // Reset selected money (change)
+                gameState.selectedMoney = [];
+                updateSelectedMoneyDisplay();
+                showFeedback('Change selection reset. Please select change again.', 'success');
+            }
+        }
+
+        // Generate a receipt for the transaction
+        function generateReceipt() {
+            receiptItemsEl.innerHTML = '';
+            
+            // Add items to receipt
+            gameState.scannedItems.forEach(item => {
+                const receiptLine = document.createElement('div');
+                receiptLine.className = 'receipt-line';
+                receiptLine.innerHTML = `
+                    <span>${item.name}</span>
+                    <span>RM ${item.price.toFixed(2)}</span>
+                `;
+                receiptItemsEl.appendChild(receiptLine);
+            });
+            
+            // Update receipt totals
+            receiptTotalEl.textContent = `RM ${gameState.currentCustomer.totalCost.toFixed(2)}`;
+            receiptCashEl.textContent = `RM ${gameState.currentCustomer.paymentAmount.toFixed(2)}`;
+            receiptChangeEl.textContent = `RM ${gameState.currentCustomer.changeNeeded.toFixed(2)}`;
+            
+            // Show receipt
+            receiptEl.style.display = 'block';
+        }
+
+        // Show feedback message
+        function showFeedback(message, type) {
+            feedbackEl.textContent = message;
+            feedbackEl.className = `feedback ${type}`;
+            
+            // Clear feedback after 4 seconds unless it's a success at the end of transaction
+            if (!(type === 'success' && message.includes('Level Up'))) {
+                setTimeout(() => {
+                    feedbackEl.className = 'feedback';
+                }, 4000);
+            }
+        }
+
+        // Update game stats display
+        function updateGameDisplay() {
+            scoreEl.textContent = gameState.score;
+            levelEl.textContent = gameState.level;
+            customersEl.textContent = gameState.customersServed;
+            
+            // Calculate accuracy
+            const accuracy = gameState.totalTransactions > 0 ? 
+                Math.round((gameState.correctTransactions / gameState.totalTransactions) * 100) : 100;
+            accuracyEl.textContent = `${accuracy}%`;
+        }
+
+        // Initialize the game when the page loads
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

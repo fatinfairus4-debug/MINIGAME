@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrono-Catcher: Standard 5 Math</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #0f0c29;  /* Fallback */
+            background: linear-gradient(to bottom, #24243e, #302b63, #0f0c29);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            touch-action: none; /* Prevent zooming on mobile */
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud-box {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #00d2ff;
+            box-shadow: 0 0 10px #00d2ff;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        h2 { margin: 0; font-size: 18px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; }
+        .big-text { font-size: 28px; font-weight: bold; color: #fff; }
+        .highlight { color: #00d2ff; }
+        .danger { color: #ff4b4b; }
+
+        #game-canvas {
+            display: block;
+            margin: 0 auto;
+        }
+
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+
+        button {
+            background: #00d2ff;
+            border: none;
+            padding: 15px 40px;
+            font-size: 24px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00d2ff;
+        }
+
+        .hidden { display: none !important; }
+        
+        #progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            margin-top: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        #progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #00d2ff;
+            transition: width 0.2s;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="hud-box">
+            <h2>Target</h2>
+            <div id="target-display" class="big-text highlight">0h 0m</div>
+        </div>
+        
+        <div class="hud-box">
+            <h2>Current</h2>
+            <div id="current-display" class="big-text">0h 0m</div>
+            <div id="progress-bar-container">
+                <div id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="hud-box">
+            <h2>Score</h2>
+            <div id="score-display" class="big-text">0</div>
+        </div>
+    </div>
+
+    <div id="start-screen">
+        <h1 style="font-size: 50px; text-shadow: 0 0 20px #00d2ff;">CHRONO CATCHER</h1>
+        <p style="max-width: 600px; text-align: center; font-size: 18px; line-height: 1.6;">
+            You are the Time Keeper. <br>
+            Collect time orbs to match the <strong>TARGET TIME</strong> exactly.<br>
+            Do not go over the limit, or the timeline will collapse!<br><br>
+            <em>Use Left/Right Arrows or Mouse to move.</em>
+        </p>
+        <button onclick="startGame()">START MISSION</button>
+    </div>
+
+    <div id="game-over-screen" class="hidden">
+        <h1 class="danger" style="font-size: 50px;">TIMELINE COLLAPSED</h1>
+        <p class="big-text">Final Score: <span id="final-score">0</span></p>
+        <p id="death-reason" style="color: #aaa; margin-bottom: 20px;"></p>
+        <button onclick="startGame()">TRY AGAIN</button>
+    </div>
+
+    <canvas id="game-canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game State
+        let state = {
+            isPlaying: false,
+            score: 0,
+            targetMinutes: 0,
+            currentMinutes: 0,
+            playerX: 0,
+            orbs: [],
+            level: 1,
+            speedMultiplier: 1
+        };
+
+        const PLAYER_WIDTH = 80;
+        const PLAYER_HEIGHT = 20;
+        const PLAYER_Y_OFFSET = 50;
+        
+        // Falling Orbs configuration
+        // Values are in minutes. We mix Standard 5 concepts (Hours, Minutes, Conversions)
+        const ORB_TYPES = [
+            { label: "15m", val: 15, color: "#00ff88" },
+            { label: "30m", val: 30, color: "#00d2ff" },
+            { label: "45m", val: 45, color: "#00d2ff" },
+            { label: "1h", val: 60, color: "#ff00ff" }, // Conversion logic
+            { label: "10m", val: 10, color: "#ffff00" },
+            { label: "5m", val: 5, color: "#ffff00" },
+            { label: "2h", val: 120, color: "#ff4b4b" } // High risk high reward
+        ];
+
+        // Resize handling
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            state.playerX = canvas.width / 2 - PLAYER_WIDTH / 2;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Input handling
+        let keys = {};
+        window.addEventListener('keydown', e => keys[e.key] = true);
+        window.addEventListener('keyup', e => keys[e.key] = false);
+        
+        // Mouse/Touch movement
+        window.addEventListener('mousemove', e => {
+            if(state.isPlaying) state.playerX = e.clientX - PLAYER_WIDTH/2;
+        });
+        window.addEventListener('touchmove', e => {
+            if(state.isPlaying) state.playerX = e.touches[0].clientX - PLAYER_WIDTH/2;
+        });
+
+        function formatTime(totalMinutes) {
+            const h = Math.floor(totalMinutes / 60);
+            const m = totalMinutes % 60;
+            if (h > 0) return `${h}h ${m}m`;
+            return `${m}m`;
+        }
+
+        function generateTarget() {
+            // Standard 5 level targets: usually between 1 hour and 5 hours
+            // Must be divisible by 5 to be fair with our orb types
+            const min = 60; // 1 hour
+            const max = 300; // 5 hours
+            let raw = Math.floor(Math.random() * (max - min + 1)) + min;
+            // Round to nearest 15 for better gameplay flow initially, then nearest 5
+            let rounding = state.level > 2 ? 5 : 15;
+            state.targetMinutes = Math.ceil(raw / rounding) * rounding;
+            state.currentMinutes = 0;
+            updateHUD();
+        }
+
+        function updateHUD() {
+            document.getElementById('target-display').innerText = formatTime(state.targetMinutes);
+            document.getElementById('current-display').innerText = formatTime(state.currentMinutes);
+            document.getElementById('score-display').innerText = state.score;
+
+            // Progress Bar
+            const pct = (state.currentMinutes / state.targetMinutes) * 100;
+            document.getElementById('progress-fill').style.width = `${Math.min(pct, 100)}%`;
+            
+            // Color feedback
+            const currentDisp = document.getElementById('current-display');
+            if (state.currentMinutes > state.targetMinutes) {
+                currentDisp.style.color = "#ff4b4b"; // Red
+            } else {
+                currentDisp.style.color = "#fff";
+            }
+        }
+
+        function spawnOrb() {
+            if (!state.isPlaying) return;
+            
+            const type = ORB_TYPES[Math.floor(Math.random() * ORB_TYPES.length)];
+            const x = Math.random() * (canvas.width - 40) + 20;
+            
+            state.orbs.push({
+                x: x,
+                y: -50,
+                radius: 25,
+                ...type
+            });
+
+            // Spawn rate increases with level
+            const spawnRate = Math.max(500, 2000 - (state.level * 200));
+            setTimeout(spawnOrb, spawnRate);
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+            
+            state.isPlaying = true;
+            state.score = 0;
+            state.level = 1;
+            state.orbs = [];
+            state.speedMultiplier = 1;
+            
+            generateTarget();
+            spawnOrb();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver(reason) {
+            state.isPlaying = false;
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = state.score;
+            document.getElementById('death-reason').innerText = reason;
+        }
+
+        function gameLoop() {
+            if (!state.isPlaying) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Move Player
+            if (keys['ArrowLeft']) state.playerX -= 10;
+            if (keys['ArrowRight']) state.playerX += 10;
+            
+            // Clamp player to screen
+            if (state.playerX < 0) state.playerX = 0;
+            if (state.playerX > canvas.width - PLAYER_WIDTH) state.playerX = canvas.width - PLAYER_WIDTH;
+
+            // Draw Player (The "Basket")
+            ctx.fillStyle = "#00d2ff";
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "#00d2ff";
+            ctx.beginPath();
+            ctx.roundRect(state.playerX, canvas.height - PLAYER_Y_OFFSET, PLAYER_WIDTH, PLAYER_HEIGHT, 10);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // 2. Update and Draw Orbs
+            for (let i = state.orbs.length - 1; i >= 0; i--) {
+                let orb = state.orbs[i];
+                orb.y += (3 + state.level) * 0.8; // Gravity speed
+
+                // Draw Orb
+                ctx.beginPath();
+                ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+                ctx.fillStyle = orb.color;
+                ctx.fill();
+                
+                // Draw Text
+                ctx.fillStyle = "black";
+                ctx.font = "bold 14px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(orb.label, orb.x, orb.y);
+
+                // Collision Detection
+                // Simple AABB vs Circle check
+                if (orb.y + orb.radius > canvas.height - PLAYER_Y_OFFSET &&
+                    orb.y - orb.radius < canvas.height - PLAYER_Y_OFFSET + PLAYER_HEIGHT &&
+                    orb.x > state.playerX && 
+                    orb.x < state.playerX + PLAYER_WIDTH) {
+                    
+                    // CAUGHT!
+                    state.currentMinutes += orb.val;
+                    state.orbs.splice(i, 1);
+                    updateHUD();
+                    
+                    // Check Win/Loss conditions immediately
+                    if (state.currentMinutes === state.targetMinutes) {
+                        // Level Complete!
+                        state.score += 100 + (state.level * 50);
+                        state.level++;
+                        state.speedMultiplier += 0.2;
+                        // Flash screen green
+                        ctx.fillStyle = "rgba(0, 255, 0, 0.3)";
+                        ctx.fillRect(0,0,canvas.width, canvas.height);
+                        generateTarget();
+                    } else if (state.currentMinutes > state.targetMinutes) {
+                        gameOver(`You went over time! Target was ${formatTime(state.targetMinutes)} but you hit ${formatTime(state.currentMinutes)}.`);
+                    }
+
+                    continue;
+                }
+
+                // Remove if off screen
+                if (orb.y > canvas.height) {
+                    state.orbs.splice(i, 1);
+                }
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Polyfill for roundRect if needed
+        if (!ctx.roundRect) {
+            ctx.roundRect = function(x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.beginPath();
+                this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r);
+                this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r);
+                this.arcTo(x, y, x + w, y, r);
+                this.closePath();
+                return this;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recycle Bin Challenge: Data Handling</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+        body{background:linear-gradient(135deg,#1a6b3b,#2ecc71);min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+        .container{max-width:900px;width:100%;background:#fff;border-radius:20px;padding:25px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+        header{text-align:center;margin-bottom:20px; color: #1a6b3b;}
+        
+        .game-info{display:flex;gap:15px;background:#e8f5e9;padding:15px;border-radius:12px;margin-bottom:20px}
+        .info-box{text-align:center;flex:1}
+        .info-title{font-weight:bold; color: #666; font-size: 0.9rem;}
+        .info-value{font-size:1.5rem; font-weight: bold; color: #2e7d32;}
+
+        .bins-container{display:flex;gap:10px;margin-bottom: 20px;}
+        .bin{flex:1;background:#f8f9fa;border-radius:12px;padding:5px;border:3px dashed #ccc; transition: 0.3s;}
+        .bin-title{font-weight:bold;color:#fff;padding:8px;border-radius:8px;text-align:center;margin-bottom:5px}
+        .bin-content{min-height:120px;display:flex;flex-wrap:wrap;gap:5px;justify-content:center;align-content: flex-start;}
+
+        .recyclable{border-color:#2196f3} .recyclable .bin-title{background:#2196f3}
+        .organic{border-color:#8d6e63} .organic .bin-title{background:#8d6e63}
+        .plastic{border-color:#ff9800} .plastic .bin-title{background:#ff9800}
+        .paper{border-color:#f44336} .paper .bin-title{background:#f44336}
+
+        .items-container{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:20px;background:#fff9c4;border-radius:12px;border: 2px solid #fbc02d;min-height: 100px;}
+        .item{width:70px;height:70px;background:white;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:grab;box-shadow: 0 4px 6px rgba(0,0,0,0.1);font-size:1.5rem}
+        .item-label{font-size:0.7rem;font-weight:bold;text-align:center;margin-top:3px;padding:0 2px;}
+
+        /* Data Section */
+        #data-section { display: none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
+        .chart-flex { display: flex; align-items: flex-end; justify-content: space-around; height: 180px; border-bottom: 2px solid #333; margin-bottom: 40px; padding: 0 20px; }
+        .bar { width: 50px; background: #4caf50; position: relative; transition: height 0.5s ease-out; border-radius: 5px 5px 0 0; }
+        .bar-label { position: absolute; bottom: -25px; left: 0; width: 100%; font-size: 0.7rem; font-weight: bold; text-align: center; }
+        .bar-value { position: absolute; top: -20px; width: 100%; text-align: center; font-weight: bold; }
+
+        .quiz-area { background: #f1f8e9; padding: 20px; border-radius: 10px; margin-top: 20px; }
+        .question-text { font-weight: bold; margin-bottom: 15px; display: block; font-size: 1.1rem; }
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .opt-btn { padding: 12px; border: 2px solid #4caf50; border-radius: 8px; background: white; cursor: pointer; font-size: 1rem; }
+        .opt-btn:hover { background: #e8f5e9; }
+        .opt-btn.correct { background: #4caf50; color: white; border-color: #2e7d32; }
+        .opt-btn.wrong { background: #f44336; color: white; border-color: #c62828; }
+
+        .feedback{text-align:center;margin-top:10px;padding:12px;border-radius:8px;font-weight:bold; display: none;}
+        .controls{display:flex;justify-content:center;gap:15px;margin-top:20px}
+        button{padding:12px 25px;border:none;border-radius:30px;font-weight:bold;cursor:pointer;transition: 0.2s;font-size:1rem;}
+        .btn-blue{background:#2196f3;color:#fff}
+        .btn-green{background:#4caf50;color:#fff}
+        
+        .stats-summary { background: #e3f2fd; padding: 15px; border-radius: 10px; margin-top: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .stat-item { display: flex; justify-content: space-between; padding: 5px; border-bottom: 1px dashed #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="game-card">
+    <header>
+        <h1><i class="fas fa-chart-bar"></i> Eco-Data Challenge</h1>
+        <p>Sort items, then analyze the statistics!</p>
+    </header>
+
+    <div class="game-info">
+        <div class="info-box"><div class="info-title">Round</div><div class="info-value"><span id="round-num">1</span>/5</div></div>
+        <div class="info-box"><div class="info-title">To Sort</div><div class="info-value" id="items-left">0</div></div>
+        <div class="info-box"><div class="info-title">Total Score</div><div class="info-value" id="score">0</div></div>
+    </div>
+
+    <div class="bins-container">
+        <div class="bin recyclable"><div class="bin-title">Recyclable</div><div class="bin-content" id="bin-recyclable"></div></div>
+        <div class="bin organic"><div class="bin-title">Organic</div><div class="bin-content" id="bin-organic"></div></div>
+        <div class="bin plastic"><div class="bin-title">Plastic</div><div class="bin-content" id="bin-plastic"></div></div>
+        <div class="bin paper"><div class="bin-title">Paper</div><div class="bin-content" id="bin-paper"></div></div>
+    </div>
+
+    <div class="items-container" id="source-container"></div>
+    <div id="feedback-msg" class="feedback"></div>
+
+    <div id="data-section">
+        <h3><i class="fas fa-chart-line"></i> Round Analysis</h3>
+        <div class="chart-flex" id="chart"></div>
+        
+        <div class="stats-summary">
+            <h4><i class="fas fa-list-ol"></i> Statistics Summary</h4>
+            <div class="stats-grid" id="stats-grid"></div>
+        </div>
+        
+        <div class="quiz-area" id="quiz">
+            <span class="question-text" id="q-text">Which bin has the most items?</span>
+            <div class="options" id="q-options"></div>
+            <div id="explanation" style="display:none; background:#fff3cd; padding:10px; border-radius:5px; margin-top:10px;"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="btn-analyze" class="btn-blue" style="display:none">Analyze Data</button>
+        <button id="btn-next" class="btn-green" style="display:none">Next Round</button>
+    </div>
+</div>
+
+<script>
+// More realistic items with better categorization
+const itemsLibrary = [
+    // Recyclable (metal/glass)
+    {n:"Soda Can", t:"recyclable", i:"🥫", desc:"Aluminum can"},
+    {n:"Glass Jar", t:"recyclable", i:"🫙", desc:"Glass container"},
+    {n:"Tin Can", t:"recyclable", i:"🥫", desc:"Food can"},
+    {n:"Wine Bottle", t:"recyclable", i:"🍾", desc:"Glass bottle"},
+    
+    // Organic
+    {n:"Apple Core", t:"organic", i:"🍎", desc:"Fruit waste"},
+    {n:"Banana Peel", t:"organic", i:"🍌", desc:"Compostable"},
+    {n:"Egg Shells", t:"organic", i:"🥚", desc:"Kitchen waste"},
+    {n:"Coffee Grounds", t:"organic", i:"☕", desc:"Compostable"},
+    {n:"Vegetable Scraps", t:"organic", i:"🥕", desc:"Food waste"},
+    
+    // Plastic
+    {n:"Water Bottle", t:"plastic", i:"🧴", desc:"PET plastic"},
+    {n:"Shopping Bag", t:"plastic", i:"🛍️", desc:"Plastic bag"},
+    {n:"Food Container", t:"plastic", i:"🥡", desc:"Plastic tub"},
+    {n:"Straw", t:"plastic", i:"🥤", desc:"Single-use plastic"},
+    {n:"Detergent Bottle", t:"plastic", i:"🧼", desc:"HDPE plastic"},
+    
+    // Paper
+    {n:"Newspaper", t:"paper", i:"📰", desc:"Newsprint"},
+    {n:"Cardboard Box", t:"paper", i:"📦", desc:"Corrugated"},
+    {n:"Office Paper", t:"paper", i:"📄", desc:"White paper"},
+    {n:"Pizza Box", t:"paper", i:"🍕", desc:"Cardboard"},
+    {n:"Magazine", t:"paper", i:"📖", desc:"Glossy paper"}
+];
+
+let state = { round: 1, score: 0, currentItems: [], sorted: 0, counts: {}, target: 0 };
+
+function initRound() {
+    state.sorted = 0;
+    state.counts = { recyclable:0, organic:0, plastic:0, paper:0 };
+    document.getElementById('round-num').innerText = state.round;
+    document.getElementById('data-section').style.display = 'none';
+    document.getElementById('btn-analyze').style.display = 'none';
+    document.getElementById('btn-next').style.display = 'none';
+    document.getElementById('source-container').innerHTML = '';
+    document.querySelectorAll('.bin-content').forEach(b => b.innerHTML = '');
+
+    // Generate random items
+    state.currentItems = [];
+    ['recyclable', 'organic', 'plastic', 'paper'].forEach(type => {
+        let count = Math.floor(Math.random() * 4) + 2; // 2-5 items per category
+        let typeItems = itemsLibrary.filter(it => it.t === type);
+        for(let i=0; i<count; i++) {
+            let randomItem = typeItems[Math.floor(Math.random() * typeItems.length)];
+            state.currentItems.push({...randomItem, id: Math.random()});
+        }
+    });
+    
+    state.target = state.currentItems.length;
+    document.getElementById('items-left').innerText = state.target;
+
+    // Shuffle and display items
+    state.currentItems.sort(() => Math.random() - 0.5).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item'; 
+        div.draggable = true;
+        div.innerHTML = `
+            <div style="font-size: 1.8rem;">${item.i}</div>
+            <div class="item-label">${item.n}</div>
+        `;
+        div.title = item.desc;
+        div.ondragstart = (e) => {
+            e.dataTransfer.setData("type", item.t);
+            e.dataTransfer.setData("name", item.n);
+        };
+        document.getElementById('source-container').appendChild(div);
+    });
+}
+
+// Setup Drop Zones
+document.querySelectorAll('.bin').forEach(bin => {
+    bin.ondragover = e => {
+        e.preventDefault();
+        bin.style.borderStyle = "solid";
+    };
+    
+    bin.ondragleave = e => {
+        bin.style.borderStyle = "dashed";
+    };
+    
+    bin.ondrop = e => {
+        e.preventDefault();
+        bin.style.borderStyle = "dashed";
+        const type = e.dataTransfer.getData("type");
+        const name = e.dataTransfer.getData("name");
+        const binType = bin.classList[1];
+        
+        if(type === binType) {
+            state.counts[type]++;
+            state.sorted++;
+            state.score += 5;
+            document.getElementById('score').innerText = state.score;
+            document.getElementById('items-left').innerText = state.target - state.sorted;
+            
+            // Add to bin with animation
+            const dummy = document.createElement('div');
+            dummy.className = 'item'; 
+            dummy.style.width = '40px'; 
+            dummy.style.height = '40px';
+            dummy.style.fontSize = '1.2rem'; 
+            dummy.style.transform = 'scale(0)';
+            dummy.innerHTML = `${getItemEmoji(name)}`;
+            bin.querySelector('.bin-content').appendChild(dummy);
+            
+            setTimeout(() => {
+                dummy.style.transition = 'transform 0.3s';
+                dummy.style.transform = 'scale(1)';
+            }, 10);
+
+            // Remove from source
+            const items = document.querySelectorAll('.item');
+            for(let it of items) { 
+                if(it.parentElement.id === 'source-container' && it.querySelector('.item-label').textContent === name) { 
+                    it.style.opacity = '0.5';
+                    it.style.transform = 'scale(0.8)';
+                    setTimeout(() => it.remove(), 300);
+                    break; 
+                } 
+            }
+
+            if(state.sorted === state.target) {
+                document.getElementById('btn-analyze').style.display = 'block';
+                msg("All items sorted! Now analyze the data.", "success");
+            }
+        } else {
+            msg(`Oops! ${name} doesn't go in the ${binType} bin. Try again!`, "error");
+            state.score = Math.max(0, state.score - 2);
+            document.getElementById('score').innerText = state.score;
+        }
+    };
+});
+
+function getItemEmoji(name) {
+    const item = itemsLibrary.find(it => it.n === name);
+    return item ? item.i : "🗑️";
+}
+
+function msg(text, type) {
+    const m = document.getElementById('feedback-msg');
+    m.innerText = text; 
+    m.style.display = 'block';
+    m.style.background = type === 'success' ? '#e8f5e9' : '#ffebee';
+    m.style.color = type === 'success' ? '#2e7d32' : '#c62828';
+    setTimeout(() => m.style.display = 'none', 3000);
+}
+
+document.getElementById('btn-analyze').onclick = () => {
+    document.getElementById('data-section').style.display = 'block';
+    document.getElementById('btn-analyze').style.display = 'none';
+    buildChart();
+    updateStatsSummary();
+    generateQuestion();
+};
+
+function buildChart() {
+    const chart = document.getElementById('chart');
+    chart.innerHTML = '';
+    const max = Math.max(...Object.values(state.counts)) || 1;
+    const colors = ['#2196f3', '#8d6e63', '#ff9800', '#f44336'];
+    let index = 0;
+    
+    for(let type in state.counts) {
+        const h = (state.counts[type] / max) * 100;
+        chart.innerHTML += `<div class="bar" style="height:${h}%; background:${colors[index]}">
+            <div class="bar-value">${state.counts[type]}</div>
+            <div class="bar-label">${type.charAt(0).toUpperCase()+type.slice(1)}</div>
+        </div>`;
+        index++;
+    }
+}
+
+function updateStatsSummary() {
+    const statsGrid = document.getElementById('stats-grid');
+    const counts = state.counts;
+    const total = Object.values(counts).reduce((a,b) => a + b, 0);
+    const max = Math.max(...Object.values(counts));
+    const min = Math.min(...Object.values(counts));
+    
+    statsGrid.innerHTML = `
+        <div class="stat-item"><span>Total Items:</span><strong>${total}</strong></div>
+        <div class="stat-item"><span>Most Common:</span><strong>${Object.keys(counts).find(k => counts[k] === max)} (${max})</strong></div>
+        <div class="stat-item"><span>Range (Max-Min):</span><strong>${max - min}</strong></div>
+        <div class="stat-item"><span>Average per Bin:</span><strong>${(total/4).toFixed(1)}</strong></div>
+    `;
+}
+
+function generateQuestion() {
+    const qArea = document.getElementById('q-options');
+    const explanationDiv = document.getElementById('explanation');
+    qArea.innerHTML = '';
+    explanationDiv.style.display = 'none';
+    const types = Object.keys(state.counts);
+    const counts = state.counts;
+    const values = Object.values(counts);
+    const sortedValues = [...values].sort((a,b) => a-b);
+    
+    // Question types with more variety
+    const questions = [
+        {
+            type: "mode",
+            text: "Which category is the Mode (most frequent)?",
+            generate: () => {
+                const maxVal = Math.max(...values);
+                const mode = types.find(t => counts[t] === maxVal);
+                return {
+                    correct: mode,
+                    options: [...types].sort(() => Math.random() - 0.5),
+                    explanation: `The mode is ${mode} with ${maxVal} items (the highest count).`
+                };
+            }
+        },
+        {
+            type: "range",
+            text: "What is the Range (difference between highest and lowest)?",
+            generate: () => {
+                const range = sortedValues[sortedValues.length-1] - sortedValues[0];
+                const wrong1 = range + 1;
+                const wrong2 = range > 0 ? range - 1 : 1;
+                const wrong3 = Math.floor(totalItems() / 2);
+                return {
+                    correct: range.toString(),
+                    options: [range, wrong1, wrong2, wrong3].sort(() => Math.random() - 0.5).map(String),
+                    explanation: `Range = Highest (${sortedValues[sortedValues.length-1]}) - Lowest (${sortedValues[0]}) = ${range}`
+                };
+            }
+        },
+        {
+            type: "total",
+            text: "What is the total number of items sorted?",
+            generate: () => {
+                const total = totalItems();
+                const wrong1 = total + 2;
+                const wrong2 = total - 2;
+                const wrong3 = total + types.length;
+                return {
+                    correct: total.toString(),
+                    options: [total, wrong1, wrong2, wrong3].sort(() => Math.random() - 0.5).map(String),
+                    explanation: `Total = ${Object.entries(counts).map(([k,v]) => `${k}:${v}`).join(' + ')} = ${total}`
+                };
+            }
+        },
+        {
+            type: "median",
+            text: "What is the Median (middle value when sorted)?",
+            generate: () => {
+                const median = sortedValues.length % 2 === 0 ? 
+                    (sortedValues[sortedValues.length/2 - 1] + sortedValues[sortedValues.length/2]) / 2 :
+                    sortedValues[Math.floor(sortedValues.length/2)];
+                const wrong1 = median + 1;
+                const wrong2 = median - 1;
+                const wrong3 = Math.max(...values);
+                return {
+                    correct: median.toString(),
+                    options: [median, wrong1, wrong2, wrong3].sort(() => Math.random() - 0.5).map(String),
+                    explanation: `Sorted values: ${sortedValues.join(', ')}. Middle value = ${median}`
+                };
+            }
+        },
+        {
+            type: "comparison",
+            text: `How many more ${types[0]} than ${types[1]}?`,
+            generate: () => {
+                const diff = Math.abs(counts[types[0]] - counts[types[1]]);
+                const wrong1 = diff + 1;
+                const wrong2 = diff > 0 ? diff - 1 : 1;
+                const wrong3 = counts[types[0]] + counts[types[1]];
+                return {
+                    correct: diff.toString(),
+                    options: [diff, wrong1, wrong2, wrong3].sort(() => Math.random() - 0.5).map(String),
+                    explanation: `${types[0]}: ${counts[types[0]]}, ${types[1]}: ${counts[types[1]]}. Difference = |${counts[types[0]]} - ${counts[types[1]]}| = ${diff}`
+                };
+            }
+        }
+    ];
+
+    const qIndex = Math.floor(Math.random() * questions.length);
+    const question = questions[qIndex];
+    document.getElementById('q-text').innerText = question.text;
+    
+    const result = question.generate();
+    
+    result.options.forEach(opt => {
+        const b = document.createElement('button');
+        b.className = 'opt-btn';
+        b.innerText = opt;
+        b.onclick = () => {
+            if(opt == result.correct) {
+                b.classList.add('correct');
+                state.score += 20;
+                msg("Correct! +20 points", "success");
+                explanationDiv.innerHTML = `<strong>✓ Correct!</strong> ${result.explanation}`;
+            } else {
+                b.classList.add('wrong');
+                msg("Try again next time!", "error");
+                explanationDiv.innerHTML = `<strong>✗ Incorrect.</strong> The correct answer is ${result.correct}. ${result.explanation}`;
+            }
+            explanationDiv.style.display = 'block';
+            document.querySelectorAll('.opt-btn').forEach(btn => {
+                btn.disabled = true;
+                if(btn.innerText == result.correct) btn.classList.add('correct');
+            });
+            document.getElementById('btn-next').style.display = 'block';
+            document.getElementById('score').innerText = state.score;
+        };
+        qArea.appendChild(b);
+    });
+}
+
+function totalItems() {
+    return Object.values(state.counts).reduce((a,b) => a + b, 0);
+}
+
+document.getElementById('btn-next').onclick = () => {
+    if(state.round < 5) {
+        state.round++;
+        initRound();
+    } else {
+        showFinalResults();
+    }
+};
+
+function showFinalResults() {
+    const rating = state.score >= 400 ? "Expert" : state.score >= 300 ? "Advanced" : state.score >= 200 ? "Intermediate" : "Beginner";
+    document.getElementById('game-card').innerHTML = `
+        <header><h1>🎊 Mission Complete!</h1></header>
+        <div style="text-align:center; padding: 40px;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">🏆</div>
+            <p style="font-size: 1.8rem; margin-bottom: 10px;">Final Score: <strong>${state.score}</strong></p>
+            <p style="font-size: 1.2rem; margin-bottom: 20px; color: #2e7d32;">${rating} Data Analyst</p>
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                <p>You've successfully analyzed waste data across 5 rounds!</p>
+                <p>Remember: Proper sorting helps recycling centers process materials efficiently.</p>
+            </div>
+            <button class="btn-green" onclick="location.reload()" style="margin-top:20px; padding: 15px 30px;">
+                <i class="fas fa-redo"></i> Play Again
+            </button>
+        </div>
+    `;
+}
+
+// Initialize the game
+initRound();
+</script>
+</body>
+</html>

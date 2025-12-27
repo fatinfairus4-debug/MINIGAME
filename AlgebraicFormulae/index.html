@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formula Breaker: Algebraic Warfare</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --term-bg: #16213e;
+            --highlight: #0f3460;
+            --accent: #e94560;
+            --text-color: #f1f1f1;
+            --operator-color: #4cc9f0;
+            --variable-color: #f72585;
+            --target-glow: 0 0 15px #f72585;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* HUD Styling */
+        #hud {
+            position: absolute;
+            top: 20px;
+            width: 80%;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .hud-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--accent);
+        }
+
+        /* Main Game Area */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+            width: 100%;
+        }
+
+        #target-display {
+            font-size: 1.5rem;
+            color: var(--operator-color);
+            margin-bottom: 20px;
+        }
+
+        #equation-zone {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 2.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            border-radius: 15px;
+            min-height: 120px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* The movable blocks */
+        .term {
+            background-color: var(--term-bg);
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .term:hover {
+            transform: translateY(-5px);
+            background-color: var(--highlight);
+            border-color: var(--operator-color);
+        }
+
+        .term.target {
+            color: var(--variable-color);
+            font-weight: bold;
+            border-color: var(--variable-color);
+            cursor: not-allowed;
+        }
+
+        .term.static {
+            background: none;
+            cursor: default;
+            font-weight: bold;
+        }
+        
+        .term.static:hover {
+            transform: none;
+            border-color: transparent;
+        }
+
+        /* Visual Feedback Classes */
+        .shake {
+            animation: shake 0.5s;
+            border-color: red !important;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .fly-left {
+            animation: flyLeft 0.6s forwards;
+        }
+        
+        .fly-right {
+            animation: flyRight 0.6s forwards;
+        }
+
+        /* Victory Overlay */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        #overlay h1 {
+            font-size: 4rem;
+            color: var(--accent);
+            text-shadow: 0 0 20px var(--accent);
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            background: var(--variable-color);
+            border: none;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.1);
+        }
+
+        /* Tutorial Text */
+        .tutorial {
+            margin-top: 20px;
+            color: #aaa;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="hud">
+        <div class="hud-box">Level: <span id="level-indicator">1</span></div>
+        <div class="hud-box">Score: <span id="score">0</span></div>
+    </div>
+
+    <div id="game-container">
+        <div id="target-display">
+            MISSION: ISOLATE <span style="color: var(--variable-color); font-weight: bold; font-size: 2rem;" id="target-var">x</span>
+        </div>
+
+        <div id="equation-zone">
+            </div>
+
+        <div class="tutorial">
+            Click the outer terms to throw them to the other side!
+        </div>
+    </div>
+
+    <div id="overlay">
+        <h1 id="overlay-msg">LEVEL COMPLETE</h1>
+        <div id="final-score" style="font-size: 1.5rem; margin-bottom: 20px; color: white;"></div>
+        <button onclick="nextLevel()">NEXT WAVE</button>
+    </div>
+
+    <script>
+        // Game State
+        let currentLevel = 0;
+        let score = 0;
+        let isAnimating = false;
+
+        // Level Data: Form 2 KSSM Algebraic Formulae progression
+        // We define the equation as 'static' parts and 'movable' layers.
+        // The game logic is simplified: layers must be removed from outside in.
+        const levels = [
+            {
+                // Level 1: Basic Addition (x + 5 = 12)
+                target: 'x',
+                lhs: ['12'],
+                rhs: [
+                    { type: 'var', val: 'x' },
+                    { type: 'op', val: '+ 5', inverse: '- 5' }
+                ]
+            },
+            {
+                // Level 2: Basic Subtraction (y = m - 3) -> Make m subject
+                target: 'm',
+                lhs: ['y'],
+                rhs: [
+                    { type: 'var', val: 'm' },
+                    { type: 'op', val: '- 3', inverse: '+ 3' }
+                ]
+            },
+            {
+                // Level 3: Multiplication (A = lb) -> Make l subject
+                target: 'l',
+                lhs: ['A'],
+                rhs: [
+                    { type: 'var', val: 'l' },
+                    { type: 'op', val: '× b', inverse: '/ b' } // Using visual multiply
+                ]
+            },
+            {
+                // Level 4: Two Step (y = mx + c) -> Make mx group first, then x
+                // Simplified for this minigame engine: we treat terms as an array
+                target: 'x',
+                lhs: ['y'],
+                rhs: [
+                    { type: 'var', val: 'x' },
+                    { type: 'op', val: '× m', inverse: '/ m' },
+                    { type: 'op', val: '+ c', inverse: '- c' }
+                ]
+            },
+            {
+                // Level 5: Division (v = u + at) -> Make a subject
+                target: 'a',
+                lhs: ['v'],
+                rhs: [
+                    { type: 'var', val: 'a' },
+                    { type: 'op', val: '× t', inverse: '/ t' },
+                    { type: 'op', val: '+ u', inverse: '- u' }
+                ]
+            },
+             {
+                // Level 6: Squares (A = x^2)
+                target: 'x',
+                lhs: ['A'],
+                rhs: [
+                    { type: 'var', val: 'x' },
+                    { type: 'op', val: '² (sq)', inverse: '√' }
+                ]
+            }
+        ];
+
+        function initGame() {
+            loadLevel(0);
+        }
+
+        function loadLevel(idx) {
+            if (idx >= levels.length) {
+                showVictory("YOU WIN!", true);
+                return;
+            }
+            
+            currentLevel = idx;
+            document.getElementById('level-indicator').innerText = currentLevel + 1;
+            document.getElementById('target-var').innerText = levels[idx].target;
+            document.getElementById('overlay').style.display = 'none';
+            
+            renderEquation();
+        }
+
+        function renderEquation() {
+            const zone = document.getElementById('equation-zone');
+            zone.innerHTML = '';
+            const level = levels[currentLevel];
+
+            // Render Left Hand Side (The "Bin")
+            let lhsDiv = document.createElement('div');
+            lhsDiv.className = 'term static';
+            lhsDiv.id = 'lhs-group';
+            // If we have multiple terms on LHS, group them in brackets visually if needed
+            // For this game, LHS accumulates the inverse operations
+            lhsDiv.innerText = level.lhs.join(' ');
+            zone.appendChild(lhsDiv);
+
+            // Render Equals
+            let eq = document.createElement('div');
+            eq.className = 'term static';
+            eq.innerText = '=';
+            zone.appendChild(eq);
+
+            // Render Right Hand Side (The Puzzle)
+            // We render in reverse order of the array so the "outermost" term is on the far right
+            // The array structure in data is [inner, middle, outer]
+            // But visually we want: x * m + c
+            
+            // Container for RHS
+            let rhsContainer = document.createElement('div');
+            rhsContainer.style.display = 'flex';
+            rhsContainer.style.gap = '10px';
+            rhsContainer.id = 'rhs-container';
+
+            level.rhs.forEach((item, index) => {
+                let term = document.createElement('div');
+                
+                if (item.type === 'var') {
+                    term.className = 'term target';
+                    term.innerText = item.val;
+                } else {
+                    term.className = 'term';
+                    term.innerText = item.val;
+                    term.onclick = () => handleTermClick(index);
+                }
+                term.dataset.index = index;
+                rhsContainer.appendChild(term);
+            });
+
+            zone.appendChild(rhsContainer);
+        }
+
+        function handleTermClick(index) {
+            if (isAnimating) return;
+            
+            const level = levels[currentLevel];
+            // Game Rule: You must remove the OUTERMOST term first.
+            // In our data structure, the last element of rhs array is the outermost.
+            
+            const outermostIndex = level.rhs.length - 1;
+
+            if (index === outermostIndex) {
+                // Correct Move
+                moveTerm(index);
+            } else {
+                // Wrong Move
+                shakeTerm(index);
+                score -= 10;
+                updateScore();
+            }
+        }
+
+        function shakeTerm(index) {
+            const terms = document.querySelectorAll('#rhs-container .term');
+            const term = terms[index]; // Note: Visual order might match array order depending on rendering
+            term.classList.add('shake');
+            setTimeout(() => term.classList.remove('shake'), 500);
+        }
+
+        function moveTerm(index) {
+            isAnimating = true;
+            const level = levels[currentLevel];
+            const item = level.rhs[index];
+            const terms = document.querySelectorAll('#rhs-container .term');
+            const clickedTerm = terms[index];
+
+            // Visual Animation: Fly to Left
+            // We need to calculate distance to LHS
+            const lhs = document.getElementById('lhs-group');
+            const lhsRect = lhs.getBoundingClientRect();
+            const termRect = clickedTerm.getBoundingClientRect();
+            
+            const dist = lhsRect.right - termRect.left - 20; // 20px gap
+
+            clickedTerm.style.transform = `translateX(${dist}px) scale(0.8)`;
+            clickedTerm.style.opacity = '0';
+
+            setTimeout(() => {
+                // LOGIC UPDATE
+                // 1. Remove from RHS array
+                level.rhs.pop();
+                
+                // 2. Update LHS text
+                // Check if we need brackets: if LHS has more than 1 term and the new op is multiplication/division
+                const currentLHS = level.lhs.join('');
+                const newOp = item.inverse;
+                
+                // Simple heuristic for brackets: if existing has + or - and new is / or *
+                let needsBrackets = (currentLHS.includes('+') || currentLHS.includes('-')) && (newOp.includes('/') || newOp.includes('*'));
+                
+                if (needsBrackets) {
+                    level.lhs = [`(${currentLHS}) ${newOp}`];
+                } else {
+                    level.lhs.push(newOp);
+                }
+
+                // 3. Score
+                score += 100;
+                updateScore();
+
+                // 4. Check Win
+                if (level.rhs.length === 1 && level.rhs[0].type === 'var') {
+                    renderEquation(); // Final update to show result
+                    setTimeout(() => showVictory("SUBJECT ISOLATED"), 500);
+                } else {
+                    renderEquation();
+                    isAnimating = false;
+                }
+
+            }, 400);
+        }
+
+        function updateScore() {
+            document.getElementById('score').innerText = score;
+        }
+
+        function showVictory(msg, isFinal = false) {
+            const overlay = document.getElementById('overlay');
+            document.getElementById('overlay-msg').innerText = msg;
+            document.getElementById('final-score').innerText = "Score: " + score;
+            
+            const btn = overlay.querySelector('button');
+            if (isFinal) {
+                btn.innerText = "PLAY AGAIN";
+                btn.onclick = () => location.reload();
+            } else {
+                btn.innerText = "NEXT LEVEL";
+                btn.onclick = nextLevel;
+            }
+            
+            overlay.style.display = 'flex';
+        }
+
+        function nextLevel() {
+            isAnimating = false;
+            loadLevel(currentLevel + 1);
+        }
+
+        // Start-
+        initGame();
+
+    </script>
+</body>
+</html>

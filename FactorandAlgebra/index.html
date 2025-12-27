@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algebra Rush: 5 Level Challenge</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --tile-bg: #16213e;
+            --accent: #e94560;
+            --text-color: #ffffff;
+            --correct: #4caf50;
+            --wrong: #f44336;
+            --gold: #ffd700;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        h1 { margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px var(--accent); }
+        h3 { margin-top: 0; color: #ccc; font-weight: normal; font-size: 1rem; }
+
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 600px;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        #timer-bar-container {
+            width: 90%;
+            max-width: 600px;
+            height: 12px;
+            background: #333;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid #555;
+        }
+
+        #timer-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, var(--accent), #ff7b00);
+            transition: width 0.1s linear;
+        }
+
+        #game-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 90%;
+            max-width: 600px;
+            perspective: 1000px;
+        }
+
+        .tile {
+            background-color: var(--tile-bg);
+            border: 2px solid #444;
+            border-radius: 8px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            text-align: center;
+            padding: 2px;
+            position: relative;
+        }
+
+        .tile:hover { transform: translateY(-3px); border-color: var(--accent); }
+        .tile.selected { background-color: var(--accent); border-color: white; transform: scale(1.05); }
+        
+        .tile.matched {
+            background-color: var(--correct);
+            transform: scale(0);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .tile.shake {
+            animation: shake 0.4s;
+            border-color: var(--wrong);
+            background-color: rgba(244, 67, 54, 0.2);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 10, 20, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            text-align: center;
+        }
+
+        .overlay-content { animation: fadeIn 0.5s ease-out; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        button {
+            padding: 15px 50px;
+            font-size: 1.5rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 25px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        }
+
+        button:hover { transform: scale(1.05); box-shadow: 0 5px 25px rgba(233, 69, 96, 0.6); }
+
+        .victory-text { color: var(--gold); text-shadow: 0 0 20px var(--gold); font-size: 3.5rem; margin: 0; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            #game-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .tile { font-size: 0.95rem; height: 70px; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Algebra Rush</h1>
+    <h3>Match Expression to Factor</h3>
+    
+    <div id="hud">
+        <span id="level-display">Level: 1/5</span>
+        <span id="score-display">Score: 0</span>
+    </div>
+
+    <div id="timer-bar-container">
+        <div id="timer-bar"></div>
+    </div>
+
+    <div id="game-grid"></div>
+
+    <div id="overlay">
+        <div class="overlay-content">
+            <h2 id="overlay-title" style="font-size: 3rem; margin:0;">ALGEBRA RUSH</h2>
+            <p id="overlay-msg" style="font-size: 1.3rem; color: #aaa; margin-top:10px;">Clear 5 Levels to Win.<br>It gets harder every step.</p>
+            <button onclick="startGame()">START GAME</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Questions sorted by Difficulty Concept ---
+        
+        // Level 1: Basic Common Factors (Numbers only)
+        const set1 = [
+            { id: 101, q: "2x + 4", a: "2(x + 2)" },
+            { id: 102, q: "3x - 9", a: "3(x - 3)" },
+            { id: 103, q: "5a + 10", a: "5(a + 2)" },
+            { id: 104, q: "4y - 8", a: "4(y - 2)" },
+            { id: 105, q: "6m + 12", a: "6(m + 2)" },
+            { id: 106, q: "7x - 7", a: "7(x - 1)" }
+        ];
+
+        // Level 2: Difference of Two Squares (Pattern: a² - b²)
+        const set2 = [
+            { id: 201, q: "x² - y²", a: "(x-y)(x+y)" },
+            { id: 202, q: "a² - 1", a: "(a-1)(a+1)" },
+            { id: 203, q: "m² - 9", a: "(m-3)(m+3)" },
+            { id: 204, q: "x² - 4", a: "(x-2)(x+2)" },
+            { id: 205, q: "p² - 25", a: "(p-5)(p+5)" },
+            { id: 206, q: "100 - x²", a: "(10-x)(10+x)" }
+        ];
+
+        // Level 3: Algebraic Fractions (Simplifying)
+        const set3 = [
+            { id: 301, q: "4x / 2", a: "2x" },
+            { id: 302, q: "x² / x", a: "x" },
+            { id: 303, q: "3a / 6a", a: "1 / 2" },
+            { id: 304, q: "5x / 10x²", a: "1 / 2x" },
+            { id: 305, q: "xy / x", a: "y" },
+            { id: 306, q: "2x / 4", a: "x / 2" },
+            { id: 307, q: "abc / ac", a: "b" },
+            { id: 308, q: "3x² / x", a: "3x" }
+        ];
+
+        // Level 4: Tricky Factors & Perfect Squares
+        const set4 = [
+            { id: 401, q: "x² + 2x + 1", a: "(x + 1)²" },
+            { id: 402, q: "x² - 6x + 9", a: "(x - 3)²" },
+            { id: 403, q: "4x² - 2x", a: "2x(2x - 1)" },
+            { id: 404, q: "x² + x", a: "x(x + 1)" },
+            { id: 405, q: "3x² - 9x", a: "3x(x - 3)" },
+            { id: 406, q: "ab + ac", a: "a(b + c)" },
+            { id: 407, q: "xy - xz", a: "x(y - z)" },
+            { id: 408, q: "1 - y²", a: "(1-y)(1+y)" }
+        ];
+
+        // Level 5: The "Boss" Mix (Combined + Fast Speed)
+        const set5 = [...set1, ...set2, ...set3, ...set4];
+
+        // --- Game State ---
+        let level = 1;
+        const maxLevels = 5;
+        let score = 0;
+        let selectedTile = null;
+        let matchedPairs = 0;
+        let totalPairs = 0;
+        let timerInterval;
+        let timeLeft = 100;
+        let gameActive = false;
+
+        const grid = document.getElementById('game-grid');
+        const timerBar = document.getElementById('timer-bar');
+        const overlay = document.getElementById('overlay');
+        const scoreDisplay = document.getElementById('score-display');
+        const levelDisplay = document.getElementById('level-display');
+
+        function startGame() {
+            overlay.style.display = 'none';
+            score = 0;
+            level = 1;
+            scoreDisplay.innerText = `Score: ${score}`;
+            startLevel();
+        }
+
+        function startLevel() {
+            levelDisplay.innerText = `Level: ${level} / ${maxLevels}`;
+            grid.innerHTML = '';
+            selectedTile = null;
+            matchedPairs = 0;
+            
+            // 1. SELECT QUESTIONS BASED ON LEVEL
+            let currentPool = [];
+            let pairsCount = 0;
+
+            if (level === 1) { currentPool = set1; pairsCount = 4; }      // 8 Tiles
+            else if (level === 2) { currentPool = set2; pairsCount = 5; } // 10 Tiles
+            else if (level === 3) { currentPool = set3; pairsCount = 6; } // 12 Tiles
+            else if (level === 4) { currentPool = set4; pairsCount = 8; } // 16 Tiles
+            else { currentPool = set5; pairsCount = 8; }                  // 16 Tiles (Hard Mix)
+
+            totalPairs = pairsCount;
+
+            // Get random selection from the pool
+            let deck = [...currentPool].sort(() => 0.5 - Math.random()).slice(0, pairsCount);
+            
+            // Create tiles
+            let tiles = [];
+            deck.forEach(item => {
+                tiles.push({ id: item.id, content: formatMath(item.q) });
+                tiles.push({ id: item.id, content: formatMath(item.a) });
+            });
+
+            // Shuffle grid
+            tiles.sort(() => 0.5 - Math.random());
+
+            // Render
+            tiles.forEach(t => {
+                const el = document.createElement('div');
+                el.classList.add('tile');
+                el.innerHTML = t.content;
+                el.dataset.id = t.id;
+                el.onclick = () => handleTileClick(el);
+                grid.appendChild(el);
+            });
+
+            // Reset Timer (Timer gets faster per level)
+            timeLeft = 100;
+            clearInterval(timerInterval);
+            gameActive = true;
+            timerInterval = setInterval(gameLoop, 100);
+        }
+
+        function formatMath(str) {
+            return str.replace(/(\w)\^(\d)/g, "$1<sup>$2</sup>");
+        }
+
+        function handleTileClick(tile) {
+            if (!gameActive || tile.classList.contains('matched') || tile === selectedTile) return;
+
+            if (!selectedTile) {
+                selectedTile = tile;
+                tile.classList.add('selected');
+            } else {
+                checkMatch(selectedTile, tile);
+            }
+        }
+
+        function checkMatch(tile1, tile2) {
+            const id1 = tile1.dataset.id;
+            const id2 = tile2.dataset.id;
+
+            if (id1 === id2) {
+                // MATCH
+                tile1.classList.remove('selected');
+                tile2.classList.remove('selected');
+                tile1.classList.add('matched');
+                tile2.classList.add('matched');
+                
+                score += 10 * level; // Higher score for higher levels
+                scoreDisplay.innerText = `Score: ${score}`;
+                selectedTile = null;
+                matchedPairs++;
+
+                if (matchedPairs === totalPairs) {
+                    levelComplete();
+                }
+            } else {
+                // WRONG
+                tile1.classList.add('shake');
+                tile2.classList.add('shake');
+                score -= 5;
+                scoreDisplay.innerText = `Score: ${score}`;
+                timeLeft -= 5; // Penalty
+
+                gameActive = false;
+                setTimeout(() => {
+                    tile1.classList.remove('selected', 'shake');
+                    tile2.classList.remove('selected', 'shake');
+                    selectedTile = null;
+                    gameActive = true;
+                }, 500);
+            }
+        }
+
+        function levelComplete() {
+            gameActive = false;
+            clearInterval(timerInterval);
+            
+            if (level === maxLevels) {
+                // VICTORY
+                setTimeout(victoryScreen, 1000);
+            } else {
+                // NEXT LEVEL
+                setTimeout(() => {
+                    level++;
+                    startLevel();
+                }, 1000);
+            }
+        }
+
+        function gameLoop() {
+            // Difficulty curve: Decay speeds up as level increases
+            // Lvl 1: 0.25, Lvl 5: 0.65 (Much faster)
+            const decay = 0.15 + (level * 0.1); 
+            timeLeft -= decay;
+            timerBar.style.width = `${timeLeft}%`;
+
+            if (timeLeft <= 0) {
+                gameOver();
+            } else if (timeLeft < 30) {
+                timerBar.style.background = "#f44336";
+            } else {
+                timerBar.style.background = "linear-gradient(90deg, #e94560, #ff7b00)";
+            }
+        }
+
+        function gameOver() {
+            gameActive = false;
+            clearInterval(timerInterval);
+            document.getElementById('overlay-title').innerHTML = "TIME'S UP";
+            document.getElementById('overlay-title').style.color = "#f44336";
+            document.getElementById('overlay-msg').innerHTML = `You reached Level ${level}<br>Score: ${score}`;
+            document.querySelector('button').innerText = "TRY AGAIN";
+            overlay.style.display = 'flex';
+        }
+
+        function victoryScreen() {
+            document.getElementById('overlay-title').innerHTML = "YOU WON!";
+            document.getElementById('overlay-title').className = "victory-text";
+            document.getElementById('overlay-msg').innerHTML = `Master of Factorisation!<br>Final Score: ${score}`;
+            document.getElementById('overlay-msg').style.color = "#fff";
+            document.querySelector('button').innerText = "PLAY AGAIN";
+            overlay.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

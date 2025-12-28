@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Function Pilot: Mastery Protocol</title>
+    <style>
+        :root {
+            --neon-blue: #00d2ff;
+            --neon-pink: #ff007f;
+            --neon-green: #39ff14;
+            --bg-dark: #050a14;
+        }
+
+        body { 
+            background: var(--bg-dark); color: white;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+            margin: 0; overflow-y: auto; min-height: 100vh; padding-bottom: 50px;
+        }
+
+        #hud-top {
+            display: flex; justify-content: space-between; width: 90%;
+            max-width: 800px; margin-top: 20px; text-transform: uppercase; letter-spacing: 2px;
+        }
+
+        #game-area { position: relative; margin-top: 10px; }
+
+        canvas {
+            background: radial-gradient(circle, #0f172a 0%, #050a14 100%);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.2);
+            max-width: 95vw;
+        }
+
+        .panel {
+            background: rgba(15, 23, 42, 0.95);
+            padding: 20px; border-radius: 10px;
+            border: 1px solid var(--neon-blue);
+            display: flex; flex-wrap: wrap; gap: 20px; margin-top: 15px;
+            align-items: center; width: 90%; max-width: 800px;
+        }
+
+        .formula-display {
+            flex: 1; min-width: 280px; border-left: 2px solid var(--neon-pink); padding-left: 15px;
+        }
+
+        .inputs { flex: 1; min-width: 250px; display: flex; align-items: center; font-size: 24px; gap: 10px;}
+
+        input {
+            background: #000; border: 1px solid var(--neon-pink);
+            color: var(--neon-green); font-size: 22px; width: 75px;
+            text-align: center; border-radius: 5px; padding: 5px;
+        }
+
+        #success-overlay {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8); border: 3px solid var(--neon-green);
+            padding: 30px 60px; border-radius: 15px; display: none;
+            font-weight: bold; font-size: 2.5rem; color: var(--neon-green);
+            text-shadow: 0 0 15px var(--neon-green); z-index: 10;
+            text-align: center;
+        }
+
+        #modal {
+            display: none; position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); background: #111;
+            padding: 40px; border: 5px solid var(--neon-green);
+            z-index: 100; text-align: center; border-radius: 20px;
+        }
+
+        .progress-bar { width: 90%; max-width: 800px; height: 10px; background: #222; margin: 10px 0; border-radius: 5px; overflow: hidden; }
+        #progress-fill { height: 100%; background: var(--neon-green); width: 0%; transition: 0.5s; }
+        
+        .math-check { color: #888; font-family: monospace; font-size: 14px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1 style="letter-spacing: 5px; color: var(--neon-blue); margin-bottom: 5px;">FUNCTION PILOT</h1>
+
+    <div id="hud-top">
+        <div>LEVEL: <span id="lvl-num" style="color:var(--neon-pink)">1</span>/10</div>
+        <div>SCORE: <span id="score" style="color:var(--neon-green)">0</span></div>
+    </div>
+
+    <div class="progress-bar"><div id="progress-fill"></div></div>
+
+    <div id="game-area">
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+        <div id="success-overlay">TARGET LOCKED<br><span style="font-size: 1.2rem;">HOLDING FOR ANALYSIS...</span></div>
+    </div>
+
+    <div class="panel">
+        <div class="inputs" id="input-area"></div>
+        <div class="formula-display">
+            <strong style="color:var(--neon-blue)">MISSION LOG:</strong><br>
+            <span id="hint-text">Loading...</span>
+            <div id="math-preview" class="math-check"></div>
+        </div>
+    </div>
+
+    <div id="modal">
+        <h1 style="color:var(--neon-green)">MISSION COMPLETE</h1>
+        <p id="final-stats" style="font-size: 24px;"></p>
+        <button onclick="location.reload()" style="padding:15px 30px; cursor:pointer; background: var(--neon-green); border:none; font-weight:bold; border-radius:5px; color: black;">RESTART SYSTEM</button>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const successOverlay = document.getElementById('success-overlay');
+    const mathPreview = document.getElementById('math-preview');
+    const GRID_SIZE = 40;
+    const ORIGIN = { x: canvas.width / 2, y: canvas.height / 2 };
+
+    let currentLvl = 1;
+    let score = 0;
+    let target = { x: 0, y: 0 };
+    let isTransitioning = false;
+
+    const levels = [
+        { title: "Linear: b", hint: "y = x + b. Find 'b' to shift the line.", vars: ['b'], fixed: {m:1, a:0} },
+        { title: "Linear: -b", hint: "y = x + b. 'b' can be negative.", vars: ['b'], fixed: {m:1, a:0} },
+        { title: "Linear: m", hint: "y = mx. 'm' is the slope (steepness).", vars: ['m'], fixed: {b:0, a:0} },
+        { title: "Linear: m & b", hint: "y = mx + b. Adjust both to hit target.", vars: ['m', 'b'], fixed: {a:0} },
+        { title: "Linear: Fractions", hint: "m can be decimals like 0.5 or 0.25.", vars: ['m', 'b'], fixed: {a:0} },
+        { title: "Linear: Negative m", hint: "Negative 'm' slopes downward.", vars: ['m', 'b'], fixed: {a:0} },
+        { title: "Linear: Zero Slope", hint: "m=0 creates a horizontal line.", vars: ['m', 'b'], fixed: {a:0} },
+        { title: "Curve: a", hint: "y = ax². 'a' controls the curve width.", vars: ['a'], fixed: {m:0, b:0} },
+        { title: "Curve: a & b", hint: "y = ax² + b. Move the curve vertically.", vars: ['a', 'b'], fixed: {m:0} },
+        { title: "Mastery", hint: "Combine a, m, and b to solve the final mission.", vars: ['a', 'm', 'b'], fixed: {} }
+    ];
+
+    function initLevel() {
+        if(currentLvl > 10) { showEnd(); return; }
+        isTransitioning = false;
+        successOverlay.style.display = 'none';
+        
+        const lvl = levels[currentLvl - 1];
+        document.getElementById('lvl-num').innerText = currentLvl;
+        document.getElementById('hint-text').innerText = lvl.hint;
+        document.getElementById('progress-fill').style.width = `${(currentLvl-1)*10}%`;
+
+        const container = document.getElementById('input-area');
+        container.innerHTML = 'y = ';
+        if (lvl.vars.includes('a')) container.innerHTML += `<input type="number" id="val-a" value="0.2" step="0.1">x² + `;
+        if (lvl.vars.includes('m')) container.innerHTML += `<input type="number" id="val-m" value="1" step="0.5">x + `;
+        else if (lvl.fixed.m !== 0 && !lvl.vars.includes('a')) container.innerHTML += `${lvl.fixed.m}x + `;
+        if (lvl.vars.includes('b')) container.innerHTML += `<input type="number" id="val-b" value="0">`;
+        else if (lvl.fixed.b !== undefined) container.innerHTML += `${lvl.fixed.b}`;
+
+        spawnTarget();
+    }
+
+    function spawnTarget() {
+        // Levels 1-7: Linear (target can be anywhere)
+        // Levels 8-10: Quadratic (keep targets visible within parabola range)
+        target.x = Math.floor(Math.random() * 8) - 4;
+        target.y = Math.floor(Math.random() * 8) - 4;
+        
+        if(target.x === 0 && target.y === 0) spawnTarget();
+    }
+
+    function checkHit() {
+        if (isTransitioning) return;
+
+        const lvl = levels[currentLvl - 1];
+        if(!lvl) return;
+        const a = parseFloat(document.getElementById('val-a')?.value || lvl.fixed.a || 0);
+        const m = parseFloat(document.getElementById('val-m')?.value || lvl.fixed.m || 0);
+        const b = parseFloat(document.getElementById('val-b')?.value || lvl.fixed.b || 0);
+
+        const playerY = (a * Math.pow(target.x, 2)) + (m * target.x) + b;
+        const diff = Math.abs(playerY - target.y);
+
+        // Display math helper
+        mathPreview.innerHTML = `Current Output at x=${target.x}: y = <b>${playerY.toFixed(2)}</b> (Target: ${target.y})`;
+
+        // Forgiving tolerance (0.1) for student UX
+        if (diff < 0.1) {
+            isTransitioning = true;
+            score += (currentLvl * 100);
+            document.getElementById('score').innerText = score;
+            successOverlay.style.display = 'block';
+
+            setTimeout(() => {
+                currentLvl++;
+                initLevel();
+            }, 2500);
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Grid
+        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+        for(let i=0; i<=canvas.width; i+=GRID_SIZE) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+        for(let i=0; i<=canvas.height; i+=GRID_SIZE) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
+        
+        // Axes
+        ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(ORIGIN.x, 0); ctx.lineTo(ORIGIN.x, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, ORIGIN.y); ctx.lineTo(canvas.width, ORIGIN.y); ctx.stroke();
+
+        // Target
+        const targetColor = isTransitioning ? '#39ff14' : '#ff007f';
+        ctx.fillStyle = targetColor;
+        ctx.shadowBlur = 15; ctx.shadowColor = targetColor;
+        ctx.beginPath(); 
+        ctx.arc(ORIGIN.x + target.x * GRID_SIZE, ORIGIN.y - target.y * GRID_SIZE, 10, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        ctx.font = "bold 16px monospace";
+        ctx.fillText(`(${target.x}, ${target.y})`, ORIGIN.x + target.x * GRID_SIZE + 15, ORIGIN.y - target.y * GRID_SIZE - 15);
+
+        // Player Line
+        const lvl = levels[currentLvl - 1] || levels[9];
+        const a = parseFloat(document.getElementById('val-a')?.value || lvl.fixed.a || 0);
+        const m = parseFloat(document.getElementById('val-m')?.value || lvl.fixed.m || 0);
+        const b = parseFloat(document.getElementById('val-b')?.value || lvl.fixed.b || 0);
+
+        ctx.strokeStyle = isTransitioning ? '#39ff14' : 'rgba(0, 210, 255, 0.7)'; 
+        ctx.lineWidth = isTransitioning ? 6 : 3;
+        ctx.beginPath();
+        for(let px = -10; px <= 10; px += 0.05) { // Smoother curve drawing
+            let py = (a * Math.pow(px, 2)) + (m * px) + b;
+            ctx.lineTo(ORIGIN.x + px * GRID_SIZE, ORIGIN.y - py * GRID_SIZE);
+        }
+        ctx.stroke();
+
+        checkHit();
+        requestAnimationFrame(draw);
+    }
+
+    function showEnd() {
+        document.getElementById('modal').style.display = 'block';
+        document.getElementById('final-stats').innerText = `TOTAL SCORE: ${score} PTS`;
+    }
+
+    initLevel();
+    draw();
+</script>
+</body>
+</html>

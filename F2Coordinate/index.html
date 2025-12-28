@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinate Hero: Space Rescue</title>
+    <style>
+        body {
+            background: radial-gradient(circle, #1b2735 0%, #090a0f 100%);
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #game-ui {
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00f2fe;
+        }
+
+        .stats-container {
+            display: flex;
+            gap: 30px;
+            font-size: 1.2rem;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid #4facfe;
+        }
+
+        #canvas-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(79, 172, 254, 0.3);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        canvas {
+            display: block;
+            border-radius: 10px;
+        }
+
+        .target-display {
+            font-size: 2rem;
+            color: #ff00de;
+            margin: 10px 0;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        #message-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            pointer-events: none;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-ui">
+        <h1>STATION COMMANDER: COORDINATE SEARCH</h1>
+        <div class="target-display">TARGET SIGNAL: <span id="target-coord">(0, 0)</span></div>
+        <div class="stats-container">
+            <div>ENERGY: <span id="health">100</span>%</div>
+            <div>STARS RECOVERED: <span id="score">0</span></div>
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="gameCanvas" width="500" height="500"></canvas>
+        <div id="message-overlay"></div>
+    </div>
+
+    <div style="margin-top: 15px; color: #4facfe;">
+        Move: Click/Tap the grid | Mission: Locate the data points
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const targetEl = document.getElementById('target-coord');
+        const scoreEl = document.getElementById('score');
+        const healthEl = document.getElementById('health');
+        const overlay = document.getElementById('message-overlay');
+
+        const range = 10; // -10 to 10
+        const step = canvas.width / (range * 2);
+        const center = canvas.width / 2;
+
+        let score = 0;
+        let health = 100;
+        let targetX = 0;
+        let targetY = 0;
+
+        function init() {
+            newTarget();
+            draw();
+        }
+
+        function newTarget() {
+            targetX = Math.floor(Math.random() * 21) - 10;
+            targetY = Math.floor(Math.random() * 21) - 10;
+            targetEl.innerText = `(${targetX}, ${targetY})`;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Grid Lines
+            ctx.strokeStyle = "rgba(79, 172, 254, 0.2)";
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= canvas.width; i += step) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
+            }
+
+            // Draw X and Y Axes
+            ctx.strokeStyle = "#4facfe";
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(center, 0); ctx.lineTo(center, canvas.height); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, center); ctx.lineTo(canvas.width, center); ctx.stroke();
+
+            // Labeling numbers
+            ctx.fillStyle = "#4facfe";
+            ctx.font = "10px Arial";
+            for (let i = -10; i <= 10; i++) {
+                if(i === 0) continue;
+                ctx.fillText(i, center + (i * step) - 5, center + 15); // X labels
+                ctx.fillText(i, center - 20, center - (i * step) + 5); // Y labels
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Convert pixels to math coordinates
+            const clickedX = Math.round((x - center) / step);
+            const clickedY = Math.round((center - y) / step);
+
+            if (clickedX === targetX && clickedY === targetY) {
+                handleSuccess();
+            } else {
+                handleFailure();
+            }
+        });
+
+        function handleSuccess() {
+            score += 1;
+            scoreEl.innerText = score;
+            showFeedback("✓ RECOVERED", "#00ff88");
+            newTarget();
+            draw();
+        }
+
+        function handleFailure() {
+            health -= 10;
+            healthEl.innerText = health;
+            showFeedback("X MISS", "#ff0055");
+            if (health <= 0) {
+                alert("GAME OVER! Ship battery depleted. Score: " + score);
+                location.reload();
+            }
+        }
+
+        function showFeedback(text, color) {
+            overlay.innerText = text;
+            overlay.style.color = color;
+            overlay.style.display = "block";
+            setTimeout(() => { overlay.style.display = "none"; }, 500);
+        }
+
+        init();
+    </script>
+</body>
+</html>

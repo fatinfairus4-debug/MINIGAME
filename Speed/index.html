@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vector Velocity: Lunar Lander</title>
+    <style>
+        body { margin: 0; background: #050505; color: white; font-family: 'Courier New', Courier, monospace; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        canvas { border: 2px solid #333; background: #000; margin-top: 10px; cursor: crosshair; }
+        .stats { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.7); padding: 10px; border: 1px solid #0f0; }
+        .msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: none; }
+        span { color: #0f0; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="stats">
+        SPEED: <span id="speed">0</span> m/s<br>
+        ACCEL: <span id="accel">0</span> m/s²<br>
+        FUEL: <span id="fuel">100</span>%
+    </div>
+
+    <div id="message" class="msg">
+        <h1 id="status">MISSION COMPLETE</h1>
+        <p id="feedback"></p>
+        <button onclick="resetGame()">RETRY</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800;
+    canvas.height = 500;
+
+    // Physics Constants
+    const GRAVITY = 0.05; 
+    const THRUST = 0.15;
+    const SAFE_LANDING_SPEED = 1.5;
+
+    let ship = {
+        x: 100, y: 50,
+        vy: 0, ay: GRAVITY,
+        fuel: 100, width: 20, height: 30,
+        isThrusting: false, dead: false, landed: false
+    };
+
+    let pad = { x: 600, y: 450, width: 80, height: 10 };
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Stars
+        ctx.fillStyle = "white";
+        for(let i=0; i<20; i++) ctx.fillRect(i*50, (i*i*13)%500, 2, 2);
+
+        // Draw Landing Pad
+        ctx.fillStyle = "#0f0";
+        ctx.fillRect(pad.x, pad.y, pad.width, pad.height);
+
+        // Draw Ship
+        ctx.fillStyle = ship.dead ? "red" : "white";
+        ctx.fillRect(ship.x, ship.y, ship.width, ship.height);
+
+        // Draw Flame
+        if (ship.isThrusting && ship.fuel > 0) {
+            ctx.fillStyle = "orange";
+            ctx.fillRect(ship.x + 5, ship.y + ship.height, 10, 15);
+        }
+
+        update();
+        requestAnimationFrame(draw);
+    }
+
+    function update() {
+        if (ship.dead || ship.landed) return;
+
+        // Apply Physics
+        ship.ay = ship.isThrusting && ship.fuel > 0 ? GRAVITY - THRUST : GRAVITY;
+        ship.vy += ship.ay;
+        ship.y += ship.vy;
+        
+        // Update Stats UI
+        document.getElementById('speed').innerText = Math.abs(ship.vy * 10).toFixed(1);
+        document.getElementById('accel').innerText = (ship.ay * 10).toFixed(1);
+        document.getElementById('fuel').innerText = Math.max(0, ship.fuel).toFixed(0);
+
+        // Horizontal Movement (Simple drift)
+        ship.x += 1;
+
+        // Collision Detection
+        if (ship.y + ship.height >= pad.y && ship.x + ship.width > pad.x && ship.x < pad.x + pad.width) {
+            if (Math.abs(ship.vy * 10) < SAFE_LANDING_SPEED * 10) {
+                endGame("SUCCESS!", "Perfect landing. Soft speed preserved momentum.");
+                ship.landed = true;
+            } else {
+                endGame("CRASH!", "Too much speed! Acceleration was too high for too long.");
+                ship.dead = true;
+            }
+        }
+
+        if (ship.y > canvas.height || ship.x > canvas.width) {
+            endGame("LOST IN SPACE", "You missed the pad entirely.");
+            ship.dead = true;
+        }
+    }
+
+    function endGame(title, text) {
+        document.getElementById('message').style.display = "block";
+        document.getElementById('status').innerText = title;
+        document.getElementById('feedback').innerText = text;
+    }
+
+    function resetGame() {
+        ship = { x: 50, y: 50, vy: 0, ay: GRAVITY, fuel: 100, width: 20, height: 30, isThrusting: false, dead: false, landed: false };
+        document.getElementById('message').style.display = "none";
+    }
+
+    window.addEventListener('keydown', (e) => { 
+        if(e.code === 'Space') { ship.isThrusting = true; ship.fuel -= 0.5; }
+    });
+    window.addEventListener('keyup', (e) => { 
+        if(e.code === 'Space') ship.isThrusting = false; 
+    });
+
+    draw();
+</script>
+</body>
+</html>

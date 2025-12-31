@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galactic Isometry: Form 2 Math</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #0b0c15;
+            color: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: #00d2d3;
+            text-shadow: 0 0 10px #00d2d3;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #8395a7;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .game-layout {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* CANVAS AREA */
+        .viewport {
+            position: relative;
+            border: 2px solid #576574;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 210, 211, 0.2);
+            background: radial-gradient(circle, #1e272e 0%, #000000 100%);
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+
+        /* CONTROLS AREA */
+        .controls {
+            width: 320px;
+            background: #222f3e;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #576574;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel-header {
+            font-family: 'Orbitron', sans-serif;
+            border-bottom: 1px solid #576574;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            color: #ff9f43;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            width: 100%;
+            justify-items: center;
+        }
+
+        button {
+            background: #2c3e50;
+            border: 1px solid #00d2d3;
+            color: #00d2d3;
+            padding: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #00d2d3;
+            color: #000;
+            box-shadow: 0 0 10px #00d2d3;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .coord-display {
+            background: #000;
+            font-family: monospace;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #333;
+            color: #00d2d3;
+            text-align: center;
+        }
+
+        /* Win Overlay */
+        #message-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            color: #2ecc71;
+            text-shadow: 0 0 20px #2ecc71;
+            display: none;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        .tutorial {
+            font-size: 0.8rem;
+            color: #aaa;
+            line-height: 1.4;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>🚀 GALACTIC ISOMETRY</h1>
+    <div class="subtitle">Match the Blue Ship to the Green Dock using Transformations</div>
+
+    <div class="game-layout">
+        
+        <div class="viewport">
+            <canvas id="gameCanvas" width="500" height="500"></canvas>
+            <div id="message-overlay">DOCKING COMPLETE</div>
+        </div>
+
+        <div class="controls">
+            
+            <div class="coord-display">
+                Ship Tip: <span id="shipCoords">(0, 0)</span><br>
+                Target Tip: <span id="targetCoords">(0, 0)</span>
+            </div>
+
+            <div>
+                <div class="panel-header">TRANSLATION</div>
+                <div class="d-pad">
+                    <div></div>
+                    <button onclick="transform('up')">▲<br>+y</button>
+                    <div></div>
+                    <button onclick="transform('left')">◀ -x</button>
+                    <button onclick="resetShip()" style="border-color: #e74c3c; color: #e74c3c;">RESET</button>
+                    <button onclick="transform('right')">+x ▶</button>
+                    <div></div>
+                    <button onclick="transform('down')">▼<br>-y</button>
+                    <div></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="panel-header">ROTATION (About Origin)</div>
+                <div class="btn-group">
+                    <button onclick="transform('rotCCW')">↺ 90° CCW</button>
+                    <button onclick="transform('rotCW')">↻ 90° CW</button>
+                </div>
+            </div>
+
+            <div>
+                <div class="panel-header">REFLECTION</div>
+                <div class="btn-group">
+                    <button onclick="transform('flipX')">X-Axis</button>
+                    <button onclick="transform('flipY')">Y-Axis</button>
+                </div>
+            </div>
+
+            <div class="tutorial">
+                <strong>Mission:</strong> Click the buttons to move your ship. <br>
+                <strong>Goal:</strong> Overlap the Blue Ship with the Green Outline.<br>
+                <strong>Level:</strong> <span id="levelDisplay">1</span>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Grid settings
+    const gridSize = 25; // pixels per unit
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    // Game State
+    let level = 1;
+    let isAnimating = false;
+
+    // The Ship is defined by an array of points (relative to 0,0)
+    // An asymmetric shape is crucial to distinguish reflections/rotations
+    const baseShape = [
+        {x: 0, y: 0},   // Nose (Center of rotation for visual simplicity in this game logic, but we rotate around origin)
+        {x: -1, y: -2}, // Left Wing
+        {x: 0, y: -1},  // Engine divot
+        {x: 1, y: -2}   // Right Wing (making it slightly asymmetric to detect flips?)
+        // Let's make it strictly asymmetric for Math purposes
+    ];
+    
+    // Asymmetric Arrow Ship for Form 2 Clarity
+    const shipModel = [
+        {x: 0, y: 0},   // Tip
+        {x: -1, y: -2}, // Left Back
+        {x: 0, y: -1},  // Center Back
+        {x: 1, y: -2},  // Right Back
+        {x: 1, y: -1}   // Fin (makes it asymmetric)
+    ];
+
+    let playerPoly = []; // Current coordinates
+    let targetPoly = []; // Target coordinates
+
+    // Initialize
+    startLevel();
+    requestAnimationFrame(gameLoop);
+
+    function startLevel() {
+        // 1. Reset Player to a simple starting position (e.g., 2,2)
+        playerPoly = clonePoly(shipModel);
+        
+        // Move player to a start spot (random small integer)
+        const startX = Math.floor(Math.random() * 4) + 1;
+        const startY = Math.floor(Math.random() * 4) + 1;
+        applyTranslation(playerPoly, startX, startY);
+
+        // 2. Generate Target by copying player and applying random transforms
+        targetPoly = clonePoly(playerPoly);
+        
+        // Randomize the "Mission" based on difficulty
+        const moves = Math.floor(Math.random() * 3) + 1; // 1 to 3 transformations
+        
+        for(let i=0; i<moves; i++) {
+            const r = Math.random();
+            if (r < 0.4) {
+                // Translation
+                const tx = Math.floor(Math.random() * 6) - 3;
+                const ty = Math.floor(Math.random() * 6) - 3;
+                applyTranslation(targetPoly, tx, ty);
+            } else if (r < 0.7) {
+                // Rotation
+                applyRotation(targetPoly, Math.random() < 0.5); // Random CW or CCW
+            } else {
+                // Reflection
+                applyReflection(targetPoly, Math.random() < 0.5); // Random X or Y
+            }
+        }
+
+        // Ensure target is within visible grid (clamp -9 to 9)
+        // This is a simple check, simply resetting if out of bounds for now
+        if (!isWithinBounds(targetPoly)) {
+            startLevel(); // Try again
+            return;
+        }
+
+        updateUI();
+        document.getElementById('message-overlay').style.display = "none";
+        document.getElementById('levelDisplay').innerText = level;
+    }
+
+    function isWithinBounds(poly) {
+        for(let p of poly) {
+            if(Math.abs(p.x) > 9 || Math.abs(p.y) > 9) return false;
+        }
+        return true;
+    }
+
+    function resetShip() {
+        // Just restarts the level essentially, or moves player back to origin?
+        // Let's move player back to (0,0) or reload level
+        // For this game, let's just restart the level interactions
+        playerPoly = clonePoly(shipModel);
+        updateUI();
+    }
+
+    // --- Math Transformation Logic ---
+
+    function clonePoly(poly) {
+        return poly.map(p => ({...p}));
+    }
+
+    function applyTranslation(poly, dx, dy) {
+        for (let p of poly) {
+            p.x += dx;
+            p.y += dy;
+        }
+    }
+
+    function applyRotation(poly, isCW) {
+        // Rotation about Origin (0,0)
+        // 90 deg CW: (x,y) -> (y, -x)
+        // 90 deg CCW: (x,y) -> (-y, x)
+        for (let p of poly) {
+            const oldX = p.x;
+            const oldY = p.y;
+            if (isCW) {
+                p.x = oldY;
+                p.y = -oldX;
+            } else {
+                p.x = -oldY;
+                p.y = oldX;
+            }
+        }
+    }
+
+    function applyReflection(poly, isXAxis) {
+        // Reflection
+        // X-Axis: (x,y) -> (x, -y)
+        // Y-Axis: (x,y) -> (-x, y)
+        for (let p of poly) {
+            if (isXAxis) {
+                p.y = -p.y; // Flip over X axis (y changes sign)
+            } else {
+                p.x = -p.x; // Flip over Y axis (x changes sign)
+            }
+        }
+    }
+
+    // --- Interaction ---
+
+    function transform(type) {
+        if (document.getElementById('message-overlay').style.display === "block") return;
+
+        switch(type) {
+            case 'up': applyTranslation(playerPoly, 0, 1); break;
+            case 'down': applyTranslation(playerPoly, 0, -1); break;
+            case 'left': applyTranslation(playerPoly, -1, 0); break;
+            case 'right': applyTranslation(playerPoly, 1, 0); break;
+            case 'rotCW': applyRotation(playerPoly, true); break;
+            case 'rotCCW': applyRotation(playerPoly, false); break;
+            case 'flipX': applyReflection(playerPoly, true); break; // Flip over X axis
+            case 'flipY': applyReflection(playerPoly, false); break; // Flip over Y axis
+        }
+        updateUI();
+        checkWin();
+    }
+
+    function checkWin() {
+        // Check if every point in player matches every point in target
+        // Since order is preserved in our logic, direct index comparison works
+        let match = true;
+        for(let i=0; i<playerPoly.length; i++) {
+            if(playerPoly[i].x !== targetPoly[i].x || playerPoly[i].y !== targetPoly[i].y) {
+                match = false;
+                break;
+            }
+        }
+
+        if(match) {
+            document.getElementById('message-overlay').style.display = "block";
+            setTimeout(() => {
+                level++;
+                startLevel();
+            }, 1500);
+        }
+    }
+
+    function updateUI() {
+        // Update coord text
+        // Note: We use p[0] as the "Tip" or reference point
+        const p = playerPoly[0];
+        const t = targetPoly[0];
+        document.getElementById('shipCoords').innerText = `(${p.x}, ${p.y})`;
+        document.getElementById('targetCoords').innerText = `(${t.x}, ${t.y})`;
+    }
+
+    // --- Rendering ---
+
+    function toCanvas(x, y) {
+        // Convert Math coords to Canvas coords
+        // Math X right, Y up. Canvas X right, Y down.
+        return {
+            x: centerX + (x * gridSize),
+            y: centerY - (y * gridSize)
+        };
+    }
+
+    function drawGrid() {
+        ctx.fillStyle = "#0b0c15";
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.strokeStyle = "#2d3436";
+        ctx.lineWidth = 1;
+
+        // Grid lines
+        for(let i=0; i<=width; i+=gridSize) {
+            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(width, i); ctx.stroke();
+        }
+
+        // Axes
+        ctx.strokeStyle = "#576574";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, centerY); ctx.lineTo(width, centerY); ctx.stroke(); // X
+        ctx.beginPath(); ctx.moveTo(centerX, 0); ctx.lineTo(centerX, height); ctx.stroke(); // Y
+        
+        // Axis Labels
+        ctx.fillStyle = "#8395a7";
+        ctx.fillText("+y", centerX + 5, 15);
+        ctx.fillText("+x", width - 20, centerY - 5);
+    }
+
+    function drawPoly(poly, color, glow, isDashed) {
+        if(poly.length === 0) return;
+
+        ctx.beginPath();
+        const start = toCanvas(poly[0].x, poly[0].y);
+        ctx.moveTo(start.x, start.y);
+
+        for(let i=1; i<poly.length; i++) {
+            const p = toCanvas(poly[i].x, poly[i].y);
+            ctx.lineTo(p.x, p.y);
+        }
+        ctx.closePath();
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        if(isDashed) ctx.setLineDash([5, 5]);
+        else ctx.setLineDash([]);
+        
+        if (glow) {
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = color;
+        } else {
+            ctx.shadowBlur = 0;
+        }
+
+        ctx.stroke();
+        
+        // Fill slightly
+        ctx.fillStyle = color + "33"; // 20% opacity hex
+        ctx.fill();
+
+        // Draw Tip Marker
+        ctx.fillStyle = "white";
+        ctx.fillRect(start.x - 2, start.y - 2, 4, 4);
+    }
+
+    function gameLoop() {
+        ctx.clearRect(0, 0, width, height);
+        drawGrid();
+        
+        // Draw Target (Green Ghost)
+        drawPoly(targetPoly, "#2ecc71", false, true);
+        
+        // Draw Player (Cyan Ship)
+        drawPoly(playerPoly, "#00d2d3", true, false);
+
+        requestAnimationFrame(gameLoop);
+    }
+
+</script>
+</body>
+</html>

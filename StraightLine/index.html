@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradient Striker: Form 2 Math</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: #f1c40f;
+            text-shadow: 2px 2px #000;
+        }
+
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            max-width: 1000px;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            border: 5px solid #ecf0f1;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            background-color: #27ae60; /* Grass Green */
+            cursor: crosshair;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .sidebar {
+            background: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .stats {
+            background: #2c3e50;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .score-board {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2ecc71;
+        }
+
+        .problem-box {
+            background: #ecf0f1;
+            color: #2c3e50;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .formula {
+            font-family: 'Courier New', monospace;
+            background: #bdc3c7;
+            padding: 5px;
+            border-radius: 3px;
+            display: block;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 2px solid #bdc3c7;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.2em;
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #d35400;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 24px;
+        }
+
+        .correct { color: #2ecc71; }
+        .wrong { color: #e74c3c; }
+
+        /* Overlay for "Goal!" animation */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.7);
+            color: #f1c40f;
+            font-size: 4em;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+            border-radius: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>⚽ Gradient Striker ⚽</h1>
+    <p>Calculate the gradient to complete the pass!</p>
+
+    <div class="game-container">
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="500" height="500"></canvas>
+            <div id="overlay">GOAL!</div>
+        </div>
+
+        <div class="sidebar">
+            <div class="stats">
+                <div>GOALS SCORED</div>
+                <div class="score-board" id="score">0</div>
+            </div>
+
+            <div class="problem-box">
+                <div><strong>Player A Position:</strong> <span id="posA"></span></div>
+                <div><strong>Player B Position:</strong> <span id="posB"></span></div>
+                <hr>
+                <div style="font-size: 0.9em; margin-bottom: 5px;">Gradient Formula:</div>
+                <span class="formula">m = (y₂ - y₁) / (x₂ - x₁)</span>
+            </div>
+
+            <div>
+                <label for="answerInput">Enter Gradient (m):</label>
+                <input type="text" id="answerInput" placeholder="e.g. 2, -1/2, 0.5" autocomplete="off">
+                <button onclick="checkAnswer()">SHOOT!</button>
+                <div class="feedback" id="feedbackMsg"></div>
+            </div>
+            
+            <div style="margin-top: 20px; font-size: 0.8em; color: #bdc3c7; text-align: center;">
+                Accepts fractions (e.g. 1/2) and decimals.
+            </div>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Grid settings
+    const gridSize = 40;
+    const offsetX = width / 2;
+    const offsetY = height / 2;
+
+    // Game State
+    let score = 0;
+    let p1 = { x: 0, y: 0 };
+    let p2 = { x: 0, y: 0 };
+    let ball = { x: 0, y: 0, active: false, t: 0 };
+    
+    // Init
+    generateLevel();
+    requestAnimationFrame(gameLoop);
+
+    function generateLevel() {
+        // Generate random coordinates between -5 and 5 to fit on screen
+        // Ensure x1 != x2 to avoid undefined gradient (vertical line)
+        
+        let x1, y1, x2, y2;
+        
+        do {
+            x1 = Math.floor(Math.random() * 11) - 5; // -5 to 5
+            x2 = Math.floor(Math.random() * 11) - 5;
+        } while (x1 === x2); // Prevent vertical lines for simplicity at this level
+
+        y1 = Math.floor(Math.random() * 11) - 5;
+        y2 = Math.floor(Math.random() * 11) - 5;
+
+        // Ensure they aren't the same point
+        if (y1 === y2 && x1 === x2) {
+            y2 += 2; 
+        }
+
+        p1 = { x: x1, y: y1 };
+        p2 = { x: x2, y: y2 };
+
+        // Reset Ball
+        ball.active = false;
+        ball.t = 0;
+
+        // UI Update
+        document.getElementById('posA').innerText = `(${p1.x}, ${p1.y})`;
+        document.getElementById('posB').innerText = `(${p2.x}, ${p2.y})`;
+        document.getElementById('answerInput').value = '';
+        document.getElementById('feedbackMsg').innerText = '';
+        document.getElementById('overlay').style.opacity = 0;
+    }
+
+    // Convert Math Coords to Canvas Coords
+    function toCanvasX(x) { return offsetX + (x * gridSize); }
+    function toCanvasY(y) { return offsetY - (y * gridSize); }
+
+    function drawGrid() {
+        ctx.fillStyle = "#27ae60"; // Pitch Green
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw center circle (pitch decoration)
+        ctx.beginPath();
+        ctx.arc(offsetX, offsetY, 60, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.3)";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(255,255,255,0.2)";
+        ctx.lineWidth = 1;
+
+        // Vertical lines
+        for(let x = 0; x <= width; x += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+
+        // Horizontal lines
+        for(let y = 0; y <= height; y += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+
+        // Axes
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 3;
+        
+        // X Axis
+        ctx.beginPath();
+        ctx.moveTo(0, offsetY);
+        ctx.lineTo(width, offsetY);
+        ctx.stroke();
+
+        // Y Axis
+        ctx.beginPath();
+        ctx.moveTo(offsetX, 0);
+        ctx.lineTo(offsetX, height);
+        ctx.stroke();
+        
+        // Axis Labels
+        ctx.fillStyle = "white";
+        ctx.font = "12px Arial";
+        ctx.fillText("y", offsetX + 5, 15);
+        ctx.fillText("x", width - 15, offsetY - 5);
+    }
+
+    function drawPlayer(x, y, label, color) {
+        const cx = toCanvasX(x);
+        const cy = toCanvasY(y);
+
+        // Shirt
+        ctx.beginPath();
+        ctx.arc(cx, cy, 15, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "white";
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = "white";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, cx, cy);
+
+        // Coordinates Text
+        ctx.fillStyle = "#f1c40f";
+        ctx.font = "12px Arial";
+        ctx.fillText(`(${x},${y})`, cx, cy - 25);
+    }
+
+    function drawBall() {
+        let bx, by;
+        
+        if (ball.active) {
+            // Linear interpolation
+            bx = toCanvasX(p1.x + (p2.x - p1.x) * ball.t);
+            by = toCanvasY(p1.y + (p2.y - p1.y) * ball.t);
+            
+            ball.t += 0.05; // Animation speed
+            if(ball.t >= 1) {
+                ball.t = 1;
+                document.getElementById('overlay').style.opacity = 1;
+                setTimeout(generateLevel, 1500); // Next level after 1.5s
+            }
+        } else {
+            bx = toCanvasX(p1.x);
+            by = toCanvasY(p1.y);
+        }
+
+        ctx.beginPath();
+        ctx.arc(bx, by, 8, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Hexagon pattern on ball (simplified)
+        ctx.beginPath();
+        ctx.moveTo(bx-4, by);
+        ctx.lineTo(bx+4, by);
+        ctx.stroke();
+    }
+
+    function drawLine() {
+        // Draw the passing line (dashed)
+        ctx.beginPath();
+        ctx.setLineDash([5, 5]);
+        ctx.moveTo(toCanvasX(p1.x), toCanvasY(p1.y));
+        ctx.lineTo(toCanvasX(p2.x), toCanvasY(p2.y));
+        ctx.strokeStyle = "rgba(255, 255, 0, 0.5)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    function gameLoop() {
+        ctx.clearRect(0, 0, width, height);
+        drawGrid();
+        drawLine();
+        drawPlayer(p1.x, p1.y, "A", "#e74c3c"); // Red Team
+        drawPlayer(p2.x, p2.y, "B", "#e74c3c"); // Red Team
+        drawBall();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function parseFraction(input) {
+        // Handle decimals
+        if (!input.includes('/')) return parseFloat(input);
+        
+        // Handle fractions
+        const parts = input.split('/');
+        if (parts.length === 2) {
+            return parseFloat(parts[0]) / parseFloat(parts[1]);
+        }
+        return NaN;
+    }
+
+    function checkAnswer() {
+        const input = document.getElementById('answerInput').value.trim();
+        const userM = parseFraction(input);
+        
+        // Calculate actual gradient
+        const rise = p2.y - p1.y;
+        const run = p2.x - p1.x;
+        const actualM = rise / run;
+
+        const feedback = document.getElementById('feedbackMsg');
+
+        // Check with small tolerance for floating point math
+        if (Math.abs(userM - actualM) < 0.001) {
+            feedback.innerHTML = "Great Pass! GOAL!";
+            feedback.className = "feedback correct";
+            score++;
+            document.getElementById('score').innerText = score;
+            ball.active = true; // Trigger animation
+        } else {
+            feedback.innerHTML = "Missed! Try again.<br>Hint: Rise = " + rise + ", Run = " + run;
+            feedback.className = "feedback wrong";
+        }
+    }
+    
+    // Allow 'Enter' key to submit
+    document.getElementById("answerInput").addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
+            checkAnswer();
+        }
+    });
+
+</script>
+
+</body>
+</html>

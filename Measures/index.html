@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Tendency Shooter - Form 2 Math</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #1a1a2e;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hud-panel {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0f3460;
+            border-radius: 0 0 15px 15px;
+            padding: 15px 30px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+            margin-top: 0;
+        }
+
+        h2 { margin: 0; font-size: 1.1rem; color: #e94560; text-transform: uppercase; letter-spacing: 2px;}
+        .dataset { font-size: 1.8rem; font-weight: bold; margin: 8px 0; color: #fff; letter-spacing: 3px; }
+        .hint { font-size: 0.9rem; color: #a0a0a0; font-style: italic; }
+
+        .stats {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        #start-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            text-align: center;
+            padding: 20px;
+        }
+
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 25px;
+            box-shadow: 0 0 15px #e94560;
+        }
+
+        button:hover { background: #ff4d6d; }
+
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div class="hud-panel">
+            <h2 id="task-type">MISSION: FIND THE MEAN</h2>
+            <div class="dataset" id="dataset-display">[ 0, 0, 0 ]</div>
+            <div id="hint-display" class="hint">Sum of data / Number of data</div>
+        </div>
+        
+        <div class="stats">
+            <div style="color: #e94560">CITY HEALTH: <span id="health-display">100</span>%</div>
+            <div style="color: #4cd137">SCORE: <span id="score-display">0</span></div>
+        </div>
+    </div>
+
+    <div id="start-screen">
+        <h1 style="font-size: 3.5rem; color: #e94560; margin: 0;">DATA DEFENDER</h1>
+        <p style="font-size: 1.2rem; max-width: 600px;">
+            Don't let the <b>CORRECT</b> answer hit your base!<br><br>
+            1. Calculate the Mean, Median, or Mode.<br>
+            2. Shoot the enemy carrying that answer (+10 pts).<br>
+            3. If the correct answer hits the base, you lose health!<br>
+            4. Shooting wrong answers costs -5 points.
+        </p>
+        <button onclick="startGame()">INITIALIZE TURRET</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let gameRunning = false;
+    let score = 0;
+    let health = 100;
+    let particles = [];
+    let enemies = [];
+    let frameCount = 0;
+    let currentAnswer = 0;
+    let currentTask = ""; 
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function generateLevel() {
+        const types = ['mean', 'median', 'mode'];
+        currentTask = types[Math.floor(Math.random() * types.length)];
+        let data = [];
+        let count = 3; 
+
+        if (currentTask === 'mean') {
+            const targetMean = Math.floor(Math.random() * 8) + 2;
+            let currentSum = 0;
+            for(let i=0; i<count-1; i++) {
+                let n = Math.floor(Math.random() * 10) + 1;
+                data.push(n);
+                currentSum += n;
+            }
+            let lastNum = (targetMean * count) - currentSum;
+            if(lastNum < 1) { generateLevel(); return; } 
+            data.push(lastNum);
+            currentAnswer = targetMean;
+            document.getElementById('task-type').innerText = "MISSION: INTERCEPT THE MEAN";
+            document.getElementById('hint-display').innerText = "Sum ÷ Count";
+
+        } else if (currentTask === 'median') {
+            for(let i=0; i<3; i++) data.push(Math.floor(Math.random() * 15) + 1);
+            let sorted = [...data].sort((a,b) => a-b);
+            currentAnswer = sorted[1];
+            document.getElementById('task-type').innerText = "MISSION: INTERCEPT THE MEDIAN";
+            document.getElementById('hint-display').innerText = "The middle value";
+
+        } else if (currentTask === 'mode') {
+            const targetMode = Math.floor(Math.random() * 9) + 1;
+            data = [targetMode, targetMode, Math.floor(Math.random()*9)+1];
+            while(data[2] === targetMode) data[2] = Math.floor(Math.random()*9)+1;
+            data.sort(() => Math.random() - 0.5);
+            currentAnswer = targetMode;
+            document.getElementById('task-type').innerText = "MISSION: INTERCEPT THE MODE";
+            document.getElementById('hint-display').innerText = "Most frequent value";
+        }
+
+        document.getElementById('dataset-display').innerText = `[ ${data.join(', ')} ]`;
+    }
+
+    class Enemy {
+        constructor() {
+            const side = Math.floor(Math.random() * 4);
+            if (side === 0) { this.x = Math.random() * canvas.width; this.y = -30; }
+            else if (side === 1) { this.x = Math.random() * canvas.width; this.y = canvas.height + 30; }
+            else if (side === 2) { this.x = -30; this.y = Math.random() * canvas.height; }
+            else { this.x = canvas.width + 30; this.y = Math.random() * canvas.height; }
+
+            const angle = Math.atan2((canvas.height/2) - this.y, (canvas.width/2) - this.x);
+            let speed = 1.2 + (score / 250);
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.radius = 28;
+            
+            if (Math.random() > 0.7) {
+                this.value = currentAnswer;
+                this.isCorrect = true;
+            } else {
+                let wrong = Math.floor(Math.random() * 15) + 1;
+                if (wrong === currentAnswer) wrong += 2;
+                this.value = wrong;
+                this.isCorrect = false;
+            }
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#34495e';
+            ctx.fill();
+            ctx.strokeStyle = this.isCorrect ? '#f1c40f' : '#ecf0f1';
+            ctx.lineWidth = this.isCorrect ? 4 : 2;
+            ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 22px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(this.value, this.x, this.y);
+        }
+    }
+
+    function createExplosion(x, y, color) {
+        for(let i=0; i<15; i++) {
+            particles.push({
+                x, y, 
+                vx: (Math.random() - 0.5) * 10, 
+                vy: (Math.random() - 0.5) * 10, 
+                life: 1.0, 
+                color
+            });
+        }
+    }
+
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        score = 0; health = 100;
+        enemies = []; particles = [];
+        updateStats();
+        gameRunning = true;
+        generateLevel();
+        loop();
+    }
+
+    function updateStats() {
+        document.getElementById('score-display').innerText = score;
+        document.getElementById('health-display').innerText = health;
+    }
+
+    function loop() {
+        if (!gameRunning) return;
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Base
+        ctx.beginPath();
+        ctx.arc(canvas.width/2, canvas.height/2, 45, 0, Math.PI*2);
+        ctx.fillStyle = '#16213e';
+        ctx.fill();
+        ctx.strokeStyle = '#e94560';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        frameCount++;
+        if (frameCount % 65 === 0) enemies.push(new Enemy());
+
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            let e = enemies[i];
+            e.update();
+            e.draw();
+
+            const dist = Math.hypot(e.x - canvas.width/2, e.y - canvas.height/2);
+            if (dist < 45 + e.radius) {
+                if (e.isCorrect) {
+                    health -= 20; // Correct answer penalty!
+                    createExplosion(e.x, e.y, '#ff4d6d');
+                    generateLevel(); // New target needed
+                    enemies = enemies.filter(enemy => !enemy.isCorrect); // Clear old correct ones
+                } else {
+                    createExplosion(e.x, e.y, '#34495e'); // Wrong answer hit safely
+                }
+                updateStats();
+                enemies.splice(i, 1);
+                if (health <= 0) gameOver();
+            }
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx; p.y += p.vy; p.life -= 0.03;
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+        ctx.globalAlpha = 1.0;
+
+        requestAnimationFrame(loop);
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+        if (!gameRunning) return;
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            let enemy = enemies[i];
+            const dist = Math.hypot(clickX - enemy.x, clickY - enemy.y);
+            if (dist < enemy.radius + 15) {
+                if (enemy.isCorrect) {
+                    score += 10;
+                    createExplosion(enemy.x, enemy.y, '#4cd137');
+                    generateLevel();
+                    enemies = enemies.filter(en => !en.isCorrect); 
+                } else {
+                    score = Math.max(0, score - 5);
+                    createExplosion(enemy.x, enemy.y, '#e94560');
+                }
+                enemies.splice(i, 1);
+                updateStats();
+                return;
+            }
+        }
+    });
+
+    function gameOver() {
+        gameRunning = false;
+        ctx.fillStyle = 'rgba(0,0,0,0.9)';
+        ctx.fillRect(0,0, canvas.width, canvas.height);
+        ctx.fillStyle = '#e94560';
+        ctx.font = 'bold 50px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText("CITY DESTROYED", canvas.width/2, canvas.height/2);
+        ctx.fillStyle = '#fff'; ctx.font = '25px Arial';
+        ctx.fillText("Final Score: " + score, canvas.width/2, canvas.height/2 + 60);
+        setTimeout(() => { document.getElementById('start-screen').style.display = 'flex'; }, 3500);
+    }
+</script>
+</body>
+</html>

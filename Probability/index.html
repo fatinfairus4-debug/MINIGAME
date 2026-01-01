@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Probability Quest: Form 2 Edition</title>
+    <style>
+        :root { --primary: #4f46e5; --accent: #8b5cf6; --bg: #f5f3ff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        #game-box { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 450px; text-align: center; border: 2px solid #ddd; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 1.1rem; }
+        .progress-bar { height: 10px; background: #e2e8f0; border-radius: 5px; margin-bottom: 20px; overflow: hidden; }
+        #progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
+        .jar-container { background: #fff; border: 4px solid #475569; border-top: none; border-radius: 0 0 50px 50px; min-height: 180px; padding: 15px; display: flex; flex-wrap: wrap; align-content: flex-end; justify-content: center; gap: 6px; margin-bottom: 20px; }
+        .marble { width: 22px; height: 22px; border-radius: 50%; box-shadow: inset -2px -2px 4px rgba(0,0,0,0.3); border: 1px solid rgba(0,0,0,0.1); }
+        .red { background: #ef4444; } .blue { background: #3b82f6; } .green { background: #22c55e; } .yellow { background: #eab308; }
+        input { width: 100px; padding: 12px; border: 2px solid #cbd5e1; border-radius: 10px; font-size: 1.2rem; text-align: center; }
+        button { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        #final-screen { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="game-box">
+    <div id="play-screen">
+        <div class="header">
+            <span>Level: <span id="lvl">1</span>/10</span>
+            <span>Score: <span id="score">0</span></span>
+        </div>
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+        
+        <h3 id="question-text">Loading...</h3>
+        <div class="jar-container" id="jar"></div>
+
+        <div style="margin-bottom: 15px;">
+            <input type="text" id="ans-input" placeholder="x/y">
+            <button onclick="submitAnswer()">Check</button>
+        </div>
+        <p id="msg"></p>
+    </div>
+
+    <div id="final-screen">
+        <h1>🎉 Quest Complete!</h1>
+        <p>You have mastered Simple Probability.</p>
+        <h2 style="font-size: 3rem; color: var(--primary);">Score: <span id="final-score">0</span>/10</h2>
+        <button onclick="location.reload()">Play Again</button>
+    </div>
+</div>
+
+<script>
+    let level = 1;
+    let score = 0;
+    let targetNum = 0;
+    let totalNum = 0;
+
+    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+
+    function setupLevel() {
+        if (level > 10) {
+            showResults();
+            return;
+        }
+
+        const jar = document.getElementById('jar');
+        const qText = document.getElementById('question-text');
+        const input = document.getElementById('ans-input');
+        const msg = document.getElementById('msg');
+        
+        jar.innerHTML = '';
+        msg.textContent = '';
+        input.value = '';
+        document.getElementById('lvl').textContent = level;
+        document.getElementById('progress-fill').style.width = (level * 10) + '%';
+
+        // Difficulty Settings
+        const marbleCount = 5 + (level * 1); // Increases marbles per level
+        const colors = ['red', 'blue', 'green'];
+        if (level > 5) colors.push('yellow'); // Add more colors for higher levels
+
+        let counts = { red: 0, blue: 0, green: 0, yellow: 0 };
+        for (let i = 0; i < marbleCount; i++) {
+            const c = colors[Math.floor(Math.random() * colors.length)];
+            counts[c]++;
+            const m = document.createElement('div');
+            m.className = `marble ${c}`;
+            jar.appendChild(m);
+        }
+
+        totalNum = marbleCount;
+        const colorNames = Object.keys(counts).filter(c => counts[c] > 0);
+        const pickColor = colorNames[Math.floor(Math.random() * colorNames.length)];
+
+        // Complexity Logic
+        const isComplement = (level >= 4 && Math.random() > 0.5);
+        
+        if (isComplement) {
+            targetNum = totalNum - counts[pickColor];
+            qText.innerHTML = `What is the probability of picking <strong>NOT ${pickColor}</strong>?`;
+        } else {
+            targetNum = counts[pickColor];
+            qText.innerHTML = `What is the probability of picking <strong>${pickColor}</strong>?`;
+        }
+    }
+
+    function submitAnswer() {
+        const input = document.getElementById('ans-input').value.trim();
+        const msg = document.getElementById('msg');
+
+        if (!input.includes('/')) {
+            msg.textContent = "Enter answer as a fraction (e.g., 2/5)";
+            return;
+        }
+
+        const [n, d] = input.split('/').map(Number);
+        
+        // Correctness check (handles simplification automatically)
+        if (d !== 0 && (n / d) === (targetNum / totalNum)) {
+            score++;
+            msg.style.color = "green";
+            msg.textContent = "Excellent!";
+            document.getElementById('score').textContent = score;
+        } else {
+            msg.style.color = "red";
+            msg.textContent = `Wrong! Correct was ${targetNum}/${totalNum}`;
+        }
+
+        level++;
+        setTimeout(setupLevel, 1500);
+    }
+
+    function showResults() {
+        document.getElementById('play-screen').style.display = 'none';
+        document.getElementById('final-screen').style.display = 'block';
+        document.getElementById('final-score').textContent = score;
+    }
+
+    setupLevel();
+</script>
+</body>
+</html>

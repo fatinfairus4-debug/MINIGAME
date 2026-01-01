@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Polygon Angle Master</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #2c3e50; color: white; text-align: center; }
+        canvas { background: #ecf0f1; border: 5px solid #34495e; border-radius: 15px; cursor: crosshair; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .ui-panel { margin: 20px auto; padding: 20px; background: #34495e; display: inline-block; border-radius: 12px; min-width: 400px; }
+        .score-board { font-size: 24px; color: #f1c40f; margin-bottom: 10px; }
+        .target-box { font-size: 20px; background: #e67e22; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .btn { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn:hover { background: #2ecc71; }
+        #msg { height: 20px; margin-top: 10px; font-weight: bold; color: #2ecc71; }
+    </style>
+</head>
+<body>
+
+    <h1>Level up your Polygon Skills!</h1>
+
+    <div class="ui-panel">
+        <div class="score-board">Score: <span id="score">0</span> | Level: <span id="level">1</span></div>
+        <div class="target-box" id="task">Loading task...</div>
+        <button class="btn" onclick="nextLevel()">Skip / Reset Shape</button>
+        <div id="msg"></div>
+    </div>
+
+    <br>
+    <canvas id="canvas" width="600" height="400"></canvas>
+
+    <div style="margin-top: 20px; color: #bdc3c7;">
+        <p>Formula: Sum of Angles = $(n - 2) \times 180^\circ$</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const levelEl = document.getElementById('level');
+        const taskEl = document.getElementById('task');
+        const msgEl = document.getElementById('msg');
+
+        let points = [];
+        let draggingPoint = null;
+        let score = 0;
+        let level = 1;
+        let targetAngle = 0;
+        let targetIndex = 0;
+        let numSides = 3;
+
+        function nextLevel() {
+            numSides = Math.min(3 + Math.floor(level / 2), 10); // Increase sides every 2 levels
+            levelEl.innerText = level;
+            initPolygon(numSides);
+            // Pick a random vertex to be the target
+            targetIndex = Math.floor(Math.random() * numSides);
+            // Set a target angle that is physically possible
+            targetAngle = Math.floor(Math.random() * 60) + 40; 
+            taskEl.innerHTML = `Drag <b>Vertex ${targetIndex + 1}</b> to reach <b>${targetAngle}°</b>`;
+            msgEl.innerText = "";
+        }
+
+        function initPolygon(n) {
+            points = [];
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 100;
+            for (let i = 0; i < n; i++) {
+                const angle = (i * 2 * Math.PI) / n;
+                points.push({ x: centerX + radius * Math.cos(angle), y: centerY + radius * Math.sin(angle) });
+            }
+            draw();
+        }
+
+        function calculateAngle(p1, p2, p3) {
+            const a = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+            const b = Math.hypot(p2.x - p3.x, p2.y - p3.y);
+            const c = Math.hypot(p3.x - p1.x, p3.y - p1.y);
+            let val = (a*a + b*b - c*c) / (2 * a * b);
+            return Math.acos(Math.max(-1, Math.min(1, val))) * (180 / Math.PI);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Polygon
+            ctx.beginPath();
+            ctx.setLineDash([]);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#34495e';
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+            ctx.closePath();
+            ctx.stroke();
+
+            points.forEach((p, i) => {
+                const prev = points[(i + points.length - 1) % points.length];
+                const next = points[(i + 1) % points.length];
+                const angle = calculateAngle(prev, p, next);
+                
+                // Highlight Target Vertex
+                ctx.fillStyle = (i === targetIndex) ? '#e67e22' : '#3498db';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw Label
+                ctx.fillStyle = "#2c3e50";
+                ctx.font = "bold 14px Arial";
+                ctx.fillText(`${i+1}: ${Math.round(angle)}°`, p.x + 12, p.y - 12);
+
+                // Win Condition Check
+                if (i === targetIndex && Math.abs(angle - targetAngle) < 2 && draggingPoint === null) {
+                    msgEl.innerText = "Perfect! Level Up! +10 Points";
+                    score += 10;
+                    level++;
+                    scoreEl.innerText = score;
+                    setTimeout(nextLevel, 1500);
+                }
+            });
+        }
+
+        canvas.onmousedown = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            points.forEach((p, i) => {
+                if (Math.hypot(p.x - mx, p.y - my) < 20) draggingPoint = i;
+            });
+        };
+
+        window.onmousemove = (e) => {
+            if (draggingPoint !== null) {
+                const rect = canvas.getBoundingClientRect();
+                points[draggingPoint].x = e.clientX - rect.left;
+                points[draggingPoint].y = e.clientY - rect.top;
+                draw();
+            }
+        };
+
+        window.onmouseup = () => { draggingPoint = null; draw(); };
+
+        nextLevel();
+    </script>
+</body>
+</html>

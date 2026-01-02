@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadratic Rush - Form 4 Math</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #1e1b4b; /* Dark blue background */
+            --card: #312e81;
+            --text: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            user-select: none; /* Prevent text highlighting */
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .shake { animation: shake 0.4s ease-in-out; }
+        
+        .game-wrapper {
+            background: var(--card);
+            width: 100%;
+            max-width: 450px;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            text-align: center;
+            border: 4px solid #4338ca;
+        }
+
+        /* Header UI */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .hearts { color: var(--danger); letter-spacing: 5px; }
+        .level-badge {
+            background: #f59e0b;
+            color: black;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        /* Question Area */
+        .question-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .equation {
+            font-size: 2rem;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 10px 0;
+            color: #a5b4fc;
+        }
+        
+        .instruction { color: #9ca3af; font-size: 0.9rem; margin-bottom: 5px; }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Stack vertically for mobile */
+            gap: 15px;
+        }
+
+        button {
+            background: white;
+            color: var(--bg);
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            box-shadow: 0 4px 0 #94a3b8;
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        button:hover { background: #e2e8f0; }
+
+        /* Screens */
+        .hidden { display: none; }
+        
+        #start-screen h1 { font-size: 2.5rem; margin-bottom: 10px; color: #818cf8; }
+        .big-btn { background: var(--success); color: white; width: 100%; font-size: 1.5rem; box-shadow: 0 4px 0 #059669; }
+        .big-btn:hover { background: #34d399; }
+
+        .result-message { font-size: 1.2rem; margin-top: 15px; min-height: 1.5em; }
+
+        /* Progress Bar */
+        .progress-bar-bg { width: 100%; height: 8px; background: #1e1b4b; border-radius: 10px; margin-top: 20px; overflow: hidden;}
+        .progress-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.3s ease; }
+
+    </style>
+</head>
+<body>
+
+<div class="game-wrapper" id="start-screen">
+    <h1>Quadratic Rush 🚀</h1>
+    <p>Form 4 KSSM Challenge</p>
+    <div style="text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; margin: 20px 0;">
+        <p>1️⃣ <strong>Lvl 1:</strong> Identify a, b, c</p>
+        <p>2️⃣ <strong>Lvl 2:</strong> Graph Shapes (∪ or ∩)</p>
+        <p>3️⃣ <strong>Lvl 3:</strong> Find Roots (x)</p>
+    </div>
+    <button class="big-btn" onclick="startGame()">Start Game</button>
+</div>
+
+<div class="game-wrapper hidden" id="game-ui">
+    <div class="header">
+        <div class="level-badge" id="level-display">Level 1</div>
+        <div class="hearts" id="hearts-display">❤️❤️❤️</div>
+    </div>
+
+    <div class="question-box">
+        <div class="instruction" id="instruction-text">Identify the values:</div>
+        <div class="equation" id="equation-text">2x² + 5x + 3 = 0</div>
+    </div>
+
+    <div class="options-grid" id="options-container">
+        </div>
+
+    <div class="result-message" id="result-msg"></div>
+
+    <div class="progress-bar-bg">
+        <div class="progress-fill" id="progress-fill"></div>
+    </div>
+</div>
+
+<div class="game-wrapper hidden" id="end-screen">
+    <h1 id="end-title">Game Over</h1>
+    <p id="end-score">Score: 0</p>
+    <p id="end-comment">Try again!</p>
+    <button class="big-btn" onclick="location.reload()">Replay ↺</button>
+</div>
+
+<script>
+    // Game State
+    let state = {
+        level: 1,
+        score: 0,
+        lives: 3,
+        questionsAnsweredInLevel: 0,
+        questionsToPassLevel: 3, // How many correct answers to advance
+        currentQuestion: {}
+    };
+
+    const ui = {
+        start: document.getElementById('start-screen'),
+        game: document.getElementById('game-ui'),
+        end: document.getElementById('end-screen'),
+        eq: document.getElementById('equation-text'),
+        inst: document.getElementById('instruction-text'),
+        opts: document.getElementById('options-container'),
+        lvl: document.getElementById('level-display'),
+        hearts: document.getElementById('hearts-display'),
+        prog: document.getElementById('progress-fill'),
+        msg: document.getElementById('result-msg')
+    };
+
+    function startGame() {
+        ui.start.classList.add('hidden');
+        ui.game.classList.remove('hidden');
+        nextTurn();
+    }
+
+    function updateStats() {
+        ui.lvl.innerText = `Level ${state.level}`;
+        ui.hearts.innerText = "❤️".repeat(state.lives);
+        // Progress bar calculation based on level (approximate)
+        let totalProgress = ((state.level - 1) * 33) + (state.questionsAnsweredInLevel * 10);
+        ui.prog.style.width = `${Math.min(totalProgress, 100)}%`;
+    }
+
+    function nextTurn() {
+        updateStats();
+        ui.msg.innerText = "";
+        
+        // Win Condition
+        if (state.level > 3) {
+            endGame(true);
+            return;
+        }
+
+        generateQuestion(state.level);
+    }
+
+    function generateQuestion(level) {
+        ui.opts.innerHTML = ""; // Clear buttons
+        let q = {};
+
+        // Random integers generator
+        const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const randNonZero = () => { let r = rand(-5, 5); return r === 0 ? 1 : r; };
+
+        if (level === 1) {
+            // LEVEL 1: Identify ABC
+            const a = randNonZero();
+            const b = rand(-9, 9);
+            const c = rand(-9, 9);
+            
+            // Format: 2x² - 5x + 3 = 0
+            let eq = `${a}x² ${b >= 0 ? '+ '+b : '- '+Math.abs(b)}x ${c >= 0 ? '+ '+c : '- '+Math.abs(c)} = 0`;
+            
+            q = {
+                text: eq,
+                instruction: "Identify a, b, and c:",
+                correct: `a=${a}, b=${b}, c=${c}`,
+                type: 'text'
+            };
+
+            // Generate wrong answers
+            let distractors = [
+                `a=${a}, b=${-b}, c=${c}`, 
+                `a=${b}, b=${a}, c=${c}`,
+                `a=${a}, b=${b}, c=${-c}`
+            ];
+            renderOptions(q.correct, distractors);
+
+        } else if (level === 2) {
+            // LEVEL 2: Shapes
+            const a = randNonZero();
+            const b = rand(-5, 5);
+            const c = rand(-5, 5);
+            let eq = `${a}x² ${b >= 0 ? '+ '+b : '- '+Math.abs(b)}x ... = 0`;
+
+            q = {
+                text: eq,
+                instruction: "What is the shape of this graph?",
+                correct: a > 0 ? "∪" : "∩",
+                type: 'shape'
+            };
+
+            let wrong = a > 0 ? "∩" : "∪";
+            renderOptions(q.correct, [wrong]);
+
+        } else if (level === 3) {
+            // LEVEL 3: Find Roots (Factorised forms)
+            // Generate clean roots (x - r1)(x - r2)
+            let r1 = rand(-4, 4);
+            let r2 = rand(-4, 4);
+            // Avoid 0 to make it strictly quadratic usually, but 0 is valid math. Let's avoid 0 for difficulty.
+            if(r1 === 0) r1 = 1; 
+            
+            // Expansion
+            let a = 1; 
+            let b = -(r1 + r2);
+            let c_val = r1 * r2;
+            
+            let eq = `x² ${b >= 0 ? '+ '+b : '- '+Math.abs(b)}x ${c_val >= 0 ? '+ '+c_val : '- '+Math.abs(c_val)} = 0`;
+
+            q = {
+                text: eq,
+                instruction: "Find the roots (values of x):",
+                correct: `x = ${r1}, ${r2}`,
+                type: 'text'
+            };
+
+            // Distractors: wrong signs
+            let d1 = `x = ${-r1}, ${-r2}`;
+            let d2 = `x = ${r1}, ${-r2}`;
+            let d3 = `x = ${r1+1}, ${r2+1}`;
+            renderOptions(q.correct, [d1, d2, d3]);
+        }
+
+        ui.eq.innerText = q.text;
+        ui.inst.innerText = q.instruction;
+        state.currentQuestion = q;
+    }
+
+    function renderOptions(correctAnswer, wrongAnswers) {
+        // Combine and shuffle
+        let allOpts = [correctAnswer, ...wrongAnswers];
+        // Deduplicate just in case logic generated duplicates
+        allOpts = [...new Set(allOpts)];
+        // Shuffle
+        allOpts.sort(() => Math.random() - 0.5);
+
+        allOpts.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.innerText = opt;
+            // Make shape buttons larger
+            if(opt === "∪" || opt === "∩") btn.style.fontSize = "3rem";
+            
+            btn.onclick = () => checkAnswer(btn, opt === correctAnswer);
+            ui.opts.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(btn, isCorrect) {
+        // Disable all buttons to prevent double clicking
+        const allBtns = ui.opts.querySelectorAll('button');
+        allBtns.forEach(b => b.disabled = true);
+
+        if (isCorrect) {
+            btn.style.background = "#10b981"; // Green
+            btn.style.color = "white";
+            btn.style.animation = "pop 0.2s";
+            ui.msg.innerText = "Correct! 🎉";
+            ui.msg.style.color = "#4ade80";
+            state.score += 10;
+            state.questionsAnsweredInLevel++;
+
+            // Progression Logic
+            if(state.questionsAnsweredInLevel >= state.questionsToPassLevel) {
+                state.level++;
+                state.questionsAnsweredInLevel = 0; // Reset counter for next level
+                setTimeout(() => {
+                    // Flash Level Up
+                    ui.game.style.opacity = 0;
+                    setTimeout(() => {
+                        ui.game.style.opacity = 1;
+                        nextTurn();
+                    }, 300);
+                }, 1000);
+            } else {
+                setTimeout(nextTurn, 1000);
+            }
+
+        } else {
+            btn.style.background = "#ef4444"; // Red
+            btn.style.color = "white";
+            ui.game.classList.add('shake');
+            ui.msg.innerText = "Oops! Wrong one.";
+            ui.msg.style.color = "#f87171";
+            
+            state.lives--;
+            updateStats();
+
+            setTimeout(() => ui.game.classList.remove('shake'), 400);
+
+            if (state.lives <= 0) {
+                setTimeout(() => endGame(false), 1000);
+            } else {
+                setTimeout(nextTurn, 1000);
+            }
+        }
+    }
+
+    function endGame(victory) {
+        ui.game.classList.add('hidden');
+        ui.end.classList.remove('hidden');
+        
+        if (victory) {
+            document.getElementById('end-title').innerText = "YOU WIN! 🏆";
+            document.getElementById('end-comment').innerText = "You are a Quadratic Master!";
+            document.getElementById('end-title').style.color = "#fbbf24";
+        } else {
+            document.getElementById('end-title').innerText = "GAME OVER 💀";
+            document.getElementById('end-comment').innerText = "Keep practicing!";
+            document.getElementById('end-title').style.color = "#ef4444";
+        }
+        document.getElementById('end-score').innerText = `Final Score: ${state.score}`;
+    }
+</script>
+
+</body>
+</html>

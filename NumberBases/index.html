@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Defender - Form 4 Math</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #0f0f1a;
+            font-family: 'Courier New', Courier, monospace;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #gameCanvas {
+            border: 2px solid #00f0ff;
+            background: radial-gradient(circle, #1a1a2e 0%, #000000 100%);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            width: 800px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 24px;
+            text-shadow: 0 0 5px #00f0ff;
+            pointer-events: none;
+        }
+
+        #inputDisplay {
+            position: absolute;
+            bottom: 30px;
+            font-size: 40px;
+            color: #00f0ff;
+            text-shadow: 0 0 10px #00f0ff;
+            font-weight: bold;
+        }
+
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.85);
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 24px;
+            background: #00f0ff;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            color: #000;
+            margin-top: 20px;
+            transition: transform 0.1s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background: #fff;
+        }
+
+        .hidden { display: none !important; }
+        
+        h1 { margin-bottom: 10px; color: #ff0055; text-shadow: 0 0 10px red; }
+        p { font-size: 18px; color: #ccc; max-width: 600px; text-align: center; }
+        .highlight { color: #00f0ff; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div>Score: <span id="scoreVal">0</span></div>
+        <div>Level: <span id="levelVal">1</span></div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <div id="inputDisplay">Target: <span id="currentInput"></span><span style="animation: blink 1s infinite">|</span></div>
+
+    <div id="startScreen">
+        <h1 style="color:#00f0ff; text-shadow:0 0 20px #00f0ff">BASE DEFENDER</h1>
+        <p>Meteors are falling! They are encrypted in <span class="highlight">Base 2, 5, and 8</span>.</p>
+        <p>Type the <span class="highlight">Base 10</span> (Decimal) equivalent to destroy them.</p>
+        <br>
+        <p><i>Example: If you see <b>101 (Base 2)</b>, type <b>5</b>.</i></p>
+        <button onclick="startGame()">START MISSION</button>
+    </div>
+
+    <div id="gameOverScreen" class="hidden">
+        <h1>CITY DESTROYED</h1>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button onclick="startGame()">RETRY</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const currentInputSpan = document.getElementById('currentInput');
+        const scoreSpan = document.getElementById('scoreVal');
+        const levelSpan = document.getElementById('levelVal');
+
+        // Game State
+        let score = 0;
+        let gameRunning = false;
+        let enemies = [];
+        let particles = [];
+        let spawnRate = 2000; // ms
+        let lastSpawn = 0;
+        let playerInput = "";
+        let difficulty = 1;
+
+        // Configuration for Base Types
+        // We start with Base 2, then add 5 and 8 as difficulty rises
+        const baseConfig = [
+            { base: 2, color: '#00ff00' }, // Green for Binary
+            { base: 5, color: '#ffff00' }, // Yellow for Base 5
+            { base: 8, color: '#ff00ff' }  // Magenta for Octal
+        ];
+
+        // --- CLASSES ---
+
+        class Enemy {
+            constructor(speedMult) {
+                this.radius = 30;
+                this.x = Math.random() * (canvas.width - 60) + 30;
+                this.y = -40;
+                this.speed = (Math.random() * 0.5 + 0.5) * speedMult;
+                
+                // Determine difficulty based on score
+                let maxVal = 10; 
+                let allowedBases = 1; // Only Base 2 initially
+                
+                if (score > 100) { allowedBases = 2; maxVal = 20; } // Add Base 5
+                if (score > 250) { allowedBases = 3; maxVal = 30; } // Add Base 8
+
+                // Pick a base
+                let typeIdx = Math.floor(Math.random() * allowedBases);
+                this.baseInfo = baseConfig[typeIdx];
+                
+                // Generate a random Base 10 value
+                this.value10 = Math.floor(Math.random() * maxVal) + 1;
+                
+                // Convert to the target base string
+                this.displayValue = this.value10.toString(this.baseInfo.base).toUpperCase();
+            }
+
+            update() {
+                this.y += this.speed;
+            }
+
+            draw() {
+                // Draw Meteor Body
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#222';
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = this.baseInfo.color;
+                ctx.stroke();
+
+                // Draw Text (The Number)
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 20px Courier New';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.displayValue, this.x, this.y - 5);
+
+                // Draw Subscript (The Base)
+                ctx.font = '12px Arial';
+                ctx.fillStyle = this.baseInfo.color;
+                ctx.fillText(`(Base ${this.baseInfo.base})`, this.x, this.y + 15);
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 10;
+                this.vy = (Math.random() - 0.5) * 10;
+                this.life = 1.0;
+                this.color = color;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.05;
+            }
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, 4, 4);
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        // --- GAME ENGINE ---
+
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            
+            // Reset variables
+            score = 0;
+            difficulty = 1;
+            enemies = [];
+            particles = [];
+            playerInput = "";
+            currentInputSpan.innerText = "";
+            scoreSpan.innerText = "0";
+            levelSpan.innerText = "1";
+            gameRunning = true;
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+
+        function createExplosion(x, y, color) {
+            for(let i=0; i<15; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function checkInput() {
+            // Check if current input matches any enemy's Base 10 value
+            const inputVal = parseInt(playerInput);
+            if (isNaN(inputVal)) return;
+
+            // Find index of enemy that matches
+            const matchIndex = enemies.findIndex(e => e.value10 === inputVal);
+
+            if (matchIndex !== -1) {
+                // Destroy Enemy
+                const enemy = enemies[matchIndex];
+                createExplosion(enemy.x, enemy.y, enemy.baseInfo.color);
+                enemies.splice(matchIndex, 1);
+                
+                score += 10;
+                scoreSpan.innerText = score;
+                playerInput = ""; // Clear input on success
+                
+                // Increase difficulty slightly
+                if (score % 50 === 0) difficulty += 0.2;
+                levelSpan.innerText = Math.floor(score/100) + 1;
+            }
+        }
+
+        function gameLoop(timestamp) {
+            if (!gameRunning) return;
+
+            // Clear Screen
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Spawn Enemies
+            if (timestamp - lastSpawn > (spawnRate / difficulty)) {
+                enemies.push(new Enemy(difficulty));
+                lastSpawn = timestamp;
+            }
+
+            // Update & Draw Enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i];
+                e.update();
+                e.draw();
+
+                // Game Over Check
+                if (e.y > canvas.height) {
+                    gameOver();
+                }
+            }
+
+            // Update & Draw Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.update();
+                p.draw();
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            // Draw Player City/Cannon base
+            ctx.fillStyle = '#00f0ff';
+            ctx.fillRect(0, canvas.height - 10, canvas.width, 10);
+            
+            // Draw Player Laser Sight (Visual flair)
+            ctx.beginPath();
+            ctx.moveTo(canvas.width/2, canvas.height-10);
+            ctx.lineTo(canvas.width/2, canvas.height-30);
+            ctx.strokeStyle = "#00f0ff";
+            ctx.stroke();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- INPUT HANDLING ---
+
+        window.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+
+            // If number key
+            if (e.key >= '0' && e.key <= '9') {
+                playerInput += e.key;
+            } 
+            // Backspace
+            else if (e.key === 'Backspace') {
+                playerInput = playerInput.slice(0, -1);
+            }
+            // Clear input completely with Escape or Space
+            else if (e.key === 'Escape' || e.key === ' ') {
+                playerInput = "";
+            }
+
+            currentInputSpan.innerText = playerInput;
+            checkInput();
+        });
+
+    </script>
+</body>
+</html>

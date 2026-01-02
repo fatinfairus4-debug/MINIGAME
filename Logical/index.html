@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Logic Gear Mystery: Full Repairs</title>
+    <style>
+        :root {
+            --copper: #b87333;
+            --brass: #e1b382;
+            --steam-gray: #cfd8dc;
+            --dark-metal: #2c2c2c;
+            --glow-green: #4caf50;
+            --glow-red: #f44336;
+        }
+
+        body {
+            background-color: var(--dark-metal);
+            color: var(--brass);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 850px;
+            height: 600px;
+            border: 10px solid var(--copper);
+            background: radial-gradient(circle, #3d3d3d 0%, #1a1a1a 100%);
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 15px;
+            background: var(--copper);
+            color: black;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 40px;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 2px solid var(--copper);
+        }
+
+        .stat-box { font-size: 1.1rem; font-weight: bold; }
+
+        #phase-instruction {
+            padding: 15px;
+            color: var(--steam-gray);
+            font-style: italic;
+            height: 50px;
+        }
+
+        #core-display {
+            height: 180px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .power-core {
+            padding: 25px;
+            background: var(--brass);
+            color: #4a331f;
+            border: 5px solid #8e5a2d;
+            border-radius: 12px;
+            cursor: grab;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            max-width: 500px;
+            transition: transform 0.1s;
+        }
+
+        .power-core:active { cursor: grabbing; transform: scale(0.95); }
+
+        .zones {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        .zone {
+            width: 250px;
+            height: 180px;
+            border: 4px dashed var(--brass);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            transition: 0.3s;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .zone h3 { margin: 5px 0; letter-spacing: 1px; }
+
+        #zone-left { border-color: #ff9800; color: #ff9800; }
+        #zone-right { border-color: #00bcd4; color: #00bcd4; }
+
+        .zone.hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-5px); }
+
+        .game-over-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div class="header" id="phase-title">Phase 1: The Gate of Truth</div>
+        
+        <div class="stats-bar">
+            <div class="stat-box">Pressure: <span id="pressure">100</span>%</div>
+            <div class="stat-box">Repairs: <span id="score">0</span></div>
+        </div>
+
+        <div id="phase-instruction">Drag the core to the correct slot!</div>
+
+        <div id="core-display">
+            <div id="active-core" class="power-core" draggable="true">Loading...</div>
+        </div>
+
+        <div class="zones">
+            <div id="zone-left" class="zone" ondragover="allowDrop(event)" ondrop="handleDrop('left')" ondragenter="highlight(this)" ondragleave="unhighlight(this)">
+                <h3 id="label-left">BOILER</h3>
+                <p id="desc-left">(Statements)</p>
+            </div>
+            <div id="zone-right" class="zone" ondragover="allowDrop(event)" ondrop="handleDrop('right')" ondragenter="highlight(this)" ondragleave="unhighlight(this)">
+                <h3 id="label-right">SCRAP BIN</h3>
+                <p id="desc-right">(Non-Statements)</p>
+            </div>
+        </div>
+
+        <div id="overlay" class="game-over-overlay">
+            <h1 id="overlay-title">SYSTEM FAILURE</h1>
+            <p id="overlay-msg">The boiler has exploded!</p>
+            <button onclick="location.reload()" style="padding: 10px 20px; cursor: pointer; background: var(--copper); border: none; font-weight: bold;">REBOOT ENGINE</button>
+        </div>
+    </div>
+
+    <script>
+        const gameData = {
+            1: {
+                title: "Phase 1: The Gate of Truth",
+                instruction: "Separate stable Statements from unstable Non-Statements.",
+                leftLabel: "BOILER", leftDesc: "Statements",
+                rightLabel: "SCRAP BIN", rightDesc: "Non-Statements",
+                tasks: [
+                    { text: "7 + 2 = 10", ans: "left" },
+                    { text: "Don't open the valve!", ans: "right" },
+                    { text: "A triangle has 3 sides.", ans: "left" },
+                    { text: "How many gears are there?", ans: "right" }
+                ]
+            },
+            2: {
+                title: "Phase 2: The Quantifier Regulator",
+                instruction: "Determine if the statement uses 'ALL' or 'SOME'.",
+                leftLabel: "ALL", leftDesc: "Every single one",
+                rightLabel: "SOME", rightDesc: "At least one",
+                tasks: [
+                    { text: "___ prime numbers are odd.", ans: "right" }, // Some (because 2 is even)
+                    { text: "___ squares have 4 equal sides.", ans: "left" }, // All
+                    { text: "___ multiples of 5 end with 0.", ans: "right" }, // Some (some end in 5)
+                    { text: "___ hexagons have 6 vertices.", ans: "left" } // All
+                ]
+            },
+            3: {
+                title: "Phase 3: The Implication Linker",
+                instruction: "Is the final implication TRUE or FALSE?",
+                leftLabel: "TRUE", leftDesc: "Logic Holds",
+                rightLabel: "FALSE", rightDesc: "Logic Breaks",
+                tasks: [
+                    { text: "If x = 3, then x + 2 = 5", ans: "left" },
+                    { text: "If x > 5, then x > 10", ans: "right" }, // False, could be 6
+                    { text: "If a shape is a square, then it has 4 sides.", ans: "left" },
+                    { text: "If x is a multiple of 4, then x is a multiple of 8.", ans: "right" } // False (e.g., 4)
+                ]
+            }
+        };
+
+        let currentPhase = 1;
+        let taskIndex = 0;
+        let pressure = 100;
+        let score = 0;
+
+        const core = document.getElementById('active-core');
+        const overlay = document.getElementById('overlay');
+
+        function updateUI() {
+            const data = gameData[currentPhase];
+            document.getElementById('phase-title').innerText = data.title;
+            document.getElementById('phase-instruction').innerText = data.instruction;
+            document.getElementById('label-left').innerText = data.leftLabel;
+            document.getElementById('desc-left').innerText = data.leftDesc;
+            document.getElementById('label-right').innerText = data.rightLabel;
+            document.getElementById('desc-right').innerText = data.rightDesc;
+            
+            if (taskIndex < data.tasks.length) {
+                core.innerText = data.tasks[taskIndex].text;
+            } else {
+                nextPhase();
+            }
+        }
+
+        function allowDrop(e) { e.preventDefault(); }
+        function highlight(el) { el.classList.add('hover'); }
+        function unhighlight(el) { el.classList.remove('hover'); }
+
+        function handleDrop(choice) {
+            unhighlight(document.getElementById('zone-left'));
+            unhighlight(document.getElementById('zone-right'));
+            
+            const correctAns = gameData[currentPhase].tasks[taskIndex].ans;
+
+            if (choice === correctAns) {
+                score += 20;
+                document.getElementById('score').innerText = score;
+                flashEffect('var(--glow-green)');
+            } else {
+                pressure -= 25;
+                document.getElementById('pressure').innerText = pressure;
+                flashEffect('var(--glow-red)');
+                if (pressure <= 0) showEnd(false);
+            }
+
+            taskIndex++;
+            setTimeout(updateUI, 500);
+        }
+
+        function flashEffect(color) {
+            core.style.backgroundColor = color;
+            setTimeout(() => core.style.backgroundColor = "var(--brass)", 400);
+        }
+
+        function nextPhase() {
+            if (currentPhase < 3) {
+                currentPhase++;
+                taskIndex = 0;
+                alert("Phase " + (currentPhase-1) + " Complete! Upgrading Logic Circuits...");
+                updateUI();
+            } else {
+                showEnd(true);
+            }
+        }
+
+        function showEnd(win) {
+            overlay.style.display = "flex";
+            if (win) {
+                document.getElementById('overlay-title').innerText = "ENGINE REPAIRED";
+                document.getElementById('overlay-title').style.color = "var(--glow-green)";
+                document.getElementById('overlay-msg').innerText = "Final Score: " + score + " | Pressure: " + pressure + "%";
+            }
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>

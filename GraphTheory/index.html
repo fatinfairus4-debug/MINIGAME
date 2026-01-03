@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Theory Architect - Form 4</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --bg: #f3f4f6;
+            --panel: #ffffff;
+            --text: #1f2937;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        h1 { margin-bottom: 10px; }
+
+        .game-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Sidebar for Task and Info */
+        .sidebar {
+            flex: 1;
+            background: var(--panel);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .task-box {
+            background: #e0e7ff;
+            border-left: 5px solid var(--primary);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .task-title { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; color: var(--primary); }
+        .instructions { font-size: 0.9em; color: #555; margin-bottom: 15px; }
+
+        .stats {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        /* Canvas Area */
+        .canvas-wrapper {
+            flex: 2;
+            background: var(--panel);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* UI Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .btn-check { background-color: var(--primary); color: white; flex: 1; }
+        .btn-reset { background-color: #ef4444; color: white; }
+        .btn-undo { background-color: #f59e0b; color: white; }
+
+        /* Modal for Level Complete */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .vertex-label {
+            position: absolute;
+            background: rgba(255,255,255,0.8);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Graph Theory Architect</h1>
+    
+    <div class="game-container">
+        <div class="sidebar">
+            <div>
+                <div class="task-box">
+                    <div class="task-title">Level <span id="level-num">1</span>: The Simple Connection</div>
+                    <div id="task-desc">Connect 3 vertices such that the sum of degrees is 4.</div>
+                </div>
+
+                <div class="instructions">
+                    <strong>Controls:</strong><br>
+                    • <strong>Click</strong> two different circles to draw an Edge.<br>
+                    • <strong>Double Click</strong> a circle to create a Loop.<br>
+                    • Draw multiple lines between same circles for Multiple Edges.
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item"><span>Edges (E):</span> <span id="stat-edges">0</span></div>
+                    <div class="stat-item"><span>Sum of Degrees (Σd):</span> <span id="stat-degrees">0</span></div>
+                    <div class="stat-item"><span>Loops:</span> <span id="stat-loops">0</span></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn-undo" onclick="game.undo()">Undo</button>
+                <button class="btn-reset" onclick="game.resetLevel()">Clear</button>
+                <button class="btn-check" onclick="game.checkWin()">Submit Blueprint</button>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper" id="canvas-container">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="modal" id="winModal">
+        <div class="modal-content">
+            <h2 style="color: #10b981;">Contract Approved!</h2>
+            <p id="win-msg">Great job meeting the requirements.</p>
+            <button class="btn-check" onclick="game.nextLevel()">Next Level</button>
+        </div>
+    </div>
+
+    <script>
+        class GraphGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.container = document.getElementById('canvas-container');
+                
+                // Game State
+                this.levelIndex = 0;
+                this.vertices = [];
+                this.edges = [];
+                this.selectedVertex = null;
+                
+                // Configuration
+                this.radius = 20;
+                
+                // Levels Data
+                this.levels = [
+                    {
+                        title: "The Triangle",
+                        desc: "Create a Simple Graph with 3 vertices. Every vertex must have a degree of exactly 2.",
+                        vertexCount: 3,
+                        check: (v, e) => {
+                            // Check simple graph (no loops, no multiple)
+                            if(this.hasLoops() || this.hasMultipleEdges()) return "Must be a Simple Graph (No loops or multiple edges)!";
+                            // Check degrees
+                            return v.every(vert => vert.degree === 2) ? true : "Each vertex must have degree 2.";
+                        }
+                    },
+                    {
+                        title: "The Butterfly",
+                        desc: "Create a graph with 5 vertices. Vertex C (center) must have degree 4. All others degree 2.",
+                        vertexCount: 5,
+                        check: (v, e) => {
+                            if(this.hasLoops() || this.hasMultipleEdges()) return "Keep it simple (No loops/multiple edges).";
+                            // Assume Vertex 2 is the center (C)
+                            if(v[2].degree !== 4) return "Vertex C (Middle) must have degree 4.";
+                            const others = [0,1,3,4];
+                            if(others.every(i => v[i].degree === 2)) return true;
+                            return "Outer vertices must have degree 2.";
+                        }
+                    },
+                    {
+                        title: "The Loop-de-Loop",
+                        desc: "Graph must have exactly 1 Loop and Total Edges (E) = 4.",
+                        vertexCount: 3,
+                        check: (v, e) => {
+                            if(this.countLoops() !== 1) return "You need exactly 1 Loop.";
+                            if(e.length !== 4) return "Total edges must be 4.";
+                            return true;
+                        }
+                    },
+                    {
+                        title: "Multiple Highways",
+                        desc: "Create a graph with 1 Multiple Edge pair. Total Degree Sum (Σd) must be 10.",
+                        vertexCount: 4,
+                        check: (v, e) => {
+                            if(!this.hasMultipleEdges()) return "You need at least one pair of Multiple Edges.";
+                            const sum = v.reduce((acc, curr) => acc + curr.degree, 0);
+                            if(sum !== 10) return `Current Degree sum is ${sum}. Need 10.`;
+                            return true;
+                        }
+                    }
+                ];
+
+                this.initEvents();
+                this.loadLevel(0);
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                this.loop();
+            }
+
+            resize() {
+                this.canvas.width = this.container.clientWidth;
+                this.canvas.height = this.container.clientHeight;
+                this.initVertices(); // Re-position vertices on resize
+                this.draw();
+            }
+
+            initVertices() {
+                // Arrange vertices in a nice polygon/grid shape based on count
+                const count = this.levels[this.levelIndex].vertexCount;
+                this.vertices = [];
+                const cx = this.canvas.width / 2;
+                const cy = this.canvas.height / 2;
+                const r = Math.min(cx, cy) - 60;
+                
+                for(let i=0; i<count; i++) {
+                    const angle = (i * 2 * Math.PI) / count - Math.PI/2;
+                    this.vertices.push({
+                        id: i,
+                        label: String.fromCharCode(65 + i), // A, B, C...
+                        x: cx + r * Math.cos(angle),
+                        y: cy + r * Math.sin(angle),
+                        degree: 0
+                    });
+                }
+                this.recalcDegrees();
+            }
+
+            loadLevel(idx) {
+                this.levelIndex = idx;
+                this.edges = [];
+                document.getElementById('level-num').innerText = idx + 1;
+                document.getElementById('task-desc').innerText = this.levels[idx].desc;
+                this.initVertices();
+                this.updateStats();
+                this.draw();
+            }
+
+            initEvents() {
+                let lastClickTime = 0;
+
+                this.canvas.addEventListener('mousedown', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const clickedV = this.getVertexAt(x, y);
+
+                    const now = new Date().getTime();
+                    const isDoubleClick = (now - lastClickTime) < 300;
+                    lastClickTime = now;
+
+                    if (clickedV) {
+                        if (isDoubleClick) {
+                            // Add Loop
+                            this.addEdge(clickedV, clickedV);
+                            this.selectedVertex = null;
+                        } else {
+                            // Select for edge creation
+                            if (this.selectedVertex === null) {
+                                this.selectedVertex = clickedV;
+                            } else {
+                                if (this.selectedVertex !== clickedV) {
+                                    this.addEdge(this.selectedVertex, clickedV);
+                                    this.selectedVertex = null;
+                                } else {
+                                    // Clicked same vertex slowly, just deselect or keep selected
+                                    this.selectedVertex = null; 
+                                }
+                            }
+                        }
+                    } else {
+                        this.selectedVertex = null;
+                    }
+                    this.draw();
+                });
+            }
+
+            addEdge(v1, v2) {
+                // Store edge as ordered pair of IDs to simplify logic
+                // For undirected graphs, we usually sort ids so (1,2) is same as (2,1)
+                const ids = [v1.id, v2.id].sort();
+                this.edges.push({ from: ids[0], to: ids[1] });
+                this.recalcDegrees();
+                this.updateStats();
+            }
+
+            undo() {
+                this.edges.pop();
+                this.recalcDegrees();
+                this.updateStats();
+                this.draw();
+            }
+
+            resetLevel() {
+                this.edges = [];
+                this.recalcDegrees();
+                this.updateStats();
+                this.draw();
+            }
+
+            recalcDegrees() {
+                this.vertices.forEach(v => v.degree = 0);
+                this.edges.forEach(e => {
+                    if (e.from === e.to) {
+                        // Loop contributes 2 to degree
+                        this.vertices[e.from].degree += 2;
+                    } else {
+                        this.vertices[e.from].degree += 1;
+                        this.vertices[e.to].degree += 1;
+                    }
+                });
+            }
+
+            updateStats() {
+                document.getElementById('stat-edges').innerText = this.edges.length;
+                const sumDeg = this.vertices.reduce((acc, v) => acc + v.degree, 0);
+                document.getElementById('stat-degrees').innerText = sumDeg;
+                document.getElementById('stat-loops').innerText = this.countLoops();
+            }
+
+            // Helpers
+            getVertexAt(x, y) {
+                return this.vertices.find(v => {
+                    const dx = v.x - x;
+                    const dy = v.y - y;
+                    return Math.sqrt(dx*dx + dy*dy) < this.radius * 1.5;
+                });
+            }
+
+            hasLoops() {
+                return this.edges.some(e => e.from === e.to);
+            }
+
+            countLoops() {
+                return this.edges.filter(e => e.from === e.to).length;
+            }
+
+            hasMultipleEdges() {
+                // Check for duplicates in edge list
+                const signatures = this.edges.map(e => e.from + "-" + e.to);
+                return new Set(signatures).size !== signatures.length;
+            }
+
+            checkWin() {
+                const result = this.levels[this.levelIndex].check(this.vertices, this.edges);
+                if (result === true) {
+                    document.getElementById('winModal').style.display = 'flex';
+                } else {
+                    alert("Not quite right: " + result);
+                }
+            }
+
+            nextLevel() {
+                document.getElementById('winModal').style.display = 'none';
+                if(this.levelIndex < this.levels.length - 1) {
+                    this.loadLevel(this.levelIndex + 1);
+                } else {
+                    alert("Congratulations! You have mastered the basics of Graph Theory Networks!");
+                    this.loadLevel(0);
+                }
+            }
+
+            // Drawing
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw Edges
+                // Group edges to handle multiple edges visually (curving them)
+                const edgeGroups = {};
+                this.edges.forEach(e => {
+                    const key = e.from + "-" + e.to;
+                    if(!edgeGroups[key]) edgeGroups[key] = 0;
+                    edgeGroups[key]++;
+                });
+
+                const drawnCounts = {}; // Track how many we've drawn of each group
+
+                this.edges.forEach(e => {
+                    const v1 = this.vertices[e.from];
+                    const v2 = this.vertices[e.to];
+                    const key = e.from + "-" + e.to;
+                    
+                    if(!drawnCounts[key]) drawnCounts[key] = 0;
+                    const count = drawnCounts[key];
+                    const totalInGroup = edgeGroups[key];
+                    
+                    this.ctx.beginPath();
+                    this.ctx.strokeStyle = "#374151";
+                    this.ctx.lineWidth = 3;
+
+                    if (e.from === e.to) {
+                        // Draw Loop
+                        // Offset loops based on count so they don't overlap exactly
+                        const offset = count * 15;
+                        this.ctx.arc(v1.x, v1.y - this.radius - 15 - offset, 20 + offset, 0, 2 * Math.PI);
+                    } else {
+                        // Draw Line or Curve for multiple edges
+                        if (totalInGroup === 1) {
+                            this.ctx.moveTo(v1.x, v1.y);
+                            this.ctx.lineTo(v2.x, v2.y);
+                        } else {
+                            // Quadratic curve for multiple edges
+                            // Calculate midpoint
+                            const mx = (v1.x + v2.x) / 2;
+                            const my = (v1.y + v2.y) / 2;
+                            // Offset perpendicular
+                            const dx = v2.x - v1.x;
+                            const dy = v2.y - v1.y;
+                            // Alternating offset
+                            const shift = (count % 2 === 0 ? 1 : -1) * (Math.ceil((count+1)/2) * 30);
+                            
+                            // Normalize perpendicular vector
+                            const len = Math.sqrt(dx*dx + dy*dy);
+                            const px = -dy/len * shift;
+                            const py = dx/len * shift;
+
+                            this.ctx.moveTo(v1.x, v1.y);
+                            this.ctx.quadraticCurveTo(mx + px, my + py, v2.x, v2.y);
+                        }
+                    }
+                    this.ctx.stroke();
+                    drawnCounts[key]++;
+                });
+
+                // Draw Vertices
+                this.vertices.forEach(v => {
+                    this.ctx.beginPath();
+                    this.ctx.fillStyle = (this.selectedVertex === v) ? "#f59e0b" : "#4f46e5";
+                    this.ctx.arc(v.x, v.y, this.radius, 0, 2 * Math.PI);
+                    this.ctx.fill();
+                    
+                    // Vertex Label (A, B, C)
+                    this.ctx.fillStyle = "white";
+                    this.ctx.font = "bold 16px Arial";
+                    this.ctx.textAlign = "center";
+                    this.ctx.textBaseline = "middle";
+                    this.ctx.fillText(v.label, v.x, v.y);
+
+                    // Degree Label (Floating nearby)
+                    this.ctx.fillStyle = "#1f2937";
+                    this.ctx.font = "12px Arial";
+                    this.ctx.fillText(`d=${v.degree}`, v.x, v.y + 35);
+                });
+            }
+
+            loop() {
+                requestAnimationFrame(() => this.loop());
+            }
+        }
+
+        // Start Game
+        const game = new GraphGame();
+    </script>
+</body>
+</html>

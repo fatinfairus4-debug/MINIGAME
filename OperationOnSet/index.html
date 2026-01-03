@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venn Sort Rush - Form 4 Sets</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --text-color: #ffffff;
+            --set-a-color: rgba(231, 76, 60, 0.4);
+            --set-b-color: rgba(52, 152, 219, 0.4);
+            --intersect-color: rgba(155, 89, 182, 0.6);
+            --outside-color: rgba(149, 165, 166, 0.2);
+            --element-bg: #f1c40f;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* HUD */
+        #hud {
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            background: rgba(0,0,0,0.3);
+            box-sizing: border-box;
+        }
+
+        #rules-display {
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #ffffff20;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        /* Game Area */
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            margin-top: 20px;
+            border: 2px solid #555;
+            background-color: var(--outside-color);
+            border-radius: 10px;
+        }
+
+        /* Venn Diagram Circles */
+        .circle {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            border-radius: 50%;
+            border: 3px solid white;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+            opacity: 0.8;
+            transition: transform 0.2s;
+        }
+
+        #circle-a {
+            top: 75px;
+            left: 50px;
+            background-color: var(--set-a-color);
+        }
+
+        #circle-b {
+            top: 75px;
+            right: 50px;
+            background-color: var(--set-b-color);
+        }
+
+        .circle-label {
+            position: absolute;
+            top: -40px;
+            font-size: 1.5rem;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Intersection Hitbox (Invisible but logical) */
+        #intersection-zone {
+            position: absolute;
+            top: 75px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 350px;
+            z-index: 5;
+            /* Debug: background: rgba(0,255,0,0.2); */
+        }
+
+        /* Draggable Element */
+        .element {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: var(--element-bg);
+            color: #000;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.5rem;
+            cursor: grab;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            z-index: 10;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .element:active {
+            cursor: grabbing;
+            transform: scale(1.1);
+        }
+
+        /* Feedback overlays */
+        #feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 20;
+            text-shadow: 0 0 10px black;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* Menus */
+        .overlay-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        h1 { margin-bottom: 0.5rem; color: #f1c40f; }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 20px;
+        }
+
+        button:hover { background: #2980b9; }
+
+        .hidden { display: none; }
+
+        @keyframes popIn {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 850px) {
+            #game-container { width: 95vw; height: 50vh; }
+            .circle { width: 40vw; height: 40vw; }
+            #circle-a { left: 5vw; }
+            #circle-b { right: 5vw; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="overlay-screen">
+        <h1>VENN SORT RUSH</h1>
+        <p>Topic: Form 4 Operations on Sets</p>
+        <p>Drag the falling numbers into the correct region.</p>
+        <div style="text-align: left; margin-top: 20px;">
+            <p>🔴 <b>Set A Only:</b> Number fits Rule A but NOT Rule B</p>
+            <p>🔵 <b>Set B Only:</b> Number fits Rule B but NOT Rule A</p>
+            <p>🟣 <b>Middle:</b> Fits BOTH rules ($A \cap B$)</p>
+            <p>⚫ <b>Outside:</b> Fits NEITHER rule ($(A \cup B)'$)</p>
+        </div>
+        <button onclick="startGame()">Start Game</button>
+    </div>
+
+    <div id="game-over-screen" class="overlay-screen hidden">
+        <h1 id="end-title">Game Over!</h1>
+        <p>Final Score: <span id="final-score">0</span></p>
+        <button onclick="startGame()">Play Again</button>
+    </div>
+
+    <div id="hud">
+        <div>Score: <span id="score">0</span></div>
+        <div>Lives: <span id="lives">3</span></div>
+        <div>Level: <span id="level">1</span></div>
+    </div>
+
+    <div id="rules-display">
+        Set A: <span id="rule-a-text" style="color:#e74c3c">...</span> | 
+        Set B: <span id="rule-b-text" style="color:#3498db">...</span>
+    </div>
+
+    <div id="game-container" ondragover="allowDrop(event)" ondrop="handleDrop(event)">
+        <div id="circle-a" class="circle">
+            <span class="circle-label">Set A</span>
+        </div>
+        
+        <div id="circle-b" class="circle">
+            <span class="circle-label">Set B</span>
+        </div>
+
+        <div id="intersection-zone"></div>
+
+        <div id="feedback"></div>
+    </div>
+
+    <script>
+        // Game State
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let gameActive = false;
+        let spawnInterval;
+        let speed = 2000; // ms between spawns
+        let currentElement = null; // The number being dragged
+        
+        // Math Logic Generators
+        const rules = [
+            { id: 'odd', name: 'Odd Numbers', check: (n) => n % 2 !== 0 },
+            { id: 'even', name: 'Even Numbers', check: (n) => n % 2 === 0 },
+            { id: 'mult3', name: 'Multiples of 3', check: (n) => n % 3 === 0 },
+            { id: 'mult4', name: 'Multiples of 4', check: (n) => n % 4 === 0 },
+            { id: 'mult5', name: 'Multiples of 5', check: (n) => n % 5 === 0 },
+            { id: 'gt25', name: 'Number > 25', check: (n) => n > 25 },
+            { id: 'lt25', name: 'Number < 25', check: (n) => n < 25 },
+            { id: 'prime', name: 'Prime Numbers', check: (n) => isPrime(n) }
+        ];
+
+        let currentRuleA;
+        let currentRuleB;
+
+        function isPrime(num) {
+            for(let i = 2, s = Math.sqrt(num); i <= s; i++)
+                if(num % i === 0) return false; 
+            return num > 1;
+        }
+
+        // --- Core Functions ---
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+            score = 0;
+            lives = 3;
+            level = 1;
+            speed = 3000;
+            updateHUD();
+            setNewLevel();
+            gameActive = true;
+            
+            // Clear existing elements
+            const oldElements = document.querySelectorAll('.element');
+            oldElements.forEach(el => el.remove());
+
+            // Start Spawner
+            clearInterval(spawnInterval);
+            spawnInterval = setInterval(spawnElement, speed);
+        }
+
+        function setNewLevel() {
+            // Pick two distinct rules
+            let r1 = Math.floor(Math.random() * rules.length);
+            let r2 = Math.floor(Math.random() * rules.length);
+            while(r1 === r2) r2 = Math.floor(Math.random() * rules.length);
+
+            currentRuleA = rules[r1];
+            currentRuleB = rules[r2];
+
+            document.getElementById('rule-a-text').innerText = currentRuleA.name;
+            document.getElementById('rule-b-text').innerText = currentRuleB.name;
+            
+            // Speed up slightly
+            if(speed > 1000) speed -= 200;
+            clearInterval(spawnInterval);
+            spawnInterval = setInterval(spawnElement, speed);
+        }
+
+        function spawnElement() {
+            if (!gameActive) return;
+
+            const val = Math.floor(Math.random() * 50) + 1; // 1 to 50
+            const el = document.createElement('div');
+            el.classList.add('element');
+            el.innerText = val;
+            el.setAttribute('draggable', true);
+            el.id = 'num-' + Date.now();
+            
+            // Initial position (Top center)
+            el.style.top = '10px';
+            el.style.left = (Math.random() * 700 + 50) + 'px'; // Random horizontal
+            
+            // Drag Events
+            el.addEventListener('dragstart', dragStart);
+            
+            // Touch Events for Mobile
+            el.addEventListener('touchstart', touchStart, {passive: false});
+            el.addEventListener('touchmove', touchMove, {passive: false});
+            el.addEventListener('touchend', touchEnd);
+
+            // Auto-fail timer (element drops down)
+            let topPos = 10;
+            const fallSpeed = level * 1; 
+            
+            const fallInterval = setInterval(() => {
+                if(!gameActive) { clearInterval(fallInterval); return; }
+                if(!document.body.contains(el)) { clearInterval(fallInterval); return; }
+                
+                // If being dragged, pause falling
+                if(el.getAttribute('data-dragging') === 'true') return;
+
+                topPos += fallSpeed;
+                el.style.top = topPos + 'px';
+
+                if (topPos > 450) {
+                    clearInterval(fallInterval);
+                    if(document.body.contains(el)) {
+                        el.remove();
+                        takeDamage();
+                    }
+                }
+            }, 30);
+
+            document.getElementById('game-container').appendChild(el);
+        }
+
+        // --- Drag Logic ---
+
+        function dragStart(e) {
+            e.dataTransfer.setData("text", e.target.id);
+            e.target.setAttribute('data-dragging', 'true');
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const data = e.dataTransfer.getData("text");
+            const el = document.getElementById(data);
+            if(el) {
+                checkPlacement(el, e.clientX, e.clientY);
+            }
+        }
+
+        // --- Touch Logic (Mobile) ---
+        let activeDragEl = null;
+
+        function touchStart(e) {
+            e.preventDefault();
+            activeDragEl = e.target;
+            activeDragEl.setAttribute('data-dragging', 'true');
+        }
+
+        function touchMove(e) {
+            e.preventDefault();
+            if (activeDragEl) {
+                let touch = e.touches[0];
+                // Update position to follow finger
+                // Need to offset by container position
+                const containerRect = document.getElementById('game-container').getBoundingClientRect();
+                activeDragEl.style.left = (touch.clientX - containerRect.left - 30) + 'px';
+                activeDragEl.style.top = (touch.clientY - containerRect.top - 30) + 'px';
+            }
+        }
+
+        function touchEnd(e) {
+            if (activeDragEl) {
+                let touch = e.changedTouches[0];
+                checkPlacement(activeDragEl, touch.clientX, touch.clientY);
+                activeDragEl.setAttribute('data-dragging', 'false');
+                activeDragEl = null;
+            }
+        }
+
+        // --- Logic Validation ---
+
+        function checkPlacement(el, x, y) {
+            // Determine where the drop happened relative to the zones
+            const container = document.getElementById('game-container').getBoundingClientRect();
+            const circleA = document.getElementById('circle-a').getBoundingClientRect();
+            const circleB = document.getElementById('circle-b').getBoundingClientRect();
+
+            // Calculate center points of circles for distance checking
+            const radius = circleA.width / 2;
+            const centerA = { x: circleA.left + radius, y: circleA.top + radius };
+            const centerB = { x: circleB.left + radius, y: circleB.top + radius };
+
+            // Distance from drop point to centers
+            const distA = Math.hypot(x - centerA.x, y - centerA.y);
+            const distB = Math.hypot(x - centerB.x, y - centerB.y);
+
+            const inA = distA < radius;
+            const inB = distB < radius;
+
+            let zone = '';
+            if (inA && inB) zone = 'intersection';
+            else if (inA) zone = 'onlyA';
+            else if (inB) zone = 'onlyB';
+            else zone = 'outside'; // Universal set
+
+            // Check Mathematical Truth
+            const num = parseInt(el.innerText);
+            const isA = currentRuleA.check(num);
+            const isB = currentRuleB.check(num);
+
+            let correctZone = '';
+            if (isA && isB) correctZone = 'intersection';
+            else if (isA && !isB) correctZone = 'onlyA';
+            else if (!isA && isB) correctZone = 'onlyB';
+            else correctZone = 'outside';
+
+            if (zone === correctZone) {
+                // Correct
+                score += 10;
+                showFeedback('✓', 'green');
+                el.remove();
+                if(score % 50 === 0) {
+                    level++;
+                    setNewLevel();
+                }
+            } else {
+                // Wrong
+                showFeedback('✗', 'red');
+                el.remove(); // Remove anyway to keep game flow
+                takeDamage();
+            }
+            updateHUD();
+        }
+
+        function takeDamage() {
+            lives--;
+            updateHUD();
+            if (lives <= 0) {
+                endGame();
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('lives').innerText = '❤️'.repeat(lives);
+            document.getElementById('level').innerText = level;
+        }
+
+        function showFeedback(text, color) {
+            const fb = document.getElementById('feedback');
+            fb.innerText = text;
+            fb.style.color = color;
+            fb.style.opacity = 1;
+            setTimeout(() => { fb.style.opacity = 0; }, 500);
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(spawnInterval);
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('game-over-screen').classList.remove('hidden');
+        }
+
+    </script>
+</body>
+</html>

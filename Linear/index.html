@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linear Inequality Survival</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #222;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            user-select: none; /* Prevents highlighting text while playing */
+        }
+        h1 { margin-bottom: 5px; color: #fff; }
+        
+        /* Game Info Panel */
+        .info-panel {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            width: 600px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        #score-board { font-size: 18px; color: #aaa; }
+        #score { color: #fff; font-weight: bold; font-size: 20px;}
+        
+        #current-inequality {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4facfe;
+            margin: 10px 0;
+            letter-spacing: 2px;
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        /* Timer Bar */
+        #timer-bar-container {
+            width: 100%;
+            height: 12px;
+            background: #555;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 10px;
+            border: 1px solid #777;
+        }
+        #timer-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #00f260, #0575e6);
+            transition: width 0.1s linear;
+        }
+
+        /* The Game Board */
+        canvas {
+            background-color: #fff;
+            border-radius: 4px;
+            cursor: crosshair;
+            box-shadow: 0 0 25px rgba(79, 172, 254, 0.2);
+            border: 4px solid #333;
+        }
+
+        /* UI Elements */
+        .controls {
+            margin-top: 15px;
+            color: #ccc;
+            font-size: 14px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        /* Buttons */
+        .btn {
+            background: #4facfe;
+            border: none;
+            padding: 12px 30px;
+            color: white;
+            font-size: 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+            transition: transform 0.1s;
+        }
+        .btn:hover { transform: scale(1.05); background: #00f260; }
+        .btn:active { transform: scale(0.95); }
+
+        #start-btn { margin-top: 20px; }
+
+        /* Game Over Modal */
+        #game-over-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(30, 30, 30, 0.95);
+            padding: 40px;
+            border: 2px solid #ff4b4b;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 100;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.3);
+        }
+        
+        /* Math Formatting */
+        .math-symbol { color: #ffeb3b; }
+    </style>
+</head>
+<body>
+
+    <h1>Inequality Survival Zone</h1>
+    
+    <div class="info-panel">
+        <div id="score-board">Score: <span id="score">0</span></div>
+        <div id="current-inequality">Press Start</div>
+        <div id="message" style="min-height: 24px;">Avoid the lava!</div>
+        <div id="timer-bar-container"><div id="timer-bar"></div></div>
+    </div>
+
+    <div style="position: relative;">
+        <canvas id="gameCanvas" width="600" height="600"></canvas>
+        <div id="start-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+            <button id="start-btn" class="btn" onclick="startGame()">START GAME</button>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <strong>Controls:</strong> Move your mouse. <br>
+        Solid Line = Included ($\le, \ge$) <span style="margin: 0 10px;">|</span> Dashed Line = Excluded ($<, >$)
+    </div>
+
+    <div id="game-over-modal">
+        <h2 style="color: #ff4b4b; font-size: 36px; margin: 0;">GAME OVER</h2>
+        <p style="font-size: 18px; margin: 20px 0;">You stood in the False region.</p>
+        <p style="font-size: 24px;">Final Score: <span id="final-score" style="color: #4facfe;">0</span></p>
+        <button class="btn" onclick="retryGame()">Try Again</button>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const eqEl = document.getElementById('current-inequality');
+    const timerBar = document.getElementById('timer-bar');
+    const modal = document.getElementById('game-over-modal');
+    const finalScoreEl = document.getElementById('final-score');
+    const msgEl = document.getElementById('message');
+    const startOverlay = document.getElementById('start-overlay');
+
+    // Game Variables
+    let isPlaying = false;
+    let score = 0;
+    let timeLeft = 0;
+    let maxTime = 5000; // Start with 5 seconds
+    let animationId;
+
+    // Player & Physics
+    let player = { x: 0, y: 0 }; // Math Coordinates
+    let mousePos = { x: 300, y: 300 }; // Pixel Coordinates
+    const SCALE = 30; // 30px = 1 unit
+    const CENTER = 300; 
+
+    // Current Math Problem
+    let currentM = 1;
+    let currentC = 0;
+    let currentSign = ">"; 
+    let showResult = false; 
+
+    // Mouse Tracking
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mousePos.x = e.clientX - rect.left;
+        mousePos.y = e.clientY - rect.top;
+        
+        // Convert pixels to Cartesian coordinates
+        // Canvas Y is inverted (0 is top), Math Y is standard (0 is bottom-ish relative to axis)
+        player.x = (mousePos.x - CENTER) / SCALE;
+        player.y = (CENTER - mousePos.y) / SCALE;
+    });
+
+    function generateInequality() {
+        // Random Slope (m)
+        currentM = Math.floor(Math.random() * 7) - 3; 
+        if(currentM === 0) currentM = 1;
+
+        // Random Y-intercept (c)
+        currentC = Math.floor(Math.random() * 11) - 5;
+
+        // Random Operator
+        const ops = [">", "<", "≥", "≤"];
+        currentSign = ops[Math.floor(Math.random() * ops.length)];
+
+        // Pretty String Creation
+        let mStr = currentM === 1 ? "x" : (currentM === -1 ? "-x" : currentM + "x");
+        let cStr = currentC >= 0 ? "+ " + currentC : "- " + Math.abs(currentC);
+        if (currentC === 0) cStr = "";
+        
+        eqEl.innerHTML = `y ${currentSign} ${mStr} ${cStr}`;
+    }
+
+    function checkSurvival() {
+        const lineY = (currentM * player.x) + currentC;
+        let safe = false;
+        // Float tolerance is generous for gameplay feel
+        switch (currentSign) {
+            case ">": safe = player.y > lineY; break;
+            case "<": safe = player.y < lineY; break;
+            case "≥": safe = player.y >= lineY; break; 
+            case "≤": safe = player.y <= lineY; break;
+        }
+        return safe;
+    }
+
+    function drawGrid() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // --- 1. Draw "Lava" if showing result ---
+        if (showResult) {
+            ctx.save();
+            ctx.fillStyle = "rgba(255, 65, 65, 0.4)"; // Red Zone
+            
+            ctx.beginPath();
+            const far = 20; 
+            const isGreater = (currentSign === ">" || currentSign === "≥");
+            
+            // Calculate boundary points off-screen
+            const yLeft = (currentM * -far) + currentC;
+            const yRight = (currentM * far) + currentC;
+            const p1 = toPixels(-far, yLeft);
+            const p2 = toPixels(far, yRight);
+
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+
+            // Fill the WRONG side
+            if (isGreater) {
+                // If Correct is UP, Wrong is DOWN
+                ctx.lineTo(600, 600);
+                ctx.lineTo(0, 600);
+            } else {
+                // If Correct is DOWN, Wrong is UP
+                ctx.lineTo(600, 0);
+                ctx.lineTo(0, 0);
+            }
+            
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // --- 2. Grid Lines ---
+        ctx.strokeStyle = "#e0e0e0";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for(let i = -10; i <= 10; i++) {
+            let p = toPixels(i, i);
+            // Verticals
+            ctx.moveTo(p.x, 0); ctx.lineTo(p.x, 600);
+            // Horizontals
+            ctx.moveTo(0, p.y); ctx.lineTo(600, p.y);
+        }
+        ctx.stroke();
+
+        // --- 3. Axes ---
+        ctx.strokeStyle = "#444";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(CENTER, 0); ctx.lineTo(CENTER, 600); // Y axis
+        ctx.moveTo(0, CENTER); ctx.lineTo(600, CENTER); // X axis
+        ctx.stroke();
+    }
+
+    function drawLine() {
+        if(!isPlaying && !showResult) return; 
+
+        ctx.save();
+        
+        // Dashed for Strict, Solid for Inclusive
+        if (currentSign === ">" || currentSign === "<") {
+            ctx.setLineDash([15, 10]); 
+            ctx.strokeStyle = "#007bff"; // Blue line for game feel
+        } else {
+            ctx.setLineDash([]); 
+            ctx.strokeStyle = "#0056b3";
+        }
+        
+        ctx.lineWidth = 4;
+
+        let x1 = -15, y1 = (currentM * -15) + currentC;
+        let x2 = 15, y2 = (currentM * 15) + currentC;
+
+        let p1 = toPixels(x1, y1);
+        let p2 = toPixels(x2, y2);
+
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawPlayer() {
+        ctx.beginPath();
+        // Draw Shadow
+        ctx.arc(mousePos.x, mousePos.y + 2, 6, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0,0,0,0.2)";
+        ctx.fill();
+
+        // Draw Dot
+        ctx.beginPath();
+        ctx.arc(mousePos.x, mousePos.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+        ctx.strokeStyle = "#333";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    function toPixels(x, y) {
+        return {
+            x: CENTER + (x * SCALE),
+            y: CENTER - (y * SCALE)
+        };
+    }
+
+    let lastTime = 0;
+    function gameLoop(timestamp) {
+        if (!isPlaying) return;
+
+        let dt = timestamp - lastTime;
+        lastTime = timestamp;
+
+        drawGrid();
+        drawLine();
+        drawPlayer();
+
+        if (!showResult) {
+            timeLeft -= dt;
+            let pct = (timeLeft / maxTime) * 100;
+            timerBar.style.width = pct + "%";
+            
+            // Color shift the timer bar
+            if(pct < 30) timerBar.style.background = "#ff4b4b";
+            else timerBar.style.background = "linear-gradient(90deg, #00f260, #0575e6)";
+
+            if (timeLeft <= 0) {
+                // ROUND OVER - CHECK RESULT
+                showResult = true;
+                const safe = checkSurvival();
+                
+                if (safe) {
+                    // SUCCESS
+                    score++;
+                    scoreEl.innerText = score;
+                    msgEl.innerText = "SAFE! Next Zone Loading...";
+                    msgEl.style.color = "#00f260";
+                    
+                    setTimeout(() => {
+                        nextRound();
+                    }, 800); // 0.8s pause to see the red zone
+                } else {
+                    // FAIL
+                    endGame();
+                }
+            }
+        }
+        
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    function nextRound() {
+        showResult = false;
+        msgEl.innerText = "Move to the SAFE zone!";
+        msgEl.style.color = "white";
+        
+        // Difficulty Ramp: Time gets shorter (min 1.5s)
+        if (maxTime > 1500) maxTime -= 150;
+        
+        timeLeft = maxTime;
+        generateInequality();
+    }
+
+    function startGame() {
+        startOverlay.style.display = 'none';
+        modal.style.display = 'none';
+        score = 0;
+        scoreEl.innerText = "0";
+        maxTime = 5000;
+        
+        isPlaying = true;
+        lastTime = performance.now();
+        nextRound();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function retryGame() {
+        modal.style.display = 'none';
+        startGame();
+    }
+
+    function endGame() {
+        isPlaying = false;
+        cancelAnimationFrame(animationId);
+        
+        // Draw one last time to show the red zone permanently
+        drawGrid();
+        drawLine();
+        drawPlayer();
+        
+        finalScoreEl.innerText = score;
+        modal.style.display = 'block';
+    }
+
+    // Initial Render
+    drawGrid();
+    
+</script>
+</body>
+</html>

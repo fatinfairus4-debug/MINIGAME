@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dispersion Master: Level 1-5</title>
+    <style>
+        :root { --primary: #2d3436; --accent: #0984e3; --success: #00b894; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f2f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        #game-box { background: white; width: 95%; max-width: 700px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-top: 10px solid var(--accent); }
+        .progress-container { width: 100%; background: #eee; height: 10px; border-radius: 5px; margin: 10px 0 20px 0; }
+        #progress-bar { width: 20%; height: 100%; background: var(--success); border-radius: 5px; transition: 0.5s; }
+        .goal-card { background: #6c5ce7; color: white; padding: 20px; border-radius: 15px; margin-bottom: 25px; font-size: 1.2rem; text-align: center; }
+        
+        /* The Playing Area */
+        #axis-container { position: relative; height: 150px; margin: 40px 0; background: #fdfdfd; border-bottom: 4px solid var(--primary); touch-action: none; }
+        .dot { width: 34px; height: 34px; background: var(--accent); border-radius: 50%; position: absolute; bottom: -19px; cursor: grab; z-index: 10; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transform: translateX(-50%); }
+        #mean-line { position: absolute; top: 0; bottom: 0; width: 2px; background: #d63031; border-left: 2px dashed #ff7675; z-index: 5; pointer-events: none; }
+        
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .info-panel { background: #f9f9f9; padding: 15px; border-radius: 12px; border: 1px solid #ddd; text-align: center;}
+        .stat-num { font-size: 1.4rem; font-weight: bold; }
+        
+        .controls { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        button { padding: 12px 25px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-check { background: var(--success); color: white; }
+        .btn-next { background: #dfe6e9; color: #b2bec3; cursor: not-allowed; }
+        .btn-reset { background: #fab1a0; color: #d63031; }
+        .active { background: var(--primary) !important; color: white !important; cursor: pointer !important; }
+        #win-screen { display: none; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="game-box">
+    <div id="main-game">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>Level <span id="lvl-num">1</span> / 5</strong>
+            <span id="difficulty" style="font-size: 0.8rem; background: #eee; padding: 2px 8px; border-radius: 10px;">Mode: Easy</span>
+        </div>
+        <div class="progress-container"><div id="progress-bar"></div></div>
+
+        <div class="goal-card" id="goal-text">Mission: Set Range to 40</div>
+
+        <div id="axis-container">
+            <div id="mean-line"></div>
+        </div>
+
+        <div class="dashboard">
+            <div class="info-panel">
+                <div>Range (Spread):</div>
+                <div class="stat-num" id="stat-range">0</div>
+            </div>
+            <div class="info-panel">
+                <div>Consistency (Std Dev):</div>
+                <div class="stat-num" id="stat-sd">0</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-reset" onclick="resetDots()">RESET DOTS</button>
+            <button class="btn-check" onclick="checkAnswer()">CHECK DATA</button>
+            <button id="next-btn" class="btn-next" onclick="nextLevel()">NEXT LEVEL →</button>
+        </div>
+    </div>
+
+    <div id="win-screen">
+        <h1>🏆 Master of Dispersion!</h1>
+        <p>You have successfully completed all 5 levels.</p>
+        <button onclick="location.reload()" style="background: var(--accent); color:white;">Play Again</button>
+    </div>
+</div>
+
+<script>
+    let level = 1;
+    let targetValue = 40;
+    let mode = 'range';
+    const dots = [];
+    const numDots = 5;
+    let activeDot = null;
+
+    function init() {
+        const container = document.getElementById('axis-container');
+        for (let i = 0; i < numDots; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.style.left = (20 + (i * 15)) + '%';
+            container.appendChild(dot);
+            dots.push(dot);
+            
+            // Mouse & Touch Support
+            dot.addEventListener('mousedown', startDrag);
+            window.addEventListener('mousemove', drag);
+            window.addEventListener('mouseup', endDrag);
+        }
+        updateLevel();
+    }
+
+    function startDrag(e) { activeDot = e.target; activeDot.style.zIndex = 100; }
+    function endDrag() { if(activeDot) activeDot.style.zIndex = 10; activeDot = null; }
+
+    function drag(e) {
+        if (!activeDot) return;
+        let rect = document.getElementById('axis-container').getBoundingClientRect();
+        let percent = ((e.clientX - rect.left) / rect.width) * 100;
+        if (percent >= 0 && percent <= 100) {
+            activeDot.style.left = percent + "%";
+            calculate();
+        }
+    }
+
+    function resetDots() {
+        dots.forEach((dot, i) => { dot.style.left = (10 + (i * 20)) + '%'; });
+        calculate();
+    }
+
+    function calculate() {
+        const pos = dots.map(d => parseFloat(d.style.left));
+        const range = Math.max(...pos) - Math.min(...pos);
+        const mean = pos.reduce((a, b) => a + b) / numDots;
+        const sd = Math.sqrt(pos.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / numDots);
+        
+        document.getElementById('stat-range').innerText = range.toFixed(1);
+        document.getElementById('stat-sd').innerText = sd.toFixed(1);
+        document.getElementById('mean-line').style.left = mean + "%";
+        return { range, sd };
+    }
+
+    function updateLevel() {
+        const btn = document.getElementById('next-btn');
+        btn.classList.remove('active');
+        btn.disabled = true;
+        document.getElementById('lvl-num').innerText = level;
+        document.getElementById('progress-bar').style.width = (level * 20) + "%";
+
+        // Logic for Level Progress
+        if (level === 1) { mode = 'range'; targetValue = 50; }
+        else if (level === 2) { mode = 'range'; targetValue = 20; }
+        else if (level === 3) { mode = 'sd'; targetValue = 25; }
+        else if (level === 4) { mode = 'sd'; targetValue = 12; }
+        else if (level === 5) { mode = 'sd'; targetValue = 6; }
+
+        const label = mode === 'range' ? "Range" : "Consistency (Std Dev)";
+        document.getElementById('goal-text').innerHTML = `Mission: Move dots until <b>${label}</b> is about <b>${targetValue}</b>`;
+        document.getElementById('difficulty').innerText = level > 2 ? "Mode: Hard" : "Mode: Easy";
+        calculate();
+    }
+
+    function checkAnswer() {
+        const stats = calculate();
+        const current = mode === 'range' ? stats.range : stats.sd;
+        if (Math.abs(current - targetValue) < 2.0) {
+            alert("🎯 Brilliant! Level " + level + " Complete.");
+            document.getElementById('next-btn').classList.add('active');
+            document.getElementById('next-btn').disabled = false;
+        } else {
+            const tip = current < targetValue ? "Spread them OUT more!" : "Move them CLOSER to the red line!";
+            alert(`Target is ${targetValue}. Your current value is ${current.toFixed(1)}.\n\nTip: ${tip}`);
+        }
+    }
+
+    function nextLevel() {
+        if (level < 5) { level++; updateLevel(); } 
+        else {
+            document.getElementById('main-game').style.display = 'none';
+            document.getElementById('win-screen').style.display = 'block';
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>

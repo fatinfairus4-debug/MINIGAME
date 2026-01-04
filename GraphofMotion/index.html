@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Motion Master: Pro Driver</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; text-align: center; margin: 0; }
+        .game-container { max-width: 800px; margin: 20px auto; background: #1e293b; padding: 20px; border-radius: 15px; border: 2px solid #334155; }
+        canvas { background: #ffffff; border-radius: 8px; margin: 10px 0; width: 100%; height: auto; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
+        .stat-card { background: #334155; padding: 10px; border-radius: 8px; border-bottom: 3px solid #38bdf8; }
+        .stat-label { font-size: 0.7em; text-transform: uppercase; color: #94a3b8; }
+        .stat-value { font-size: 1.2em; font-weight: bold; }
+        .level-header { color: #38bdf8; font-size: 1.5em; margin-bottom: 5px; }
+        input[type=range] { width: 100%; height: 40px; cursor: pointer; accent-color: #38bdf8; }
+        .hint { color: #94a3b8; font-style: italic; margin-top: 10px; }
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); 
+                   display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
+        button { padding: 15px 40px; font-size: 18px; cursor: pointer; background: #38bdf8; color: #0f172a; 
+                 border: none; border-radius: 8px; font-weight: bold; transition: 0.2s; }
+        button:hover { background: #7dd3fc; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+<div id="overlay">
+    <h1 id="overlayTitle">Motion Master</h1>
+    <p id="overlayText">Form 4 Mathematics: Chapter 7</p>
+    <button onclick="closeOverlay()">START LEVEL</button>
+</div>
+
+<div class="game-container">
+    <div class="level-header" id="levelTitle">Level 1: Uniform Velocity</div>
+    <p id="levelDesc">The gradient is constant. Keep your speed steady!</p>
+
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Time</div><div class="stat-value"><span id="timeBox">0.0</span>s</div></div>
+        <div class="stat-card"><div class="stat-label">Distance</div><div class="stat-value"><span id="distBox">0</span>km</div></div>
+        <div class="stat-card"><div class="stat-label">Speed (Grad)</div><div class="stat-value"><span id="speedBox">0.0</span></div></div>
+        <div class="stat-card"><div class="stat-label">Accuracy</div><div class="stat-value"><span id="scoreBox">100</span>%</div></div>
+    </div>
+
+    <canvas id="canvas" width="700" height="350"></canvas>
+
+    <div style="padding: 10px 30px;">
+        <input type="range" id="slider" min="0" max="100" value="0">
+        <p class="hint" id="instructionText">← Move the slider to begin the mission →</p>
+    </div>
+    <div style="font-size: 1.2em; color: #facc15;">Total Campaign Score: <span id="totalScoreBoard">0</span></div>
+</div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const slider = document.getElementById('slider');
+    const overlay = document.getElementById('overlay');
+
+    let currentLevel = 1;
+    let time = 0;
+    let gameActive = false;
+    let missionStarted = false; // New flag to wait for player movement
+    let history = [];
+    let levelScore = 100;
+    let totalScore = 0;
+    let speedBuffer = [];
+
+    const levels = {
+        1: { title: "Level 1: Constant Speed", desc: "Gradient = Speed. Maintain a straight diagonal line!", start: 0, target: (t) => t * 10 },
+        2: { title: "Level 2: The Stopover", desc: "A horizontal line means speed is 0. Stay at 50km!", start: 50, target: (t) => 50 },
+        3: { title: "Level 3: Acceleration", desc: "The curve gets steeper, meaning speed is increasing!", start: 0, target: (t) => (t * t) },
+        4: { title: "Level 4: Returning Home", desc: "Negative gradient means moving back to the start.", start: 100, target: (t) => 100 - (t * 10) },
+        5: { title: "Level 5: The Full Journey", desc: "Move, Stop, then move fast to finish!", start: 0, target: (t) => t < 3 ? 20 : (t < 6 ? 20 : 20 + (t-6)*20) }
+    };
+
+    function drawGrid() {
+        ctx.strokeStyle = "#e2e8f0";
+        ctx.lineWidth = 1;
+        for(let i=0; i<=700; i+=70) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,350); ctx.stroke(); }
+        for(let i=0; i<=350; i+=35) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(700,i); ctx.stroke(); }
+    }
+
+    function drawTarget() {
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.25)";
+        ctx.lineWidth = 30;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(0, 350 - (levels[currentLevel].start * 3.5));
+        for(let t=0; t<=10; t+=0.1) {
+            ctx.lineTo(t * 70, 350 - (levels[currentLevel].target(t) * 3.5));
+        }
+        ctx.stroke();
+    }
+
+    function update() {
+        if(!gameActive || !missionStarted) return;
+
+        time += 0.04;
+        let currentDist = parseInt(slider.value);
+        
+        // Speed Calculation
+        speedBuffer.push({d: currentDist, t: time});
+        if(speedBuffer.length > 5) {
+            let old = speedBuffer.shift();
+            let speed = (Math.abs(currentDist - old.d) / (time - old.t)).toFixed(1);
+            document.getElementById('speedBox').innerText = speed;
+        }
+
+        history.push({t: time, d: currentDist});
+
+        // Scoring
+        let target = levels[currentLevel].target(time);
+        if(Math.abs(currentDist - target) > 10) levelScore -= 0.4;
+
+        document.getElementById('timeBox').innerText = time.toFixed(1);
+        document.getElementById('distBox').innerText = currentDist;
+        document.getElementById('scoreBox').innerText = Math.max(0, Math.floor(levelScore));
+
+        if(time >= 10) {
+            gameActive = false;
+            finishLevel();
+        }
+
+        render();
+        requestAnimationFrame(update);
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, 700, 350);
+        drawGrid();
+        drawTarget();
+
+        // Trail
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, 350 - (levels[currentLevel].start * 3.5));
+        history.forEach(p => ctx.lineTo(p.t * 70, 350 - (p.d * 3.5)));
+        ctx.stroke();
+
+        // Car/Van Indicator
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(time * 70 - 10, 350 - (parseInt(slider.value) * 3.5) - 10, 20, 12);
+    }
+
+    function finishLevel() {
+        totalScore += Math.max(0, Math.floor(levelScore));
+        document.getElementById('totalScoreBoard').innerText = totalScore;
+        
+        overlay.style.display = 'flex';
+        document.getElementById('overlayTitle').innerText = "Level Results";
+        document.getElementById('overlayText').innerText = `You scored ${Math.floor(levelScore)}% accuracy!`;
+        
+        if(currentLevel < 5) {
+            currentLevel++;
+            document.querySelector('#overlay button').innerText = "PROCEED TO LEVEL " + currentLevel;
+        } else {
+            document.getElementById('overlayTitle').innerText = "MISSION ACCOMPLISHED";
+            document.getElementById('overlayText').innerText = `Final Math Score: ${totalScore}/500`;
+            document.querySelector('#overlay button').innerText = "PLAY AGAIN";
+            currentLevel = 1;
+            totalScore = 0;
+        }
+    }
+
+    function closeOverlay() {
+        overlay.style.display = 'none';
+        setupLevel();
+    }
+
+    function setupLevel() {
+        time = 0;
+        history = [];
+        levelScore = 100;
+        missionStarted = false;
+        gameActive = true;
+        
+        // Auto-position slider to level start
+        slider.value = levels[currentLevel].start;
+        document.getElementById('levelTitle').innerText = levels[currentLevel].title;
+        document.getElementById('levelDesc').innerText = levels[currentLevel].desc;
+        document.getElementById('instructionText').innerText = "← Move the slider to begin! →";
+        render();
+    }
+
+    slider.addEventListener('input', () => {
+        if(gameActive && !missionStarted) {
+            missionStarted = true;
+            document.getElementById('instructionText').innerText = "Stay on the blue path!";
+            update();
+        }
+    });
+
+    // Initial setup
+    setupLevel();
+</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pasar Malam Tycoon: Financial Manager</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        #game-container { width: 600px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 4px solid #ff9f43; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .stats { background: #fff3e0; padding: 10px; border-radius: 8px; margin: 10px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        #visual-area { height: 200px; background: #dfe6e9; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 50px; position: relative; overflow: hidden; }
+        .btn { background: #ff9f43; border: none; color: white; padding: 15px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 18px; font-weight: bold; margin-top: 10px; }
+        .btn:hover { background: #ee5253; }
+        .log { font-size: 14px; color: #555; height: 60px; overflow-y: auto; border: 1px solid #ddd; padding: 5px; margin-top: 10px; }
+        .progress-bar { height: 20px; background: #eee; border-radius: 10px; margin-top: 5px; }
+        #goal-fill { height: 100%; background: #2ecc71; width: 0%; border-radius: 10px; transition: 0.3s; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="header">
+        <h2 style="margin:0;">Pasar Malam Tycoon 🥤</h2>
+        <div>Day: <span id="day-count">1</span>/30</div>
+    </div>
+
+    <div class="stats">
+        <div>Cash: <b>RM<span id="cash">100</span></b></div>
+        <div>Savings: <b>RM<span id="savings">0</span></b></div>
+        <div>Goal: <b>RM3500</b></div>
+        <div>Stock: <span id="stock">10</span> servings</div>
+    </div>
+
+    <div id="visual-area">🏪</div>
+    
+    <div class="progress-bar"><div id="goal-fill"></div></div>
+    <div style="font-size: 12px; text-align: center;">Goal Progress (SMART: Laptop for College)</div>
+
+    <div id="controls">
+        <button class="btn" onclick="sellDrink()">Serve Customer (Earn RM15)</button>
+        <button class="btn" style="background: #0984e3;" onclick="buyStock()">Restock (Cost RM30 for 10)</button>
+        <button class="btn" style="background: #6c5ce7;" onclick="nextDay()">End Day (Pay Rent RM20)</button>
+    </div>
+
+    <div class="log" id="game-log">Welcome to the Night Market! You need RM3,500 in 30 days. Manage your cash flow wisely!</div>
+</div>
+
+<script>
+    let cash = 100;
+    let savings = 0;
+    let stock = 10;
+    let day = 1;
+    const goal = 3500;
+    const rent = 20;
+
+    function updateUI() {
+        document.getElementById('cash').innerText = cash;
+        document.getElementById('savings').innerText = savings;
+        document.getElementById('stock').innerText = stock;
+        document.getElementById('day-count').innerText = day;
+        let progress = (savings / goal) * 100;
+        document.getElementById('goal-fill').style.width = Math.min(progress, 100) + "%";
+    }
+
+    function log(msg) {
+        const logDiv = document.getElementById('game-log');
+        logDiv.innerHTML = msg + "<br>" + logDiv.innerHTML;
+    }
+
+    function sellDrink() {
+        if (stock > 0) {
+            cash += 15;
+            stock--;
+            log("Sold a drink! +RM15");
+            updateUI();
+        } else {
+            log("Out of stock! Buy more ingredients.");
+        }
+    }
+
+    function buyStock() {
+        if (cash >= 30) {
+            cash -= 30;
+            stock += 10;
+            log("Restocked 10 units.");
+            updateUI();
+        } else {
+            log("Not enough cash to restock!");
+        }
+    }
+
+    function nextDay() {
+        // Evaluate Financial Status
+        if (cash < rent) {
+            alert("Game Over! You couldn't pay the stall rent (RM20).");
+            location.reload();
+            return;
+        }
+
+        cash -= rent;
+        
+        // Auto-Saving (The Core Lesson)
+        let saveAmount = Math.floor(cash * 0.5); // Save 50% of remaining cash
+        savings += saveAmount;
+        cash -= saveAmount;
+
+        // Random Financial Shock (Event)
+        if (Math.random() > 0.7) {
+            let repair = 40;
+            cash -= repair;
+            log("⚠️ Equipment broke! Repair cost RM40.");
+        }
+
+        day++;
+        if (day > 30) {
+            if (savings >= goal) {
+                alert("CONGRATULATIONS! You achieved your SMART goal!");
+            } else {
+                alert("Time's up! You saved RM" + savings + " but needed RM" + goal);
+            }
+            location.reload();
+        }
+
+        log("--- Day " + day + " Starts --- Paid RM20 rent. Saved RM" + saveAmount);
+        updateUI();
+    }
+</script>
+
+</body>
+</html>

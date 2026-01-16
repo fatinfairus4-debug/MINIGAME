@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astro-Var Defender</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #050505;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            touch-action: none; /* Prevents scrolling on mobile */
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* HUD Overlay */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00ffcc;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            color: #00ffcc;
+            display: inline-block;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+        }
+
+        /* Central Mission Display */
+        #mission-panel {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        #current-equation {
+            font-size: 1.5rem;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #target-display {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 15px #ffffff;
+            background: rgba(0,0,0,0.6);
+            padding: 5px 20px;
+            border-radius: 10px;
+            border: 2px solid #ff00ff;
+        }
+
+        /* Screens */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .hidden { display: none !important; }
+
+        h1 {
+            font-size: 4rem;
+            margin: 0;
+            background: -webkit-linear-gradient(#00ffcc, #0077ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+        }
+
+        .btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            background: linear-gradient(45deg, #ff00ff, #0077ff);
+            border: none;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(255, 0, 255, 0.8);
+        }
+
+        .stars { font-size: 3rem; color: gold; margin-top: 10px; }
+        
+        #health-bar-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            height: 20px;
+            background: #333;
+            border: 2px solid #fff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        #health-fill {
+            width: 100%;
+            height: 100%;
+            background: #ff3333;
+            transition: width 0.2s;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    
+    <div id="health-bar-container"><div id="health-fill"></div></div>
+
+    <div id="hud">
+        <div class="stat-box">Score: <span id="score-el">0</span></div>
+        <div style="display:block"></div>
+        <div class="stat-box">Level: <span id="level-el">1</span></div>
+        <div style="display:block"></div>
+        <div class="stat-box">Time: <span id="time-el">60</span>s</div>
+    </div>
+
+    <div id="mission-panel">
+        <div id="current-equation">MISSION: y = kx (k=2)</div>
+        <div id="target-display">TARGET y = 10</div>
+        <div style="font-size: 0.9rem; margin-top:5px; color:#aaa">Shoot the asteroid with the correct <b>x</b></div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="start-screen" class="overlay-screen">
+        <h1>ASTRO-VAR DEFENDER</h1>
+        <p style="font-size: 1.2rem; max-width: 600px; text-align: center; color: #ccc; margin-top: 20px;">
+            Pilot your ship with your <b>MOUSE</b>. Click to <b>SHOOT</b>.<br>
+            Destroy the asteroid containing the <b>x value</b> that matches the target <b>y</b>.
+        </p>
+        <button class="btn" onclick="startGame()">LAUNCH MISSION</button>
+    </div>
+
+    <div id="game-over-screen" class="overlay-screen hidden">
+        <h1>MISSION ENDED</h1>
+        <div class="stars" id="final-stars">★★★</div>
+        <p style="font-size: 2rem; margin: 10px;">Final Score: <span id="final-score">0</span></p>
+        <button class="btn" onclick="startGame()">RESTART SYSTEM</button>
+    </div>
+
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // UI Elements
+    const scoreEl = document.getElementById('score-el');
+    const levelEl = document.getElementById('level-el');
+    const timeEl = document.getElementById('time-el');
+    const healthFill = document.getElementById('health-fill');
+    const equationText = document.getElementById('current-equation');
+    const targetText = document.getElementById('target-display');
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const finalScoreEl = document.getElementById('final-score');
+    const finalStarsEl = document.getElementById('final-stars');
+
+    // Game State
+    let animationId;
+    let score = 0;
+    let level = 1;
+    let maxTime = 90;
+    let timeLeft = 90;
+    let health = 100;
+    let isGameOver = false;
+    let lastTime = 0;
+    let asteroidSpawnTimer = 0;
+    
+    // Math Logic State
+    let currentK = 2;
+    let currentY = 10;
+    let correctX = 5;
+    let variationType = 'direct'; // direct, inverse, square
+
+    // Entities
+    const player = { x: 0, y: 0, width: 40, height: 40, color: '#00ffcc' };
+    let projectiles = [];
+    let asteroids = [];
+    let particles = [];
+
+    // Resize handling
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        player.y = canvas.height - 80;
+        player.x = canvas.width / 2;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Input Handling
+    canvas.addEventListener('mousemove', (e) => {
+        if(isGameOver) return;
+        player.x = e.clientX;
+    });
+
+    canvas.addEventListener('mousedown', () => {
+        if(isGameOver) return;
+        shoot();
+    });
+
+    // --- MATH LOGIC GENERATOR ---
+    function setMathProblem() {
+        // Difficulty Logic
+        if (score > 500) level = 2;
+        if (score > 1500) level = 3;
+        levelEl.innerText = level;
+
+        let k, x, y, typeTxt;
+
+        if (level === 1) {
+            // Direct: y = kx
+            k = Math.floor(Math.random() * 8) + 2; 
+            x = Math.floor(Math.random() * 9) + 2;
+            y = k * x;
+            typeTxt = `Direct: y = kx (k=${k})`;
+            variationType = 'direct';
+        } else if (level === 2) {
+            // Inverse: y = k/x
+            x = Math.floor(Math.random() * 8) + 2;
+            let factor = Math.floor(Math.random() * 5) + 2; 
+            k = x * factor; 
+            y = k / x;
+            typeTxt = `Inverse: y = k/x (k=${k})`;
+            variationType = 'inverse';
+        } else {
+            // Square: y = kx^2
+            k = Math.floor(Math.random() * 3) + 1;
+            x = Math.floor(Math.random() * 5) + 2;
+            y = k * (x * x);
+            typeTxt = `Square: y = kx² (k=${k})`;
+            variationType = 'square';
+        }
+
+        currentK = k;
+        correctX = x;
+        currentY = y;
+        
+        equationText.innerText = typeTxt;
+        targetText.innerText = `TARGET y = ${currentY}`;
+    }
+
+    // --- GAME LOGIC ---
+
+    function startGame() {
+        startScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
+        
+        score = 0;
+        scoreEl.innerText = 0;
+        timeLeft = maxTime;
+        health = 100;
+        healthFill.style.width = '100%';
+        isGameOver = false;
+        
+        projectiles = [];
+        asteroids = [];
+        particles = [];
+        
+        setMathProblem();
+        
+        lastTime = performance.now();
+        animate(lastTime);
+        
+        // Timer countdown
+        const timerInt = setInterval(() => {
+            if (isGameOver) { clearInterval(timerInt); return; }
+            timeLeft--;
+            timeEl.innerText = timeLeft;
+            if (timeLeft <= 0) endGame();
+        }, 1000);
+    }
+
+    function shoot() {
+        projectiles.push({
+            x: player.x,
+            y: player.y - 20,
+            radius: 5,
+            color: '#ff00ff',
+            velocity: 10
+        });
+    }
+
+    function spawnAsteroid() {
+        const radius = 35;
+        const xPos = Math.random() * (canvas.width - radius * 2) + radius;
+        
+        // 40% chance to spawn the CORRECT answer, else spawn a random wrong number
+        let value;
+        if (Math.random() < 0.4) {
+            value = correctX; // The answer we want
+        } else {
+            // Generate a wrong answer close to correct one
+            do {
+                value = correctX + Math.floor(Math.random() * 10) - 5;
+            } while (value === correctX || value <= 0);
+        }
+
+        asteroids.push({
+            x: xPos,
+            y: -50,
+            radius: radius,
+            value: value,
+            speed: Math.random() * 1.5 + 0.5 + (level * 0.2), // Get faster with levels
+            angle: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.1
+        });
+    }
+
+    function createExplosion(x, y, color) {
+        for(let i=0; i<10; i++) {
+            particles.push({
+                x: x, 
+                y: y,
+                vx: (Math.random() - 0.5) * 5,
+                vy: (Math.random() - 0.5) * 5,
+                life: 1.0,
+                color: color
+            });
+        }
+    }
+
+    function endGame() {
+        isGameOver = true;
+        cancelAnimationFrame(animationId);
+        gameOverScreen.classList.remove('hidden');
+        finalScoreEl.innerText = score;
+        
+        let stars = "☆ ☆ ☆";
+        if (score > 500) stars = "★ ☆ ☆";
+        if (score > 1500) stars = "★ ★ ☆";
+        if (score > 2500) stars = "★ ★ ★";
+        finalStarsEl.innerText = stars;
+    }
+
+    function animate(timestamp) {
+        if(isGameOver) return;
+        const deltaTime = timestamp - lastTime;
+        lastTime = timestamp;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. Draw Player
+        ctx.fillStyle = player.color;
+        ctx.beginPath();
+        ctx.moveTo(player.x, player.y - 20);
+        ctx.lineTo(player.x - 20, player.y + 20);
+        ctx.lineTo(player.x + 20, player.y + 20);
+        ctx.fill();
+
+        // 2. Update/Draw Projectiles
+        projectiles.forEach((p, index) => {
+            p.y -= p.velocity;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+            ctx.fillStyle = p.color;
+            ctx.fill();
+            
+            if (p.y < 0) projectiles.splice(index, 1);
+        });
+
+        // 3. Spawning Asteroids
+        asteroidSpawnTimer += deltaTime;
+        if (asteroidSpawnTimer > 1500) { // Spawn every 1.5s approx
+            spawnAsteroid();
+            asteroidSpawnTimer = 0;
+        }
+
+        // 4. Update/Draw Asteroids
+        asteroids.forEach((ast, aIndex) => {
+            ast.y += ast.speed;
+            ast.angle += ast.rotSpeed;
+
+            // Draw Asteroid Body
+            ctx.save();
+            ctx.translate(ast.x, ast.y);
+            ctx.rotate(ast.angle);
+            ctx.fillStyle = '#444';
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            // Hexagon shape approx
+            for (let i = 0; i < 6; i++) {
+                ctx.lineTo(ast.radius * Math.cos(i * Math.PI / 3), ast.radius * Math.sin(i * Math.PI / 3));
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw Number
+            ctx.rotate(-ast.angle); // Rotate back for text
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(ast.value, 0, 0);
+            ctx.restore();
+
+            // Collision: Projectile vs Asteroid
+            projectiles.forEach((p, pIndex) => {
+                const dist = Math.hypot(p.x - ast.x, p.y - ast.y);
+                if (dist < ast.radius + p.radius) {
+                    // HIT!
+                    createExplosion(ast.x, ast.y, '#ffaa00');
+                    projectiles.splice(pIndex, 1);
+                    asteroids.splice(aIndex, 1);
+                    
+                    if (ast.value === correctX) {
+                        // Correct Answer
+                        score += 100 + (level * 20);
+                        scoreEl.innerText = score;
+                        createExplosion(ast.x, ast.y, '#00ff00'); // Green explosion
+                        setMathProblem(); // New problem
+                    } else {
+                        // Wrong Answer
+                        score = Math.max(0, score - 50);
+                        scoreEl.innerText = score;
+                        health -= 10;
+                        healthFill.style.width = health + '%';
+                        if (health <= 0) endGame();
+                    }
+                }
+            });
+
+            // Collision: Player vs Asteroid
+            if (ast.y > canvas.height - 100) {
+                 const distP = Math.hypot(player.x - ast.x, player.y - ast.y);
+                 if (distP < ast.radius + 20) {
+                     asteroids.splice(aIndex, 1);
+                     health -= 20;
+                     healthFill.style.width = health + '%';
+                     createExplosion(player.x, player.y, '#ff0000');
+                     if (health <= 0) endGame();
+                 }
+            }
+            
+            // Remove if off screen
+            if (ast.y > canvas.height + 50) {
+                asteroids.splice(aIndex, 1);
+            }
+        });
+
+        // 5. Particles
+        particles.forEach((part, index) => {
+            part.x += part.vx;
+            part.y += part.vy;
+            part.life -= 0.05;
+            ctx.fillStyle = part.color;
+            ctx.globalAlpha = part.life;
+            ctx.fillRect(part.x, part.y, 4, 4);
+            ctx.globalAlpha = 1.0;
+            if (part.life <= 0) particles.splice(index, 1);
+        });
+
+        animationId = requestAnimationFrame(animate);
+    }
+
+</script>
+
+</body>
+</html>

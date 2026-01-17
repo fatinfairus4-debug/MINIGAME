@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transformation Factory: Form 5 Math</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #ec4899;
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 { margin: 0 0 10px 0; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; }
+        
+        #game-container {
+            display: flex;
+            gap: 20px;
+            background: var(--panel);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        /* Canvas Styling */
+        canvas {
+            background: #fff;
+            border-radius: 4px;
+            cursor: crosshair;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* UI Controls */
+        #controls {
+            width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .stat-box {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+
+        .control-group {
+            border-top: 1px solid #334155;
+            padding-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        button:active { transform: scale(0.95); }
+        button:hover { opacity: 0.9; }
+
+        .btn-move { background: var(--primary); color: white; }
+        .btn-reflect { background: #0ea5e9; color: white; }
+        .btn-rotate { background: #8b5cf6; color: white; }
+        .btn-scale { background: var(--secondary); color: white; }
+        .btn-reset { background: #ef4444; color: white; margin-top: auto; }
+        .btn-undo { background: #64748b; color: white; }
+
+        /* Overlays */
+        #overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .hidden { display: none !important; }
+
+        #final-score { font-size: 3rem; color: var(--secondary); margin: 10px 0; }
+        #star-container { font-size: 2.5rem; color: #fbbf24; margin-bottom: 20px; }
+        
+        .big-btn {
+            font-size: 1.2rem;
+            padding: 15px 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50px;
+        }
+
+        #message {
+            position: absolute;
+            top: 10px;
+            background: #22c55e;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Transformation Factory</h1>
+    <div id="message">Match!</div>
+
+    <div id="game-container">
+        <canvas id="gridCanvas" width="400" height="400"></canvas>
+
+        <div id="controls">
+            <div class="stat-box">
+                <span>Level: <span id="level-display">1</span></span>
+                <span>Score: <span id="score-display">0</span></span>
+            </div>
+            <div class="stat-box">
+                <span>Time: <span id="time-display">60</span>s</span>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">Translation (Vector)</span>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                    <button class="btn-move" onclick="transform('up')">Up (0, 1)</button>
+                    <button class="btn-move" onclick="transform('down')">Down (0, -1)</button>
+                    <button class="btn-move" onclick="transform('left')">Left (-1, 0)</button>
+                    <button class="btn-move" onclick="transform('right')">Right (1, 0)</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">Reflection (Axis)</span>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                    <button class="btn-reflect" onclick="transform('refX')">X-Axis</button>
+                    <button class="btn-reflect" onclick="transform('refY')">Y-Axis</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">Rotation (Origin 0,0)</span>
+                <button class="btn-rotate" onclick="transform('rot90')">Rotate 90° Clockwise</button>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label">Enlargement (Origin 0,0)</span>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                    <button class="btn-scale" onclick="transform('scale2')">Scale k=2</button>
+                    <button class="btn-scale" onclick="transform('scaleHalf')">Scale k=½</button>
+                </div>
+            </div>
+
+            <button class="btn-undo" onclick="undoLast()">Undo Last Step</button>
+        </div>
+    </div>
+
+    <div id="overlay">
+        <h1 id="overlay-title">Congruency & Enlargement</h1>
+        <p style="max-width: 400px; text-align: center; color: #cbd5e1; margin-bottom: 20px;">
+            Apply transformations to the <strong>Blue Shape</strong> (Object) until it perfectly overlaps the <strong>Red Shape</strong> (Image).<br><br>
+            <strong>Combined Transformations</strong> apply in later levels!
+        </p>
+        <div id="result-area" class="hidden" style="text-align: center;">
+            <div>Final Score</div>
+            <div id="final-score">0</div>
+            <div id="star-container">☆☆☆</div>
+        </div>
+        <button class="big-btn" id="main-btn" onclick="startGame()">START GAME</button>
+    </div>
+
+<script>
+    /**
+     * GAME ENGINE & MATH LOGIC
+     */
+    
+    const canvas = document.getElementById('gridCanvas');
+    const ctx = canvas.getContext('2d');
+    const gridSize = 20; // Pixels per grid unit
+    const axisOffset = 200; // Center of the canvas (400/2)
+
+    // Game State
+    let level = 1;
+    let score = 0;
+    let timeLeft = 60;
+    let gameActive = false;
+    let timerInterval;
+    
+    // Shapes are arrays of points {x, y} relative to graph (not pixels)
+    let currentShape = []; 
+    let targetShape = [];
+    let historyStack = [];
+
+    // Level Definitions
+    // Difficulty progression: Translation -> Reflection -> Rotation -> Enlargement -> Combined
+    const levels = [
+        { type: "Translation", moves: 1, setup: 'trans' },
+        { type: "Reflection", moves: 1, setup: 'ref' },
+        { type: "Rotation", moves: 1, setup: 'rot' },
+        { type: "Combined T+R", moves: 2, setup: 'comb1' },
+        { type: "Enlargement", moves: 1, setup: 'enl' },
+        { type: "Combined E+T", moves: 2, setup: 'comb2' },
+        { type: "Complex", moves: 3, setup: 'hard' }
+    ];
+
+    // --- Core Functions ---
+
+    function initLevel() {
+        if(level > levels.length) {
+            endGame(true);
+            return;
+        }
+
+        // Reset shapes
+        historyStack = [];
+        
+        // Define a basic L-shape or Triangle as starter
+        const baseShape = [ {x: 1, y: 1}, {x: 3, y: 1}, {x: 1, y: 4} ]; // Triangle
+        
+        // Clone for current player shape
+        currentShape = JSON.parse(JSON.stringify(baseShape));
+
+        // Generate Target based on Level Logic
+        // We start with the base shape and apply random valid transformations to create the goal
+        // This ensures the level is always solvable.
+        targetShape = JSON.parse(JSON.stringify(baseShape));
+        
+        applyLevelLogic(levels[level-1].setup);
+
+        // Update UI
+        document.getElementById('level-display').innerText = level;
+        draw();
+    }
+
+    function applyLevelLogic(type) {
+        // Manipulate targetShape to set the goal
+        // We actually modify the 'currentShape' to be far away, and leave target at a nice spot, or vice versa.
+        // Strategy: Keep Target fixed, randomize Current start position inversely? 
+        // Simpler: Start Current at fixed, Move Target.
+
+        switch(type) {
+            case 'trans':
+                // Move target 3 right, 2 up
+                transformShape(targetShape, 'right'); transformShape(targetShape, 'right'); transformShape(targetShape, 'right');
+                transformShape(targetShape, 'up'); transformShape(targetShape, 'up');
+                break;
+            case 'ref':
+                // Move away from axis then reflect
+                transformShape(currentShape, 'right'); transformShape(currentShape, 'right');
+                transformShape(targetShape, 'right'); transformShape(targetShape, 'right');
+                transformShape(targetShape, 'refX');
+                break;
+            case 'rot':
+                transformShape(currentShape, 'right'); transformShape(currentShape, 'up');
+                transformShape(targetShape, 'right'); transformShape(targetShape, 'up');
+                transformShape(targetShape, 'rot90');
+                break;
+            case 'comb1': // Trans + Ref
+                transformShape(targetShape, 'left'); transformShape(targetShape, 'left');
+                transformShape(targetShape, 'refY');
+                break;
+            case 'enl':
+                 // Move slightly off center so enlargement is visible
+                transformShape(currentShape, 'right'); 
+                transformShape(targetShape, 'right'); 
+                transformShape(targetShape, 'scale2');
+                break;
+            case 'comb2': // Enlarge + Move
+                transformShape(targetShape, 'scale2');
+                transformShape(targetShape, 'down'); transformShape(targetShape, 'down');
+                break;
+            case 'hard': // Rot + Scale + Move
+                 transformShape(targetShape, 'rot90');
+                 transformShape(targetShape, 'scale2');
+                 transformShape(targetShape, 'left');
+                 break;
+        }
+    }
+
+    // --- Math Transformation Logic ---
+
+    function transform(action) {
+        if(!gameActive) return;
+
+        // Save state for undo
+        historyStack.push(JSON.parse(JSON.stringify(currentShape)));
+
+        transformShape(currentShape, action);
+        draw();
+        checkWin();
+    }
+
+    function transformShape(shape, action) {
+        for(let p of shape) {
+            let tempX = p.x;
+            let tempY = p.y;
+
+            switch(action) {
+                // Translation
+                case 'up': p.y += 1; break;
+                case 'down': p.y -= 1; break;
+                case 'left': p.x -= 1; break;
+                case 'right': p.x += 1; break;
+
+                // Reflection
+                case 'refX': p.y = -p.y; break; // Reflect in X-axis (y changes sign)
+                case 'refY': p.x = -p.x; break; // Reflect in Y-axis (x changes sign)
+
+                // Rotation (90 deg Clockwise about origin)
+                // (x, y) -> (y, -x)
+                case 'rot90': 
+                    p.x = tempY; 
+                    p.y = -tempX; 
+                    break;
+
+                // Enlargement (Center at Origin)
+                case 'scale2': 
+                    p.x *= 2; p.y *= 2; 
+                    break;
+                case 'scaleHalf':
+                    p.x /= 2; p.y /= 2;
+                    break;
+            }
+        }
+    }
+
+    function undoLast() {
+        if(historyStack.length > 0) {
+            currentShape = historyStack.pop();
+            draw();
+        }
+    }
+
+    // --- Drawing System ---
+
+    function toPixel(val, isY = false) {
+        // Convert Math coord to Canvas coord
+        if (isY) return axisOffset - (val * gridSize);
+        return axisOffset + (val * gridSize);
+    }
+
+    function draw() {
+        // Clear Canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Grid
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        for(let i=0; i<=400; i+=gridSize) {
+            ctx.moveTo(i, 0); ctx.lineTo(i, 400); // Vert
+            ctx.moveTo(0, i); ctx.lineTo(400, i); // Horiz
+        }
+        ctx.stroke();
+
+        // Draw Axes
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(axisOffset, 0); ctx.lineTo(axisOffset, 400); // Y Axis
+        ctx.moveTo(0, axisOffset); ctx.lineTo(400, axisOffset); // X Axis
+        ctx.stroke();
+
+        // Draw Origin Label
+        ctx.fillStyle = '#64748b';
+        ctx.font = '12px Arial';
+        ctx.fillText("O", axisOffset + 2, axisOffset + 12);
+
+        // Draw Target Shape (Red Ghost)
+        drawPolygon(targetShape, 'rgba(239, 68, 68, 0.4)', 'rgba(239, 68, 68, 1)');
+
+        // Draw Player Shape (Blue Solid)
+        drawPolygon(currentShape, 'rgba(79, 70, 229, 0.6)', 'rgba(79, 70, 229, 1)');
+    }
+
+    function drawPolygon(points, fill, stroke) {
+        ctx.fillStyle = fill;
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(toPixel(points[0].x), toPixel(points[0].y, true));
+        for(let i=1; i<points.length; i++) {
+            ctx.lineTo(toPixel(points[i].x), toPixel(points[i].y, true));
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    // --- Game Logic ---
+
+    function checkWin() {
+        // Check if all points match (approximate for float safety)
+        // Sort points to ensure order doesn't matter (though transformations usually preserve vertex order)
+        // For simplicity, we assume vertex order is preserved because we transform the array.
+        
+        let match = true;
+        for(let i=0; i<currentShape.length; i++) {
+            let dx = Math.abs(currentShape[i].x - targetShape[i].x);
+            let dy = Math.abs(currentShape[i].y - targetShape[i].y);
+            if(dx > 0.01 || dy > 0.01) {
+                match = false;
+                break;
+            }
+        }
+
+        if(match) {
+            score += 100 + (timeLeft * 2); // Score bonus for speed
+            document.getElementById('score-display').innerText = score;
+            showFlashMessage();
+            level++;
+            
+            // Short delay before next level
+            setTimeout(() => {
+                initLevel();
+            }, 800);
+        }
+    }
+
+    function showFlashMessage() {
+        const msg = document.getElementById('message');
+        msg.style.opacity = 1;
+        setTimeout(() => msg.style.opacity = 0, 1000);
+    }
+
+    function startGame() {
+        // Reset Variables
+        level = 1;
+        score = 0;
+        timeLeft = 120; // 2 minutes for the whole run
+        gameActive = true;
+        
+        document.getElementById('overlay').classList.add('hidden');
+        document.getElementById('result-area').classList.add('hidden');
+        document.getElementById('score-display').innerText = "0";
+
+        initLevel();
+        
+        // Start Timer
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('time-display').innerText = timeLeft;
+            if(timeLeft <= 0) {
+                endGame(false);
+            }
+        }, 1000);
+    }
+
+    function endGame(completed) {
+        gameActive = false;
+        clearInterval(timerInterval);
+        
+        const overlay = document.getElementById('overlay');
+        const title = document.getElementById('overlay-title');
+        const mainBtn = document.getElementById('main-btn');
+        const resultArea = document.getElementById('result-area');
+        const finalScoreEl = document.getElementById('final-score');
+        const starsEl = document.getElementById('star-container');
+
+        overlay.classList.remove('hidden');
+        resultArea.classList.remove('hidden');
+        
+        finalScoreEl.innerText = score;
+
+        // Calculate Stars
+        let stars = "☆ ☆ ☆";
+        if(score > 500) stars = "★ ☆ ☆";
+        if(score > 1000) stars = "★ ★ ☆";
+        if(score > 1500) stars = "★ ★ ★";
+        starsEl.innerText = stars;
+
+        if(completed) {
+            title.innerText = "Course Completed!";
+            mainBtn.innerText = "PLAY AGAIN";
+        } else {
+            title.innerText = "Time's Up!";
+            mainBtn.innerText = "TRY AGAIN";
+        }
+    }
+
+    // Initial Draw
+    draw();
+
+</script>
+</body>
+</html>

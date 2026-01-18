@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sigma Stabilizer: Dispersion Challenge</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            background-color: #0f172a;
+            color: white;
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 4px solid #3b82f6;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+            overflow: hidden;
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Orbitron', sans-serif;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .hud-item {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+        }
+
+        #target-display {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(15, 23, 42, 0.9);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: 2px solid white;
+            transition: all 0.3s ease;
+            text-align: center;
+            z-index: 5;
+            width: 60%;
+        }
+
+        .target-high { border-color: #ef4444 !important; color: #ef4444; }
+        .target-low { border-color: #22c55e !important; color: #22c55e; }
+
+        canvas {
+            display: block;
+        }
+
+        /* Overlays (Start/End) */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
+
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 3rem; margin-bottom: 10px; color: #3b82f6; }
+        h2 { font-size: 2rem; margin-bottom: 20px; }
+        p { font-size: 1.1rem; max-width: 600px; line-height: 1.6; color: #cbd5e1; margin-bottom: 20px; }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-family: 'Orbitron', sans-serif;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            box-shadow: 0 4px 0 #1d4ed8;
+        }
+
+        .btn:active { transform: translateY(4px); box-shadow: none; }
+        .btn:hover { background: #2563eb; }
+
+        .stars { font-size: 3rem; color: #ffd700; margin: 20px 0; }
+        .formula-box {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="hud">
+            <div class="hud-item">Score: <span id="score">0</span></div>
+            <div class="hud-item">Level: <span id="level">1</span></div>
+            <div class="hud-item">Time: <span id="timer">60</span>s</div>
+        </div>
+
+        <div id="target-display" class="target-low">CURRENT GOAL: CATCH LOW DISPERSION</div>
+
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="start-screen" class="overlay">
+            <h1>SIGMA STABILIZER</h1>
+            <p><strong>Topic: Measures of Dispersion (Grouped Data)</strong></p>
+            <div class="formula-box">
+                Remember: Standard Deviation (σ) measures spread.<br>
+                Wide Histogram = <strong>High Dispersion</strong><br>
+                Narrow/Tall Histogram = <strong>Low Dispersion</strong>
+            </div>
+            <p>Move your collector with the <strong>Mouse</strong> or <strong>Arrow Keys</strong>.<br>
+            Look at the "Current Goal" and catch the matching data graphs!<br>
+            Avoid the wrong ones to keep your variance calculation pure.</p>
+            <button class="btn" onclick="startGame()">START GAME</button>
+        </div>
+
+        <div id="game-over-screen" class="overlay hidden">
+            <h1>CALCULATION COMPLETE</h1>
+            <div id="final-stars" class="stars">★★★</div>
+            <h2 id="final-score">Score: 0</h2>
+            <p id="performance-text">Good effort!</p>
+            <button class="btn" onclick="startGame()">RESTART</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Configuration & State ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const timeEl = document.getElementById('timer');
+        const levelEl = document.getElementById('level');
+        const targetDisplay = document.getElementById('target-display');
+        
+        let gameState = 'START'; // START, PLAYING, GAMEOVER
+        let score = 0;
+        let timeLeft = 60;
+        let level = 1;
+        let gameLoopId;
+        let spawnInterval;
+        let timerInterval;
+        let targetMode = 'LOW'; // 'LOW' or 'HIGH' dispersion
+        let modeTimer = 0;
+        
+        // --- Player Object ---
+        const player = {
+            x: 350,
+            y: 520,
+            width: 100,
+            height: 60,
+            color: '#3b82f6',
+            speed: 8
+        };
+
+        // --- Falling Objects ---
+        let particles = [];
+        
+        // --- Input Handling ---
+        let keys = {};
+        let mouseX = null;
+
+        window.addEventListener('keydown', e => keys[e.key] = true);
+        window.addEventListener('keyup', e => keys[e.key] = false);
+        
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+        });
+
+        // --- Game Logic ---
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+            
+            // Reset Stats
+            score = 0;
+            timeLeft = 60;
+            level = 1;
+            particles = [];
+            targetMode = 'LOW';
+            updateScore();
+            updateTargetDisplay();
+            
+            gameState = 'PLAYING';
+            
+            // Start Timers
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timeEl.innerText = timeLeft;
+                
+                // Switch target mode every 8-12 seconds randomly to keep it interesting
+                modeTimer++;
+                if(modeTimer > 8 && Math.random() > 0.8) {
+                    switchTargetMode();
+                    modeTimer = 0;
+                }
+
+                // Level up every 15 seconds
+                if(timeLeft % 15 === 0 && timeLeft !== 60) {
+                    level++;
+                    levelEl.innerText = level;
+                }
+
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+
+            // Start Loop
+            cancelAnimationFrame(gameLoopId);
+            gameLoop();
+        }
+
+        function switchTargetMode() {
+            targetMode = targetMode === 'LOW' ? 'HIGH' : 'LOW';
+            updateTargetDisplay();
+        }
+
+        function updateTargetDisplay() {
+            if(targetMode === 'LOW') {
+                targetDisplay.innerText = "GOAL: CATCH LOW DISPERSION (NARROW)";
+                targetDisplay.className = "target-low";
+            } else {
+                targetDisplay.innerText = "GOAL: CATCH HIGH DISPERSION (WIDE)";
+                targetDisplay.className = "target-high";
+            }
+        }
+
+        function spawnParticle() {
+            // Spawn rate increases with level
+            const chance = 0.02 + (level * 0.005);
+            if (Math.random() < chance) {
+                const type = Math.random() > 0.5 ? 'LOW' : 'HIGH';
+                particles.push({
+                    x: Math.random() * (canvas.width - 60),
+                    y: -60,
+                    width: 60,
+                    height: 60,
+                    speed: 2 + (level * 0.5) + (Math.random() * 2), // Speed varies
+                    type: type
+                });
+            }
+        }
+
+        function update() {
+            // Player Movement (Mouse priority, then keyboard)
+            if (mouseX !== null) {
+                player.x = mouseX - player.width / 2;
+            } else {
+                if (keys['ArrowLeft']) player.x -= player.speed;
+                if (keys['ArrowRight']) player.x += player.speed;
+            }
+
+            // Boundary Check
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            // Update Particles
+            spawnParticle();
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.y += p.speed;
+
+                // Collision Detection
+                if (
+                    p.x < player.x + player.width &&
+                    p.x + p.width > player.x &&
+                    p.y < player.y + player.height &&
+                    p.y + p.height > player.y
+                ) {
+                    // Hit!
+                    if (p.type === targetMode) {
+                        score += 100 + (level * 10);
+                        createFloatingText(p.x, p.y, "+100", "#22c55e");
+                    } else {
+                        score -= 50;
+                        if(score < 0) score = 0;
+                        createFloatingText(p.x, p.y, "-50", "#ef4444");
+                        // Screen shake effect
+                        canvas.style.transform = "translate(5px, 5px)";
+                        setTimeout(() => canvas.style.transform = "translate(0,0)", 50);
+                    }
+                    updateScore();
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                // Off Screen
+                if (p.y > canvas.height) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        // --- Visuals & Drawing ---
+
+        function drawHistogramIcon(ctx, x, y, size, type) {
+            // Background for the block
+            ctx.fillStyle = "#1e293b"; 
+            ctx.fillRect(x, y, size, size);
+            ctx.strokeStyle = "white";
+            ctx.strokeRect(x, y, size, size);
+
+            ctx.fillStyle = type === 'LOW' ? '#22c55e' : '#ef4444'; // Green for Low, Red for High
+            
+            const barWidth = size / 5;
+            const bottomY = y + size - 5;
+
+            if (type === 'LOW') {
+                // Low Dispersion: Tall in middle, short on sides (Concentrated)
+                // Shapes: Small, Tall, Very Tall, Tall, Small
+                ctx.fillRect(x + barWidth*0.5, bottomY - 10, barWidth, 10);
+                ctx.fillRect(x + barWidth*1.5, bottomY - 30, barWidth, 30);
+                ctx.fillRect(x + barWidth*2.5, bottomY - 45, barWidth, 45); // Mean
+                ctx.fillRect(x + barWidth*3.5, bottomY - 30, barWidth, 30);
+            } else {
+                // High Dispersion: Flat distribution (Spread out)
+                // Shapes: Medium, Medium, Medium, Medium, Medium
+                ctx.fillRect(x + 5, bottomY - 20, barWidth, 20);
+                ctx.fillRect(x + barWidth + 5, bottomY - 25, barWidth, 25);
+                ctx.fillRect(x + barWidth*2 + 5, bottomY - 20, barWidth, 20); // Mean
+                ctx.fillRect(x + barWidth*3 + 5, bottomY - 25, barWidth, 25);
+                ctx.fillRect(x + barWidth*4 + 5, bottomY - 20, barWidth, 20);
+            }
+            
+            // Draw Label
+            ctx.fillStyle = "white";
+            ctx.font = "10px sans-serif";
+            ctx.fillText(type === 'LOW' ? "σ Low" : "σ High", x + 10, y + 12);
+        }
+
+        function draw() {
+            // Clear Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Player (The Collection Bin)
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.roundRect(player.x, player.y, player.width, player.height, [0, 0, 10, 10]);
+            ctx.fill();
+            
+            // Draw Bin Rim
+            ctx.strokeStyle = "#60a5fa";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(player.x, player.y);
+            ctx.lineTo(player.x, player.y + player.height);
+            ctx.lineTo(player.x + player.width, player.y + player.height);
+            ctx.lineTo(player.x + player.width, player.y);
+            ctx.stroke();
+
+            // Label on Bin
+            ctx.fillStyle = "white";
+            ctx.font = "bold 16px Roboto";
+            ctx.textAlign = "center";
+            ctx.fillText("DATA BIN", player.x + player.width/2, player.y + 35);
+
+            // Draw Particles
+            particles.forEach(p => {
+                drawHistogramIcon(ctx, p.x, p.y, p.width, p.type);
+            });
+
+            // Draw Floating Text (simple visual feedback)
+            // (In a full engine we'd manage these in an array, here we keep it simple)
+        }
+
+        // Floating Text Logic (Simple implementation)
+        let floatingTexts = [];
+        function createFloatingText(x, y, text, color) {
+            floatingTexts.push({x, y, text, color, life: 30});
+        }
+        
+        function drawFloatingTexts() {
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                let ft = floatingTexts[i];
+                ctx.fillStyle = ft.color;
+                ctx.font = "bold 20px Orbitron";
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ft.y -= 2;
+                ft.life--;
+                if(ft.life <= 0) floatingTexts.splice(i, 1);
+            }
+        }
+
+        function gameLoop() {
+            if (gameState === 'PLAYING') {
+                update();
+                draw();
+                drawFloatingTexts();
+                gameLoopId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function updateScore() {
+            scoreEl.innerText = score;
+        }
+
+        function endGame() {
+            gameState = 'GAMEOVER';
+            clearInterval(timerInterval);
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = "Final Score: " + score;
+            
+            // Calculate Stars
+            let stars = "";
+            let msg = "";
+            if (score < 1000) { stars = "★☆☆"; msg = "Keep practicing variance!"; }
+            else if (score < 2500) { stars = "★★☆"; msg = "Great consistency!"; }
+            else { stars = "★★★"; msg = "Master of Statistics!"; }
+            
+            document.getElementById('final-stars').innerText = stars;
+            document.getElementById('performance-text').innerText = msg;
+        }
+
+    </script>
+</body>
+</html>

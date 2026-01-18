@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wave Sync: Form 5 Trig Challenge</title>
+    <style>
+        :root {
+            --bg-color: #0f0f1a;
+            --hud-color: #1a1a2e;
+            --accent-cyan: #00f2ff;
+            --accent-pink: #ff0055;
+            --accent-green: #00ff9d;
+            --text-color: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            user-select: none;
+        }
+
+        /* HUD & UI */
+        #game-ui {
+            position: absolute;
+            top: 20px;
+            width: 90%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+            z-index: 10;
+        }
+
+        .stat-box {
+            background: rgba(26, 26, 46, 0.8);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--accent-cyan);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; }
+        .stat-value { font-size: 1.5rem; color: var(--accent-green); }
+        
+        #timer-value { color: var(--accent-pink); }
+
+        /* Game Container */
+        #canvas-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            background: radial-gradient(circle, #1a1a2e 0%, #0f0f1a 100%);
+        }
+
+        /* Target Equation Display */
+        #equation-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            opacity: 0.1;
+            font-weight: bold;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* Controls Hint */
+        #controls-hint {
+            margin-top: 15px;
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        .key {
+            display: inline-block;
+            padding: 2px 8px;
+            border: 1px solid #666;
+            border-radius: 4px;
+            background: #222;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* Overlay (Start/End) */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        h1 { font-size: 3rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 5px; color: var(--accent-cyan); }
+        h2 { color: var(--accent-pink); margin-top: 0; }
+        
+        .stars { font-size: 3rem; color: gold; margin: 20px 0; }
+        
+        button {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background: var(--accent-cyan);
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--accent-cyan);
+        }
+
+        #feedback {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-ui">
+        <div class="stat-box">
+            <span class="stat-label">Score</span>
+            <span class="stat-value" id="score">0</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Level</span>
+            <span class="stat-value" id="level">1</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">Time</span>
+            <span class="stat-value" id="timer-value">60</span>
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <div id="equation-display">y = sin x</div>
+        <div id="feedback">MATCH!</div>
+    </div>
+
+    <div id="controls-hint">
+        Use <span class="key">↑</span> <span class="key">↓</span> to change <b>Amplitude (a)</b> <br>
+        Use <span class="key">←</span> <span class="key">→</span> to change <b>Period (b)</b> <br>
+        Press <span class="key">SPACE</span> to switch between <b>SIN</b> and <b>COS</b> (Level 2+)
+    </div>
+
+    <div id="overlay">
+        <h1 id="overlay-title">WAVE SYNC</h1>
+        <h2 id="overlay-subtitle">Form 5 Trigonometry</h2>
+        <div id="final-stats" style="display:none; text-align:center;">
+            <p>Final Score: <span id="final-score">0</span></p>
+            <div class="stars" id="star-display">☆☆☆</div>
+        </div>
+        <button id="btn-action" onclick="startGame()">Start Mission</button>
+    </div>
+
+<script>
+    /**
+     * GAME CONFIGURATION & VARIABLES
+     */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Game State
+    let isPlaying = false;
+    let score = 0;
+    let level = 1;
+    let timeLeft = 60;
+    let timerInterval;
+    let animationId;
+
+    // Physics/Math State
+    const X_AXIS_Y = canvas.height / 2;
+    const SCALE_X = 80; // pixels per unit (roughly)
+    const SCALE_Y = 60; // pixels per unit amplitude
+
+    // The Player's Wave (Current Input)
+    let playerWave = {
+        type: 'sin', // 'sin' or 'cos'
+        a: 1, // Amplitude
+        b: 1  // Period multiplier
+    };
+
+    // The Target Wave (Goal)
+    let targetWave = {
+        type: 'sin',
+        a: 1,
+        b: 1
+    };
+
+    /**
+     * CORE FUNCTIONS
+     */
+
+    function startGame() {
+        // Reset Variables
+        score = 0;
+        level = 1;
+        timeLeft = 60;
+        playerWave = { type: 'sin', a: 1, b: 1 };
+        
+        // UI Updates
+        document.getElementById('score').innerText = score;
+        document.getElementById('level').innerText = level;
+        document.getElementById('timer-value').innerText = timeLeft;
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('final-stats').style.display = 'none';
+
+        // Start Systems
+        isPlaying = true;
+        generateNewTarget();
+        startTimer();
+        gameLoop();
+    }
+
+    function endGame() {
+        isPlaying = false;
+        clearInterval(timerInterval);
+        cancelAnimationFrame(animationId);
+
+        // Calculate Stars
+        let stars = "☆☆☆";
+        if (score >= 2000) stars = "★★★";
+        else if (score >= 1000) stars = "★★☆";
+        else if (score >= 500) stars = "★☆☆";
+
+        // Update Overlay
+        document.getElementById('overlay-title').innerText = "GAME OVER";
+        document.getElementById('overlay-subtitle').innerText = "Simulation Ended";
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('star-display').innerText = stars;
+        document.getElementById('final-stats').style.display = 'block';
+        document.getElementById('btn-action').innerText = "RESTART SYSTEM";
+        document.getElementById('overlay').style.display = 'flex';
+    }
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer-value').innerText = timeLeft;
+            
+            // Urgency effect
+            if(timeLeft <= 10) {
+                document.getElementById('timer-value').style.textShadow = "0 0 15px red";
+            } else {
+                document.getElementById('timer-value').style.textShadow = "none";
+            }
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }, 1000);
+    }
+
+    /**
+     * GAMEPLAY LOGIC
+     */
+
+    function generateNewTarget() {
+        // Difficulty scaling based on level
+        const maxAmp = level > 2 ? 3 : 2;
+        const maxB = level > 3 ? 3 : 2;
+        const types = level >= 2 ? ['sin', 'cos'] : ['sin'];
+
+        // Randomize target
+        let newType, newA, newB;
+        
+        // Ensure new target is different from current player position to avoid instant win
+        do {
+            newType = types[Math.floor(Math.random() * types.length)];
+            newA = Math.floor(Math.random() * maxAmp) + 1; // 1 to maxAmp
+            newB = Math.floor(Math.random() * maxB) + 1;   // 1 to maxB
+            
+            // Sometimes flip amplitude for negative graphs (Level 4+)
+            if (level >= 4 && Math.random() > 0.7) newA *= -1;
+
+        } while (newType === playerWave.type && newA === playerWave.a && newB === playerWave.b);
+
+        targetWave = { type: newType, a: newA, b: newB };
+    }
+
+    function checkMatch() {
+        if (playerWave.type === targetWave.type && 
+            playerWave.a === targetWave.a && 
+            playerWave.b === targetWave.b) {
+            
+            // SUCCESS!
+            score += 100 + (level * 20);
+            timeLeft += 3; // Bonus time
+            document.getElementById('score').innerText = score;
+            
+            // Visual Feedback
+            showFeedback("MATCH!", "#00ff9d");
+            
+            // Level Up logic
+            if (score > level * 400) {
+                level++;
+                document.getElementById('level').innerText = level;
+                showFeedback("LEVEL UP!", "#ff0055");
+            }
+
+            generateNewTarget();
+        }
+    }
+
+    function showFeedback(text, color) {
+        const fb = document.getElementById('feedback');
+        fb.innerText = text;
+        fb.style.color = color;
+        fb.style.opacity = 1;
+        setTimeout(() => fb.style.opacity = 0, 800);
+    }
+
+    /**
+     * RENDERING (THE MATH)
+     */
+    function drawGrid() {
+        ctx.strokeStyle = "#333";
+        ctx.lineWidth = 1;
+
+        // Draw Axes
+        ctx.beginPath();
+        ctx.moveTo(0, X_AXIS_Y);
+        ctx.lineTo(canvas.width, X_AXIS_Y); // X-axis
+        ctx.moveTo(50, 0);
+        ctx.lineTo(50, canvas.height); // Y-axis
+        ctx.stroke();
+
+        // Draw Degree Markers (0, 90, 180, 270, 360)
+        ctx.font = "12px monospace";
+        ctx.fillStyle = "#888";
+        
+        // We map pixels to degrees. Let's say 150px = 90 degrees
+        const pxPer90Deg = 150;
+        
+        for(let i = 0; i <= 5; i++) {
+            let x = 50 + (i * pxPer90Deg);
+            let deg = i * 90;
+            ctx.fillText(deg + "°", x - 10, X_AXIS_Y + 20);
+            
+            // Vertical grid lines
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.strokeStyle = "rgba(255,255,255,0.05)";
+            ctx.stroke();
+        }
+
+        // Draw Amplitude Markers
+        ctx.fillText("1", 30, X_AXIS_Y - SCALE_Y);
+        ctx.fillText("-1", 25, X_AXIS_Y + SCALE_Y);
+        ctx.fillText("2", 30, X_AXIS_Y - (SCALE_Y*2));
+        ctx.fillText("-2", 25, X_AXIS_Y + (SCALE_Y*2));
+    }
+
+    function drawWave(waveObj, color, isDashed = false) {
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color;
+        if (isDashed) ctx.setLineDash([10, 10]);
+        else ctx.setLineDash([]);
+
+        // Graphing: y = a sin(bx) or y = a cos(bx)
+        // Canvas mapping: 
+        // x pixel = 50 (origin) + (degrees / 90) * 150
+        // y pixel = Center - (Value * SCALE_Y)
+        
+        let startPixelX = 0; 
+        
+        for (let x = 0; x < canvas.width; x++) {
+            // Convert pixel x to degrees (relative to origin at x=50)
+            // 150px = 90 deg -> 1px = 90/150 = 0.6 deg
+            let degrees = (x - 50) * 0.6;
+            
+            // Convert to Radians for JS Math functions
+            let radians = degrees * (Math.PI / 180);
+
+            let yVal = 0;
+            
+            // Apply b (period multiplier): sin(b * theta)
+            if (waveObj.type === 'sin') {
+                yVal = waveObj.a * Math.sin(waveObj.b * radians);
+            } else {
+                yVal = waveObj.a * Math.cos(waveObj.b * radians);
+            }
+
+            let canvasY = X_AXIS_Y - (yVal * SCALE_Y);
+
+            if (x === 0) ctx.moveTo(x, canvasY);
+            else ctx.lineTo(x, canvasY);
+        }
+        ctx.stroke();
+    }
+
+    function updateHUD() {
+        // Construct the math string equation
+        let sign = targetWave.a < 0 ? "-" : "";
+        let absA = Math.abs(targetWave.a);
+        let aStr = absA === 1 ? "" : absA; // Hide 1
+        let bStr = targetWave.b === 1 ? "x" : `${targetWave.b}x`;
+        
+        let eq = `Target: y = ${sign}${aStr}${targetWave.type}(${bStr})`;
+        
+        // Draw Player stats on canvas for quick reading
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "#00f2ff";
+        ctx.textAlign = "left";
+        ctx.fillText(`Player: y = ${playerWave.a}${playerWave.type}(${playerWave.b}x)`, 20, 30);
+        
+        ctx.fillStyle = "#ff0055";
+        ctx.textAlign = "right";
+        ctx.fillText(eq, canvas.width - 20, 30);
+    }
+
+    function gameLoop() {
+        if (!isPlaying) return;
+
+        // Clear Canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Background Grid
+        drawGrid();
+
+        // Draw Target Wave (Red/Pink, Dashed)
+        drawWave(targetWave, '#ff0055', true);
+
+        // Draw Player Wave (Cyan, Solid)
+        drawWave(playerWave, '#00f2ff', false);
+
+        // Update Text
+        updateHUD();
+
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    /**
+     * INPUT HANDLING
+     */
+    window.addEventListener('keydown', (e) => {
+        if (!isPlaying) return;
+
+        switch(e.key) {
+            case 'ArrowUp':
+                if (playerWave.a < 3) playerWave.a++;
+                break;
+            case 'ArrowDown':
+                if (playerWave.a > -3) playerWave.a--;
+                if (playerWave.a === 0) playerWave.a--; // Skip 0 amplitude
+                break;
+            case 'ArrowRight':
+                if (playerWave.b < 4) playerWave.b++;
+                break;
+            case 'ArrowLeft':
+                if (playerWave.b > 1) playerWave.b--;
+                break;
+            case ' ': // Spacebar
+                if (level >= 2) {
+                    playerWave.type = playerWave.type === 'sin' ? 'cos' : 'sin';
+                }
+                break;
+        }
+        
+        checkMatch();
+    });
+
+</script>
+</body>
+</html>

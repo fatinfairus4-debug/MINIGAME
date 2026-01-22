@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbit Architect: Math Modeling</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-color: #1e293b;
+            --accent-color: #38bdf8;
+            --success-color: #4ade80;
+            --danger-color: #f87171;
+            --text-color: #f1f5f9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            border: 2px solid var(--panel-color);
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+            overflow: hidden;
+        }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .stat-box {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--accent-color);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(30, 41, 59, 0.95);
+            padding: 20px;
+            box-sizing: border-box;
+            border-top: 2px solid var(--accent-color);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .equation-display {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+            color: var(--accent-color);
+        }
+
+        .sliders-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 40%;
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--accent-color);
+            cursor: pointer;
+        }
+
+        button.action-btn {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button.action-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
+        h1 { margin-bottom: 10px; color: var(--accent-color); }
+        .star-rating { font-size: 3rem; color: gold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div class="hud" id="hud">
+            <div class="stat-box">Sector: <span id="level-disp">1</span></div>
+            <div class="stat-box">Score: <span id="score-disp">0</span></div>
+            <div class="stat-box" style="color: var(--danger-color)">Oxygen: <span id="time-disp">90</span>s</div>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="controls">
+            <div class="equation-display" id="equation-text">y = mx + c</div>
+            <div class="sliders-container" id="sliders-area"></div>
+            <div style="text-align: center; margin-top: 10px;">
+                <button class="action-btn" onclick="checkSolution()">LAUNCH PROBE</button>
+            </div>
+        </div>
+
+        <div id="start-screen" class="overlay">
+            <h1>ORBIT ARCHITECT</h1>
+            <h2>Mathematical Modeling</h2>
+            <p>Adjust the flight path equations to deliver cargo to the target stations.</p>
+            <button class="action-btn" onclick="startGame()">INITIATE MISSION</button>
+        </div>
+
+        <div id="level-screen" class="overlay hidden">
+            <h2 style="color: var(--success-color)">TARGET REACHED!</h2>
+            <p>Trajectory verified. Preparing next jump...</p>
+            <button class="action-btn" onclick="nextLevel()">NEXT SECTOR</button>
+        </div>
+
+        <div id="end-screen" class="overlay hidden">
+            <h1>MISSION REPORT</h1>
+            <div class="star-rating" id="final-stars">★★★</div>
+            <h2>Final Score: <span id="final-score">0</span></h2>
+            <p id="end-message"></p>
+            <button class="action-btn" onclick="restartGame()">REBOOT SYSTEM</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const SCALE = 40; 
+        
+        let gameState = {
+            level: 1,
+            score: 0,
+            timeLeft: 90,
+            timerInterval: null,
+            isActive: false,
+            variables: {},
+            isFlash: false
+        };
+
+        const levels = [
+            {
+                id: 1,
+                type: "linear",
+                equationStr: "y = mx + c",
+                target: { x: 15, y: 12 },
+                startVars: { m: 0.5, c: 2 },
+                sliders: [
+                    { name: "m", min: -2, max: 2, step: 0.1, label: "Slope (m)" },
+                    { name: "c", min: 0, max: 15, step: 0.5, label: "Height (c)" }
+                ]
+            },
+            {
+                id: 2,
+                type: "quadratic",
+                equationStr: "y = a(x - 8)² + c",
+                target: { x: 16, y: 2 },
+                obstacle: { x: 7, y: 0, w: 2, h: 8 }, 
+                startVars: { a: -0.1, c: 10 },
+                sliders: [
+                    { name: "a", min: -0.5, max: -0.01, step: 0.01, label: "Curvature (a)" },
+                    { name: "c", min: 5, max: 18, step: 0.5, label: "Peak Height (c)" }
+                ]
+            },
+            {
+                id: 3,
+                type: "exponential",
+                equationStr: "y = k * a^x",
+                target: { x: 14, y: 15 },
+                startVars: { k: 1, a: 1.1 },
+                sliders: [
+                    { name: "k", min: 0.1, max: 3, step: 0.1, label: "Initial (k)" },
+                    { name: "a", min: 1.01, max: 1.3, step: 0.01, label: "Growth (a)" }
+                ]
+            }
+        ];
+
+        let currentLevelConfig = null;
+
+        function toCanvasX(x) { return x * SCALE; }
+        function toCanvasY(y) { return canvas.height - (y * SCALE); }
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
+            gameState.level = 1;
+            gameState.score = 0;
+            gameState.timeLeft = 90;
+            gameState.isActive = true;
+            startLevel(1);
+            
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+            gameState.timerInterval = setInterval(() => {
+                if (gameState.isActive) {
+                    gameState.timeLeft--;
+                    updateHUD();
+                    if (gameState.timeLeft <= 0) endGame(false);
+                }
+            }, 1000);
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startLevel(lvlNum) {
+            currentLevelConfig = levels[lvlNum - 1];
+            gameState.variables = { ...currentLevelConfig.startVars };
+            document.getElementById('level-screen').classList.add('hidden');
+            document.getElementById('equation-text').innerText = currentLevelConfig.equationStr;
+            document.getElementById('level-disp').innerText = lvlNum;
+            
+            const sliderContainer = document.getElementById('sliders-area');
+            sliderContainer.innerHTML = '';
+            currentLevelConfig.sliders.forEach(s => {
+                const group = document.createElement('div');
+                group.className = 'slider-group';
+                group.innerHTML = `<label id="label-${s.name}">${s.label}: ${gameState.variables[s.name]}</label>
+                                   <input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${gameState.variables[s.name]}">`;
+                const input = group.querySelector('input');
+                input.oninput = (e) => {
+                    const val = parseFloat(e.target.value);
+                    gameState.variables[s.name] = val;
+                    document.getElementById(`label-${s.name}`).innerText = `${s.label}: ${val.toFixed(2)}`;
+                };
+                sliderContainer.appendChild(group);
+            });
+        }
+
+        function calculateY(x) {
+            const v = gameState.variables;
+            const t = currentLevelConfig.type;
+            if (t === 'linear') return (v.m * x) + v.c;
+            if (t === 'quadratic') return (v.a * Math.pow((x - 8), 2)) + v.c;
+            if (t === 'exponential') return v.k * Math.pow(v.a, x);
+            return 0;
+        }
+
+        function gameLoop() {
+            if (!gameState.isActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Grid
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            for(let i=0; i<=20; i++) {
+                ctx.beginPath(); ctx.moveTo(toCanvasX(i), 0); ctx.lineTo(toCanvasX(i), canvas.height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, toCanvasY(i)); ctx.lineTo(canvas.width, toCanvasY(i)); ctx.stroke();
+            }
+
+            // Draw Obstacle
+            if (currentLevelConfig.obstacle) {
+                const o = currentLevelConfig.obstacle;
+                ctx.fillStyle = '#f87171';
+                ctx.fillRect(toCanvasX(o.x), toCanvasY(o.y + o.h), o.w * SCALE, o.h * SCALE);
+            }
+
+            // Draw Target
+            const t = currentLevelConfig.target;
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+            ctx.beginPath(); ctx.arc(toCanvasX(t.x), toCanvasY(t.y), 25, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath(); ctx.arc(toCanvasX(t.x), toCanvasY(t.y), 8, 0, Math.PI*2); ctx.fill();
+
+            // Draw Path
+            ctx.strokeStyle = gameState.isFlash ? '#fff' : '#4ade80';
+            ctx.lineWidth = gameState.isFlash ? 6 : 3;
+            ctx.beginPath();
+            for (let x = 0; x <= 20; x += 0.1) {
+                let y = calculateY(x);
+                if (x === 0) ctx.moveTo(toCanvasX(x), toCanvasY(y));
+                else ctx.lineTo(toCanvasX(x), toCanvasY(y));
+            }
+            ctx.stroke();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function checkSolution() {
+            const t = currentLevelConfig.target;
+            const predY = calculateY(t.x);
+            
+            // Error margins for "hit"
+            const hitTarget = Math.abs(predY - t.y) <= 1.2;
+            
+            let hitObstacle = false;
+            if (currentLevelConfig.obstacle) {
+                const o = currentLevelConfig.obstacle;
+                // Scan the x-range of the obstacle to see if our line passes through it
+                for(let xCheck = o.x; xCheck <= o.x + o.w; xCheck += 0.1) {
+                    if (calculateY(xCheck) <= o.h) {
+                        hitObstacle = true;
+                        break;
+                    }
+                }
+            }
+
+            // Visual feedback
+            gameState.isFlash = true;
+            setTimeout(() => gameState.isFlash = false, 200);
+
+            if (hitTarget && !hitObstacle) {
+                gameState.score += (gameState.timeLeft * 10);
+                updateHUD();
+                if (gameState.level < levels.length) {
+                    document.getElementById('level-screen').classList.remove('hidden');
+                } else {
+                    endGame(true);
+                }
+            } else {
+                // Failure Shake
+                const container = document.getElementById('game-container');
+                container.style.borderColor = "#f87171";
+                setTimeout(() => container.style.borderColor = "#1e293b", 500);
+            }
+        }
+
+        function nextLevel() { 
+            gameState.level++; 
+            startLevel(gameState.level); 
+            updateHUD();
+        }
+        
+        function restartGame() { startGame(); }
+        
+        function updateHUD() {
+            document.getElementById('score-disp').innerText = gameState.score;
+            document.getElementById('time-disp').innerText = gameState.timeLeft;
+            document.getElementById('level-disp').innerText = gameState.level;
+        }
+
+        function endGame(win) {
+            gameState.isActive = false;
+            clearInterval(gameState.timerInterval);
+            document.getElementById('end-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = gameState.score;
+            document.getElementById('end-message').innerText = win ? "Trajectory Stabilized. Mission Success!" : "Oxygen Depleted. Trajectory Lost.";
+            document.getElementById('final-stars').innerText = gameState.score > 3000 ? "★★★" : (gameState.score > 1500 ? "★★" : "★");
+        }
+    </script>
+</body>
+</html>

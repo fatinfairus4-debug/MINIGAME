@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penjaga Masa: Sejarah Tahun 4</title>
+    <style>
+        :root {
+            --primary: #8d6e63;
+            --secondary: #d7ccc8;
+            --accent: #ffca28;
+            --dark: #3e2723;
+            --success: #4caf50;
+            --error: #f44336;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: #efebe9;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Game Container */
+        #game-container {
+            width: 100%;
+            max-width: 600px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 4px solid var(--primary);
+        }
+
+        /* Header */
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .stats-box {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* Translation Button */
+        #lang-btn {
+            background: var(--accent);
+            border: none;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--dark);
+            box-shadow: 0 4px 0 #c79100;
+            transition: transform 0.1s;
+        }
+        #lang-btn:active { transform: translateY(4px); box-shadow: none; }
+
+        /* Game Area */
+        #play-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: url('https://www.transparenttextures.com/patterns/aged-paper.png');
+            background-color: #fff8e1;
+            position: relative;
+        }
+
+        /* The Level Indicator */
+        #level-indicator {
+            background: rgba(0,0,0,0.1);
+            padding: 5px 20px;
+            border-radius: 15px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+
+        /* The Artifact Card */
+        .card {
+            width: 250px;
+            height: 180px;
+            background: white;
+            border: 3px solid var(--dark);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--dark);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.2s;
+        }
+
+        .card small {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: normal;
+        }
+
+        /* The Bins (Answers) */
+        #bins-container {
+            display: flex;
+            width: 100%;
+            padding: 20px;
+            gap: 10px;
+            background: var(--secondary);
+            box-sizing: border-box;
+            min-height: 120px;
+        }
+
+        .bin {
+            flex: 1;
+            background: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 5px 0 #2b1b18;
+        }
+
+        .bin:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+
+        /* Screens (Start/End) */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(62, 39, 35, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .hidden { display: none; }
+
+        h1 { margin-bottom: 10px; color: var(--accent); }
+        .btn-main {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 6px 0 #2e7d32;
+            font-weight: bold;
+        }
+        .btn-main:active { transform: translateY(6px); box-shadow: none; }
+
+        /* Stars */
+        .stars { font-size: 3rem; color: var(--accent); margin: 10px 0; }
+        
+        /* Timer Bar */
+        #timer-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #ddd;
+        }
+        #timer-bar {
+            width: 100%;
+            height: 100%;
+            background: var(--success);
+            transition: width 1s linear, background 0.3s;
+        }
+
+        /* Animations */
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+        .correct-flash { background-color: #dcedc8 !important; border-color: var(--success) !important; }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <header>
+        <div class="stats-box">
+            <span id="score-display">Score: 0</span>
+        </div>
+        <button id="lang-btn" onclick="toggleLanguage()">EN</button>
+    </header>
+    
+    <div id="timer-bar-container">
+        <div id="timer-bar"></div>
+    </div>
+
+    <div id="play-area">
+        <div id="level-indicator">Level 1: Sources</div>
+        <div id="card-container">
+            </div>
+    </div>
+
+    <div id="bins-container">
+        </div>
+
+    <div id="start-screen" class="screen">
+        <h1 id="title-text">PENJAGA MASA</h1>
+        <p id="desc-text">Susun artifak sejarah ke dalam kategori yang betul!</p>
+        <button class="btn-main" id="start-btn" onclick="startGame()">MULA (START)</button>
+    </div>
+
+    <div id="end-screen" class="screen hidden">
+        <h1 id="game-over-text">TAMAT</h1>
+        <div class="stars" id="stars-display">★★★</div>
+        <p id="final-score-text">Markah Akhir: 0</p>
+        <button class="btn-main" id="restart-btn" onclick="startGame()">MAIN LAGI (RESTART)</button>
+    </div>
+</div>
+
+<script>
+    // --- GAME DATA ---
+    // Content covers Unit 1: Mengenali Sejarah (Sources, Time, Methods)
+    const gameData = {
+        level1: {
+            titleMS: "Tahap 1: Sumber Sejarah",
+            titleEN: "Level 1: Historical Sources",
+            categories: [
+                { id: "pri", ms: "Sumber Primer", en: "Primary Source" },
+                { id: "sec", ms: "Sumber Sekunder", en: "Secondary Source" }
+            ],
+            items: [
+                { ms: "Fosil", en: "Fossil", type: "pri" },
+                { ms: "Buku Teks", en: "Textbook", type: "sec" },
+                { ms: "Diari Anne Frank", en: "Anne Frank's Diary", type: "pri" },
+                { ms: "Surat Khabar", en: "Newspaper", type: "sec" },
+                { ms: "Artifak Tembikar", en: "Pottery Artifact", type: "pri" },
+                { ms: "Majalah", en: "Magazine", type: "sec" },
+                { ms: "Manuskrip Lama", en: "Old Manuscript", type: "pri" },
+                { ms: "Ensiklopedia", en: "Encyclopedia", type: "sec" }
+            ]
+        },
+        level2: {
+            titleMS: "Tahap 2: Konsep Masa",
+            titleEN: "Level 2: Time Concepts",
+            categories: [
+                { id: "dek", ms: "Dekad (10)", en: "Decade (10)" },
+                { id: "abd", ms: "Abad (100)", en: "Century (100)" },
+                { id: "alf", ms: "Alaf (1000)", en: "Millennium (1000)" }
+            ],
+            items: [
+                { ms: "10 Tahun", en: "10 Years", type: "dek" },
+                { ms: "1 Abad", en: "1 Century", type: "abd" },
+                { ms: "1000 Tahun", en: "1000 Years", type: "alf" },
+                { ms: "Satu Dekad", en: "One Decade", type: "dek" },
+                { ms: "100 Tahun", en: "100 Years", type: "abd" }
+            ]
+        },
+        level3: {
+            titleMS: "Tahap 3: Kaedah Sejarah",
+            titleEN: "Level 3: Historical Methods",
+            categories: [
+                { id: "lis", ms: "Lisan", en: "Oral" },
+                { id: "arc", ms: "Arkeologi", en: "Archaeology" },
+                { id: "tul", ms: "Bertulis", en: "Written" }
+            ],
+            items: [
+                { ms: "Temu Bual", en: "Interview", type: "lis" },
+                { ms: "Gali Cari", en: "Excavation", type: "arc" },
+                { ms: "Surat Kiriman", en: "Letters", type: "tul" },
+                { ms: "Ucapan Tokoh", en: "Speech", type: "lis" },
+                { ms: "Fosil Tulang", en: "Bone Fossil", type: "arc" },
+                { ms: "Biografi", en: "Biography", type: "tul" }
+            ]
+        }
+    };
+
+    // --- STATE VARIABLES ---
+    let currentLang = 'ms'; // 'ms' or 'en'
+    let score = 0;
+    let currentLevel = 1;
+    let timeLeft = 60;
+    let timerInterval;
+    let currentItem = null;
+    let levelItems = []; // items remaining in current level
+    let gameActive = false;
+
+    // --- DOM ELEMENTS ---
+    const scoreEl = document.getElementById('score-display');
+    const timerBar = document.getElementById('timer-bar');
+    const levelInd = document.getElementById('level-indicator');
+    const cardContainer = document.getElementById('card-container');
+    const binsContainer = document.getElementById('bins-container');
+    const startScreen = document.getElementById('start-screen');
+    const endScreen = document.getElementById('end-screen');
+    const langBtn = document.getElementById('lang-btn');
+
+    // --- TRANSLATION LOGIC ---
+    function toggleLanguage() {
+        currentLang = currentLang === 'ms' ? 'en' : 'ms';
+        langBtn.innerText = currentLang === 'ms' ? 'EN' : 'BM';
+        updateUIText();
+        
+        if (gameActive) {
+            renderBins(); // Update bin labels
+            renderCard(); // Update card text
+        }
+    }
+
+    function updateUIText() {
+        const txt = {
+            ms: { 
+                title: "PENJAGA MASA", 
+                desc: "Susun artifak sejarah ke dalam kategori yang betul!",
+                score: "Markah",
+                start: "MULA",
+                end: "TAMAT",
+                final: "Markah Akhir",
+                restart: "MAIN LAGI"
+            },
+            en: { 
+                title: "TIME KEEPER", 
+                desc: "Sort the historical artifacts into the correct categories!",
+                score: "Score",
+                start: "START",
+                end: "GAME OVER",
+                final: "Final Score",
+                restart: "PLAY AGAIN"
+            }
+        };
+
+        const t = txt[currentLang];
+        document.getElementById('title-text').innerText = t.title;
+        document.getElementById('desc-text').innerText = t.desc;
+        document.getElementById('start-btn').innerText = t.start;
+        document.getElementById('game-over-text').innerText = t.end;
+        document.getElementById('restart-btn').innerText = t.restart;
+        
+        // Only update score label if game not running to avoid flicker logic, 
+        // but simple concat handles it.
+        scoreEl.innerText = `${t.score}: ${score}`;
+    }
+
+    // --- GAME LOOP ---
+    function startGame() {
+        score = 0;
+        currentLevel = 1;
+        timeLeft = 60;
+        gameActive = true;
+        
+        startScreen.classList.add('hidden');
+        endScreen.classList.add('hidden');
+        
+        startLevel(1);
+        startTimer();
+        updateUIText();
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timerBar.style.width = '100%';
+        timerBar.style.backgroundColor = '#4caf50';
+
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            const percentage = (timeLeft / 60) * 100;
+            timerBar.style.width = `${percentage}%`;
+
+            if (timeLeft < 20) timerBar.style.backgroundColor = '#f44336';
+            else if (timeLeft < 40) timerBar.style.backgroundColor = '#ffca28';
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }, 1000);
+    }
+
+    function startLevel(lvl) {
+        currentLevel = lvl;
+        const levelData = gameData[`level${lvl}`];
+        
+        // Update Indicator
+        levelInd.innerText = currentLang === 'ms' ? levelData.titleMS : levelData.titleEN;
+
+        // Clone items so we can remove them as we go
+        levelItems = [...levelData.items];
+        
+        // Shuffle items
+        levelItems.sort(() => Math.random() - 0.5);
+
+        renderBins();
+        nextCard();
+    }
+
+    function renderBins() {
+        const levelData = gameData[`level${currentLevel}`];
+        binsContainer.innerHTML = '';
+        
+        levelData.categories.forEach(cat => {
+            const btn = document.createElement('button');
+            btn.className = 'bin';
+            btn.innerText = currentLang === 'ms' ? cat.ms : cat.en;
+            btn.onclick = () => handleAnswer(cat.id);
+            binsContainer.appendChild(btn);
+        });
+    }
+
+    function nextCard() {
+        if (levelItems.length === 0) {
+            // Level Complete
+            if (currentLevel < 3) {
+                // Bonus time for level up
+                timeLeft = Math.min(timeLeft + 15, 60); 
+                // Show "Level Up" feedback briefly?
+                startLevel(currentLevel + 1);
+            } else {
+                endGame();
+            }
+            return;
+        }
+
+        currentItem = levelItems.pop();
+        renderCard();
+    }
+
+    function renderCard() {
+        cardContainer.innerHTML = '';
+        const card = document.createElement('div');
+        card.className = 'card';
+        
+        // Main Text
+        const mainText = document.createElement('span');
+        mainText.innerText = currentLang === 'ms' ? currentItem.ms : currentItem.en;
+        
+        // Helper text (concept type)
+        const subText = document.createElement('small');
+        subText.innerText = "?"; // Could add specific hints here later
+
+        card.appendChild(mainText);
+        card.appendChild(subText);
+        cardContainer.appendChild(card);
+    }
+
+    function handleAnswer(selectedType) {
+        if (!gameActive) return;
+
+        const cardEl = document.querySelector('.card');
+
+        if (selectedType === currentItem.type) {
+            // Correct
+            score += 100;
+            cardEl.classList.add('correct-flash');
+            
+            // Short delay to show green flash
+            setTimeout(() => {
+                nextCard();
+                updateScoreDisplay();
+            }, 200);
+        } else {
+            // Wrong
+            score = Math.max(0, score - 50); // Penalty
+            cardEl.classList.add('shake');
+            // Remove shake class after animation
+            setTimeout(() => cardEl.classList.remove('shake'), 400);
+            updateScoreDisplay();
+            
+            // Put the item back at the bottom of the pile to try again?
+            // Or just discard it? Let's put it back at the bottom to ensure mastery.
+            levelItems.unshift(currentItem);
+            
+            // Re-render card to reset state (forces text update if lang changed during shake)
+             setTimeout(() => {
+                nextCard(); // Proceed to next for better flow, but the wrong one is re-queued
+            }, 500);
+        }
+    }
+
+    function updateScoreDisplay() {
+        const prefix = currentLang === 'ms' ? "Markah" : "Score";
+        scoreEl.innerText = `${prefix}: ${score}`;
+    }
+
+    function endGame() {
+        gameActive = false;
+        clearInterval(timerInterval);
+        
+        // Calculate Stars
+        let stars = "";
+        if (score > 1500) stars = "★★★";
+        else if (score > 800) stars = "★★☆";
+        else stars = "★☆☆";
+
+        document.getElementById('stars-display').innerText = stars;
+        
+        const finalTxt = currentLang === 'ms' ? "Markah Akhir" : "Final Score";
+        document.getElementById('final-score-text').innerText = `${finalTxt}: ${score}`;
+        
+        endScreen.classList.remove('hidden');
+    }
+
+    // Initialize
+    updateUIText();
+
+</script>
+
+</body>
+</html>

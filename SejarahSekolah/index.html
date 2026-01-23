@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Misi Identiti Sekolah - Slider Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Fredoka+One&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #333;
+            font-family: 'Comic Neue', cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        /* The Game Box */
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 450px; /* Mobile width limit */
+            height: 100%;
+            max-height: 800px;
+            background: #e3f2fd;
+            border: none;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+            touch-action: none; /* CRITICAL: Stops screen moving when you slide finger */
+        }
+
+        /* Canvas */
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none; /* Double protection */
+        }
+
+        /* UI Layers */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: opacity 0.3s;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* HUD (Score/Time) */
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Fredoka One', cursive;
+            font-size: 22px;
+            color: #3e2723;
+            pointer-events: none; /* Let clicks pass through */
+            z-index: 10;
+        }
+
+        .hud-box {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 3px solid #ffca28;
+            box-shadow: 0 4px 0 #ff6f00;
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            color: #d84315;
+            font-size: 36px;
+            margin: 0 0 10px 0;
+            text-shadow: 2px 2px 0 #fff;
+            line-height: 1;
+        }
+
+        p {
+            font-size: 18px;
+            color: #4e342e;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        /* Guide Grid */
+        .guide-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 15px;
+            border: 3px dashed #ffb74d;
+            margin: 15px 0;
+            width: 100%;
+        }
+
+        .emoji-list { font-size: 24px; margin-top: 5px; letter-spacing: 5px; }
+        .good-label { color: #2e7d32; font-weight: 800; font-size: 18px; }
+        .bad-label { color: #c62828; font-weight: 800; font-size: 18px; }
+
+        /* Buttons */
+        .btn {
+            background: #ffeb3b;
+            border: none;
+            border-bottom: 6px solid #fbc02d;
+            color: #3e2723;
+            font-family: 'Fredoka One', cursive;
+            font-size: 28px;
+            padding: 15px 50px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: translateY(6px); border-bottom: 0px; }
+
+        #lang-btn {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            background: #29b6f6;
+            border: 2px solid #01579b;
+            color: white;
+            font-family: 'Fredoka One', cursive;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .stars { font-size: 60px; color: #ffeb3b; -webkit-text-stroke: 2px #f57f17; }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <button id="lang-btn" onclick="toggleLanguage()">English</button>
+
+        <div class="hud">
+            <div class="hud-box"><span id="lbl-score">Markah</span>: <span id="val-score">0</span></div>
+            <div class="hud-box">⏱️ <span id="val-time">60</span>s</div>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="start-screen" class="overlay">
+            <h1 id="txt-title">Misi Identiti Sekolah</h1>
+            <p id="txt-sub">Sejarah Tahun 4</p>
+            
+            <div class="guide-grid">
+                <div>
+                    <div class="good-label" id="txt-catch">TANGKAP</div>
+                    <div class="emoji-list">📛🏳️📜🔭</div>
+                </div>
+                <div>
+                    <div class="bad-label" id="txt-avoid">ELAK</div>
+                    <div class="emoji-list">🎮🍔💤⚽</div>
+                </div>
+            </div>
+
+            <p id="txt-instr">"Slide" jari untuk gerak!</p>
+            <button class="btn" onclick="startGame()" id="btn-start">MULA</button>
+        </div>
+
+        <div id="end-screen" class="overlay hidden">
+            <h1 id="txt-over">Tamat!</h1>
+            <div class="stars" id="final-stars">⭐⭐⭐</div>
+            <p><span id="txt-final">Markah Akhir</span>: <span id="final-score">0</span></p>
+            <p id="final-msg" style="font-size: 24px; color: #d84315;">Hebat!</p>
+            <button class="btn" onclick="startGame()" id="btn-restart">MAIN LAGI</button>
+        </div>
+    </div>
+
+<script>
+    // --- Setup Canvas ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Resize canvas to fit the wrapper exactly (Responsive)
+    function resizeCanvas() {
+        const wrapper = document.getElementById('game-wrapper');
+        canvas.width = wrapper.clientWidth;
+        canvas.height = wrapper.clientHeight;
+        // Keep player at bottom if resized
+        player.y = canvas.height - 100; 
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
+    // --- Translation Data ---
+    let currentLang = 'ms';
+    const textData = {
+        ms: {
+            title: "Misi Identiti Sekolah",
+            sub: "Sejarah Tahun 4",
+            catch: "TANGKAP (Ya)",
+            avoid: "ELAK (Bukan)",
+            instr: "Seret jari untuk gerak!",
+            start: "MULA",
+            score: "Markah",
+            over: "Tamat!",
+            final: "Markah Akhir",
+            restart: "MAIN LAGI",
+            langBtn: "English",
+            msgs: ["Cuba Lagi", "Usaha Bagus", "Sejarawan Hebat!"],
+            items: {
+                good: [
+                    {t:"Lencana", e:"📛"}, {t:"Bendera", e:"🏳️"}, 
+                    {t:"Moto", e:"📜"}, {t:"Visi", e:"🔭"}, {t:"Lagu", e:"🎵"}
+                ],
+                bad: [
+                    {t:"Mainan", e:"🎮"}, {t:"Makanan", e:"🍔"}, 
+                    {t:"Tidur", e:"💤"}, {t:"Bola", e:"⚽"}
+                ]
+            }
+        },
+        en: {
+            title: "School Identity Mission",
+            sub: "History Year 4",
+            catch: "CATCH (Yes)",
+            avoid: "AVOID (No)",
+            instr: "Slide finger to move!",
+            start: "START",
+            score: "Score",
+            over: "Time's Up!",
+            final: "Final Score",
+            restart: "PLAY AGAIN",
+            langBtn: "Bahasa Melayu",
+            msgs: ["Try Again", "Good Job", "Great Historian!"],
+            items: {
+                good: [
+                    {t:"Badge", e:"📛"}, {t:"Flag", e:"🏳️"}, 
+                    {t:"Motto", e:"📜"}, {t:"Vision", e:"🔭"}, {t:"Song", e:"🎵"}
+                ],
+                bad: [
+                    {t:"Toy", e:"🎮"}, {t:"Food", e:"🍔"}, 
+                    {t:"Sleep", e:"💤"}, {t:"Ball", e:"⚽"}
+                ]
+            }
+        }
+    };
+
+    // --- Game Variables ---
+    let gameRunning = false;
+    let score = 0;
+    let timeLeft = 60;
+    let timerInterval;
+    let bgOffsetY = 0; // For sliding background
+    
+    const player = { x: 0, y: 0, width: 80, height: 60 };
+    let items = [];
+    let particles = [];
+
+    // --- Input Handling (The Slider Logic) ---
+    // We use Pointer Events which work for Mouse AND Touch
+    
+    function movePlayer(clientX) {
+        const rect = canvas.getBoundingClientRect();
+        let relativeX = clientX - rect.left;
+        
+        // Clamp (Keep inside screen)
+        if (relativeX < player.width/2) relativeX = player.width/2;
+        if (relativeX > canvas.width - player.width/2) relativeX = canvas.width - player.width/2;
+        
+        player.x = relativeX;
+    }
+
+    // Event Listeners for "Sliding"
+    canvas.addEventListener('pointermove', (e) => {
+        if (!gameRunning) return;
+        movePlayer(e.clientX);
+    });
+
+    canvas.addEventListener('pointerdown', (e) => {
+        if (!gameRunning) return;
+        movePlayer(e.clientX);
+    });
+
+    // --- Core Functions ---
+
+    function startGame() {
+        resizeCanvas(); // Ensure size is correct
+        score = 0;
+        timeLeft = 60;
+        items = [];
+        particles = [];
+        gameRunning = true;
+        
+        // UI
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('end-screen').classList.add('hidden');
+        updateHUD();
+
+        // Timer
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateHUD();
+            if(timeLeft <= 0) endGame();
+        }, 1000);
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function spawnItem() {
+        const dict = textData[currentLang].items;
+        const isGood = Math.random() > 0.4; // 60% good items
+        const pool = isGood ? dict.good : dict.bad;
+        const choice = pool[Math.floor(Math.random() * pool.length)];
+
+        items.push({
+            x: Math.random() * (canvas.width - 40) + 20,
+            y: -50,
+            speed: (Math.random() * 3 + 2) + (score/100), // Gets faster as you score
+            emoji: choice.e,
+            text: choice.t,
+            type: isGood ? 'good' : 'bad'
+        });
+    }
+
+    function update() {
+        // 1. Background Slide Effect
+        bgOffsetY += 2;
+        if (bgOffsetY > 40) bgOffsetY = 0; // Reset pattern
+
+        // 2. Spawning
+        if (Math.random() < 0.03) spawnItem();
+
+        // 3. Move Items & Collision
+        for (let i = items.length - 1; i >= 0; i--) {
+            let item = items[i];
+            item.y += item.speed;
+
+            // Hitbox check
+            if (
+                item.y > player.y - 20 &&
+                item.y < player.y + player.height &&
+                Math.abs(item.x - player.x) < 50
+            ) {
+                // Collision
+                if (item.type === 'good') {
+                    score += 10;
+                    spawnParticle(player.x, player.y, "+10", "#4caf50");
+                } else {
+                    score = Math.max(0, score - 10);
+                    spawnParticle(player.x, player.y, "-10", "#f44336");
+                }
+                updateHUD();
+                items.splice(i, 1);
+            } else if (item.y > canvas.height) {
+                items.splice(i, 1); // Remove if missed
+            }
+        }
+
+        // 4. Particles (Floating Text)
+        for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].y -= 2;
+            particles[i].life--;
+            if(particles[i].life <= 0) particles.splice(i, 1);
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. Draw Background Grid (Sliding Effect)
+        ctx.strokeStyle = "rgba(0, 150, 255, 0.2)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // Vertical lines
+        for(let i=0; i<canvas.width; i+=40) {
+            ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height);
+        }
+        // Horizontal lines (moving)
+        for(let j=bgOffsetY; j<canvas.height; j+=40) {
+            ctx.moveTo(0, j); ctx.lineTo(canvas.width, j);
+        }
+        ctx.stroke();
+
+        // 2. Draw Player (Basket)
+        ctx.textAlign = "center";
+        ctx.font = "60px Arial";
+        ctx.fillText("🧺", player.x, player.y + 50);
+
+        // 3. Draw Items
+        for (let item of items) {
+            ctx.font = "40px Arial";
+            ctx.fillText(item.emoji, item.x, item.y);
+            
+            ctx.fillStyle = "#3e2723";
+            ctx.font = "bold 16px Comic Neue";
+            ctx.fillText(item.text, item.x, item.y + 25);
+        }
+
+        // 4. Draw Particles
+        for (let p of particles) {
+            ctx.fillStyle = p.color;
+            ctx.font = "bold 30px Fredoka One";
+            ctx.fillText(p.text, p.x, p.y);
+        }
+    }
+
+    function gameLoop() {
+        if (!gameRunning) return;
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    // --- Helpers ---
+    function spawnParticle(x, y, txt, col) {
+        particles.push({x: x, y: y, text: txt, color: col, life: 30});
+    }
+
+    function updateHUD() {
+        document.getElementById('val-score').innerText = score;
+        document.getElementById('val-time').innerText = timeLeft;
+    }
+
+    function endGame() {
+        gameRunning = false;
+        clearInterval(timerInterval);
+        document.getElementById('end-screen').classList.remove('hidden');
+        document.getElementById('final-score').innerText = score;
+
+        // Determine Stars
+        let stars = "🌑🌑🌑";
+        let msg = textData[currentLang].msgs[0];
+        
+        if (score >= 100) { stars = "⭐🌑🌑"; msg = textData[currentLang].msgs[0]; }
+        if (score >= 300) { stars = "⭐⭐🌑"; msg = textData[currentLang].msgs[1]; }
+        if (score >= 500) { stars = "⭐⭐⭐"; msg = textData[currentLang].msgs[2]; }
+
+        document.getElementById('final-stars').innerText = stars;
+        document.getElementById('final-msg').innerText = msg;
+    }
+
+    function toggleLanguage() {
+        currentLang = currentLang === 'ms' ? 'en' : 'ms';
+        const t = textData[currentLang];
+        
+        document.getElementById('lang-btn').innerText = t.langBtn;
+        document.getElementById('txt-title').innerText = t.title;
+        document.getElementById('txt-sub').innerText = t.sub;
+        document.getElementById('txt-catch').innerText = t.catch;
+        document.getElementById('txt-avoid').innerText = t.avoid;
+        document.getElementById('txt-instr').innerText = t.instr;
+        document.getElementById('btn-start').innerText = t.start;
+        document.getElementById('lbl-score').innerText = t.score;
+        document.getElementById('txt-over').innerText = t.over;
+        document.getElementById('txt-final').innerText = t.final;
+        document.getElementById('btn-restart').innerText = t.restart;
+    }
+
+    // Init
+    resizeCanvas();
+    toggleLanguage();
+    toggleLanguage(); // Reset to MS
+</script>
+</body>
+</html>

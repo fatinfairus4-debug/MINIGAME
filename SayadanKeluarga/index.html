@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Misi Salasilah Keluarga - Sejarah Tahun 4</title>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --secondary: #F5A623;
+            --success: #7ED321;
+            --bg: #F0F4F8;
+            --card-bg: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Arial', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* --- Header & Controls --- */
+        header {
+            background-color: var(--primary);
+            color: white;
+            width: 100%;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 800px;
+            margin: 10px auto;
+            background: white;
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-box {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .translate-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--secondary);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 0 #d38d1b;
+        }
+
+        .translate-btn:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
+        /* --- Game Area --- */
+        #game-container {
+            width: 95%;
+            max-width: 900px; /* Slightly wider to fit 4 kids in level 3 */
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .instruction {
+            margin-bottom: 20px;
+            color: #555;
+            font-style: italic;
+        }
+
+        /* The Tree Structure */
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            position: relative;
+            flex-wrap: nowrap;
+        }
+
+        /* Connecting lines for the tree */
+        .tree-level.connected::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 20px;
+            background: #ccc;
+            z-index: -1;
+        }
+        
+        .tree-level.connected::before {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 20%;
+            right: 20%;
+            height: 4px;
+            background: #ccc;
+            z-index: -1;
+            border-radius: 4px;
+        }
+        
+        /* Specific fix for level 3 wide children row */
+        .tree-level:last-child {
+            gap: 10px; /* Tighter gap for the bottom row */
+        }
+
+        .drop-zone {
+            width: 90px;
+            height: 110px;
+            border: 3px dashed #ccc;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255,255,255,0.5);
+            transition: all 0.3s;
+            position: relative;
+            margin: 0 5px;
+        }
+
+        .drop-zone.hovered {
+            background-color: #e3f2fd;
+            border-color: var(--primary);
+        }
+
+        .drop-zone-label {
+            font-size: 0.75em;
+            color: #888;
+            margin-top: 5px;
+            pointer-events: none;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* Draggable Items */
+        #pieces-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 30px;
+            padding: 20px;
+            background: #e1e8ed;
+            border-radius: 15px;
+            min-height: 100px;
+        }
+
+        .draggable {
+            width: 80px;
+            height: 100px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            border: 2px solid transparent;
+            z-index: 10;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+        }
+
+        .draggable img {
+            font-size: 35px; /* Using emojis as images */
+            margin-bottom: 5px;
+        }
+
+        .draggable span {
+            font-size: 0.8em;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* --- Modal --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .stars {
+            font-size: 40px;
+            color: #ccc;
+            margin: 10px 0;
+        }
+        .stars .active {
+            color: var(--secondary);
+        }
+
+        .btn-restart {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        /* Helper for correct/incorrect placement */
+        .correct {
+            border-color: var(--success) !important;
+            background-color: #f0fff4 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 class="lang" data-bm="Topik 2: Saya dan Keluarga" data-en="Topic 2: Me and My Family">Topik 2: Saya dan Keluarga</h1>
+        <button class="translate-btn" onclick="toggleLanguage()">EN / BM</button>
+    </header>
+
+    <div class="controls">
+        <div class="stat-box"><span class="lang" data-bm="Masa: " data-en="Time: ">Masa: </span> <span id="timer">60</span>s</div>
+        <div class="stat-box"><span class="lang" data-bm="Tahap: " data-en="Level: ">Tahap: </span> <span id="level-display">1</span></div>
+        <div class="stat-box"><span class="lang" data-bm="Markah: " data-en="Score: ">Markah: </span> <span id="score">0</span></div>
+    </div>
+
+    <div id="game-container">
+        <p class="instruction lang" data-bm="Heret ahli keluarga ke tempat kosong yang betul!" data-en="Drag family members to the correct empty slots!">Heret ahli keluarga ke tempat kosong yang betul!</p>
+        
+        <div id="tree-area"></div>
+
+        <div id="pieces-container"></div>
+    </div>
+
+    <div id="end-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="end-title">Tamat!</h2>
+            <div class="stars" id="star-rating">★ ★ ★</div>
+            <p><span class="lang" data-bm="Markah Akhir: " data-en="Final Score: ">Markah Akhir: </span><strong id="final-score">0</strong></p>
+            <p id="feedback-text"></p>
+            <button class="btn-restart lang" onclick="restartGame()" data-bm="Main Semula" data-en="Play Again">Main Semula</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Data ---
+        // Roles: key (internal ID), bm (Malay text), en (English text), icon (Emoji)
+        const roles = {
+            grandpa: { bm: "Datuk", en: "Grandfather", icon: "👴" },
+            grandma: { bm: "Nenek", en: "Grandmother", icon: "👵" },
+            father: { bm: "Bapa", en: "Father", icon: "👨" },
+            mother: { bm: "Ibu", en: "Mother", icon: "👩" },
+            me: { bm: "Saya", en: "Me", icon: "👦" }, 
+            brother: { bm: "Abang", en: "Brother", icon: "👱‍♂️" },
+            sister: { bm: "Kakak", en: "Sister", icon: "👧" },
+            baby: { bm: "Adik", en: "Baby", icon: "👶" }
+        };
+
+        // Levels Configuration (FIXED)
+        const levels = [
+            {
+                // Level 1: Nuclear Family (Keluarga Asas)
+                name: "Keluarga Asas",
+                time: 45,
+                structure: [
+                    ["father", "mother"], // Generation 2
+                    ["me", "sister"]      // Generation 3
+                ]
+            },
+            {
+                // Level 2: Extended Family (Vertical)
+                name: "Keluarga Kembangan",
+                time: 60,
+                structure: [
+                    ["grandpa", "grandma"], // Generation 1
+                    ["father", "mother"],   // Generation 2
+                    ["me"]                  // Generation 3
+                ]
+            },
+            {
+                // Level 3: Complex - FIXED
+                // Baby is now in the bottom row with other siblings
+                name: "Keluarga Besar",
+                time: 90,
+                structure: [
+                    ["grandpa", "grandma"],            // Generation 1
+                    ["father", "mother"],              // Generation 2
+                    ["brother", "me", "sister", "baby"] // Generation 3 (Siblings)
+                ]
+            }
+        ];
+
+        // --- State Variables ---
+        let currentLevel = 0;
+        let score = 0;
+        let timeLeft = 0;
+        let timerInterval;
+        let isEnglish = false;
+        let correctPlacements = 0;
+        let totalPiecesInLevel = 0;
+
+        // --- DOM Elements ---
+        const treeArea = document.getElementById('tree-area');
+        const piecesContainer = document.getElementById('pieces-container');
+        const timerDisplay = document.getElementById('timer');
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level-display');
+        const modal = document.getElementById('end-modal');
+
+        // --- Initialization ---
+        function initGame() {
+            currentLevel = 0;
+            score = 0;
+            loadLevel(currentLevel);
+            scoreDisplay.innerText = "0";
+            modal.style.display = "none";
+        }
+
+        function loadLevel(levelIndex) {
+            if (levelIndex >= levels.length) {
+                endGame(true); // Won all levels
+                return;
+            }
+
+            const levelData = levels[levelIndex];
+            timeLeft = levelData.time;
+            timerDisplay.innerText = timeLeft;
+            levelDisplay.innerText = levelIndex + 1;
+            correctPlacements = 0;
+            
+            // Build Structure
+            buildTree(levelData.structure);
+            
+            // Start Timer
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame(false); // Time out
+                }
+            }, 1000);
+
+            updateLanguageUI();
+        }
+
+        // --- Building the UI ---
+        function buildTree(structure) {
+            treeArea.innerHTML = '';
+            piecesContainer.innerHTML = '';
+            let piecesToCreate = [];
+
+            structure.forEach((row, rowIndex) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'tree-level';
+                if(rowIndex < structure.length -1) rowDiv.classList.add('connected'); 
+
+                row.forEach(roleKey => {
+                    // Create Drop Zone
+                    const zone = document.createElement('div');
+                    zone.className = 'drop-zone';
+                    zone.dataset.role = roleKey;
+                    
+                    // Label
+                    const label = document.createElement('span');
+                    label.className = 'drop-zone-label lang';
+                    label.dataset.bm = roles[roleKey].bm; 
+                    label.dataset.en = roles[roleKey].en;
+                    label.innerText = isEnglish ? roles[roleKey].en : roles[roleKey].bm;
+                    
+                    zone.appendChild(label);
+                    
+                    // Drag Events
+                    zone.addEventListener('dragover', dragOver);
+                    zone.addEventListener('dragleave', dragLeave);
+                    zone.addEventListener('drop', drop);
+                    
+                    rowDiv.appendChild(zone);
+
+                    piecesToCreate.push(roleKey);
+                });
+
+                treeArea.appendChild(rowDiv);
+            });
+
+            totalPiecesInLevel = piecesToCreate.length;
+            
+            // Shuffle and create pieces
+            piecesToCreate.sort(() => Math.random() - 0.5);
+            piecesToCreate.forEach(roleKey => {
+                const piece = document.createElement('div');
+                piece.className = 'draggable lang-piece';
+                piece.draggable = true;
+                piece.id = `piece-${roleKey}-${Math.random()}`; 
+                piece.dataset.role = roleKey;
+                
+                // Content
+                piece.innerHTML = `
+                    <div style="font-size:35px">${roles[roleKey].icon}</div>
+                    <span class="piece-text">${isEnglish ? roles[roleKey].en : roles[roleKey].bm}</span>
+                `;
+
+                piece.addEventListener('dragstart', dragStart);
+                piecesContainer.appendChild(piece);
+            });
+        }
+
+        // --- Drag and Drop Logic ---
+        function dragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.dataset.role);
+            e.dataTransfer.setData('elementId', e.target.id);
+        }
+
+        function dragOver(e) {
+            e.preventDefault(); 
+            e.currentTarget.classList.add('hovered');
+        }
+
+        function dragLeave(e) {
+            e.currentTarget.classList.remove('hovered');
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            const zone = e.currentTarget;
+            zone.classList.remove('hovered');
+
+            if (zone.querySelector('.draggable')) return;
+
+            const droppedRole = e.dataTransfer.getData('text/plain');
+            const draggedElementId = e.dataTransfer.getData('elementId');
+            const targetRole = zone.dataset.role;
+
+            if (droppedRole === targetRole) {
+                // Correct!
+                const piece = document.getElementById(draggedElementId);
+                const clonedPiece = piece.cloneNode(true);
+                clonedPiece.draggable = false;
+                clonedPiece.classList.add('correct');
+                
+                zone.innerHTML = ''; 
+                zone.appendChild(clonedPiece);
+                piece.remove();
+
+                score += 10 + Math.floor(timeLeft / 2);
+                scoreDisplay.innerText = score;
+                correctPlacements++;
+
+                if (correctPlacements === totalPiecesInLevel) {
+                    clearInterval(timerInterval);
+                    setTimeout(() => {
+                        currentLevel++;
+                        loadLevel(currentLevel);
+                    }, 1000);
+                }
+            } else {
+                // Wrong!
+                zone.style.borderColor = 'red';
+                setTimeout(() => { zone.style.borderColor = '#ccc'; }, 500);
+                score = Math.max(0, score - 5);
+                scoreDisplay.innerText = score;
+            }
+        }
+
+        // --- End Game Logic ---
+        function endGame(isWin) {
+            modal.style.display = "flex";
+            document.getElementById('final-score').innerText = score;
+            const title = document.getElementById('end-title');
+            const feedback = document.getElementById('feedback-text');
+            const stars = document.getElementById('star-rating');
+
+            if (isWin) {
+                title.innerText = isEnglish ? "Congratulations!" : "Tahniah!";
+                
+                let starCount = 1;
+                if (score > 150) starCount = 2;
+                if (score > 300) starCount = 3;
+
+                let starHTML = "";
+                for(let i=0; i<3; i++) {
+                    starHTML += `<span class="${i < starCount ? 'active' : ''}">★</span>`;
+                }
+                stars.innerHTML = starHTML;
+                feedback.innerText = isEnglish ? "You know your family history!" : "Anda kenal salasilah keluarga anda!";
+            } else {
+                title.innerText = isEnglish ? "Time's Up!" : "Masa Tamat!";
+                stars.innerHTML = `<span>★</span><span>☆</span><span>☆</span>`;
+                feedback.innerText = isEnglish ? "Try again to get more stars!" : "Cuba lagi untuk dapatkan lebih bintang!";
+            }
+        }
+
+        function restartGame() {
+            initGame();
+        }
+
+        // --- Translation Logic ---
+        function toggleLanguage() {
+            isEnglish = !isEnglish;
+            updateLanguageUI();
+        }
+
+        function updateLanguageUI() {
+            document.querySelectorAll('.lang').forEach(el => {
+                el.innerText = isEnglish ? el.dataset.en : el.dataset.bm;
+            });
+            document.querySelectorAll('#pieces-container .draggable').forEach(el => {
+                const roleKey = el.dataset.role;
+                el.querySelector('.piece-text').innerText = isEnglish ? roles[roleKey].en : roles[roleKey].bm;
+            });
+            document.querySelectorAll('.drop-zone-label').forEach(el => {
+                 el.innerText = isEnglish ? el.dataset.en : el.dataset.bm;
+            });
+            const btn = document.querySelector('.btn-restart');
+            btn.innerText = isEnglish ? btn.dataset.en : btn.dataset.bm;
+        }
+
+        // Start Game
+        initGame();
+
+    </script>
+</body>
+</html>

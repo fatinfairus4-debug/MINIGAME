@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Sejarah Tahun 4: Unit 4</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Changed gradient to feel more "historical/earthy" but still fun */
+            --bg-gradient: linear-gradient(135deg, #16a085 0%, #f4d03f 100%);
+            --panel-bg: rgba(255, 255, 255, 0.95);
+            --tile-size: 44px; 
+            --gap: 5px;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg-gradient);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+            overflow-y: auto; 
+            overflow-x: hidden;
+            touch-action: manipulation;
+            padding-bottom: 60px;
+        }
+
+        /* --- Header & Buttons --- */
+        header { text-align: center; margin-top: 15px; color: white; z-index: 10; }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            margin: 0; font-size: 1.6rem;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            letter-spacing: 1px;
+            line-height: 1.2;
+        }
+        
+        .subtitle { font-size: 0.9rem; font-weight: 700; opacity: 0.9; margin-bottom: 5px; }
+
+        .top-controls { margin: 10px 0; display: flex; gap: 10px; justify-content: center; }
+
+        .btn {
+            border: none; padding: 8px 16px; border-radius: 20px;
+            font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: transform 0.1s;
+            text-transform: uppercase; font-size: 0.75rem; outline: none;
+        }
+        .btn:active { transform: translateY(4px); box-shadow: none; }
+        .btn-translate { background-color: #3498db; color: white; border: 2px solid white; }
+        .btn-restart { background-color: #e74c3c; color: white; border: 2px solid white; }
+
+        /* --- HUD --- */
+        .hud { display: flex; gap: 10px; margin-bottom: 10px; z-index: 10; }
+        .hud-box {
+            background: var(--panel-bg); padding: 5px 12px; border-radius: 12px;
+            text-align: center; min-width: 70px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .hud-label { font-size: 0.65rem; color: #7f8c8d; font-weight: 800; }
+        .hud-val { font-size: 1.1rem; color: #2c3e50; font-weight: 900; }
+
+        /* --- Game Board --- */
+        .game-wrapper { position: relative; padding: 5px; }
+
+        .game-container {
+            background: #95a5a6; padding: 8px; border-radius: 12px;
+            border-bottom: 6px solid #7f8c8d;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(8, var(--tile-size));
+            grid-template-rows: repeat(8, var(--tile-size));
+            gap: var(--gap);
+            position: relative;
+        }
+
+        .tile {
+            width: var(--tile-size); height: var(--tile-size);
+            background: white; border-radius: 10px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 26px; cursor: pointer; user-select: none;
+            box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1), 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1;
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); 
+        }
+
+        /* Tile States */
+        .tile:hover { filter: brightness(1.1); }
+        
+        .tile.selected {
+            background-color: #ffeaa7;
+            border: 3px solid #f1c40f;
+            z-index: 10;
+            animation: jelly 0.6s infinite;
+        }
+
+        .tile.matched { animation: matchPop 0.3s forwards; }
+
+        /* --- Animations --- */
+        @keyframes jelly {
+            0%, 100% { transform: scale(1, 1); }
+            25% { transform: scale(0.9, 1.1); }
+            50% { transform: scale(1.1, 0.9); }
+            75% { transform: scale(0.95, 1.05); }
+        }
+
+        @keyframes matchPop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        @keyframes dropIn {
+            0% { transform: translateY(-300%); opacity: 0; }
+            60% { transform: translateY(10%); opacity: 1; }
+            100% { transform: translateY(0); }
+        }
+
+        /* Particles */
+        .particle {
+            position: absolute;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 20;
+            animation: fly 0.6s forwards ease-out;
+        }
+
+        @keyframes fly {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* --- Info Panel --- */
+        .info-panel {
+            margin-top: 20px; 
+            margin-bottom: 20px; 
+            background: white; width: 90%; max-width: 400px;
+            border-radius: 15px; padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-left: 8px solid #27ae60; transition: all 0.3s;
+            z-index: 10;
+        }
+        .info-header { font-weight: 800; font-size: 1.2rem; color: #27ae60; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .info-text { font-size: 1rem; line-height: 1.5; color: #555; }
+        .info-hint { font-size: 0.8rem; color: #999; font-style: italic; display: block; margin-top: 10px; text-align: center;}
+
+        /* --- Modal --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none;
+            justify-content: center; align-items: center; z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 20px; text-align: center; width: 80%; max-width: 320px;
+            animation: slideUp 0.4s; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .stars { font-size: 2.5rem; color: #f1c40f; margin: 10px 0; text-shadow: 0 2px 0 rgba(0,0,0,0.1); }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 id="t-title">Unit 4: Sejarah Tempat Tinggal</h1>
+        <div class="subtitle" id="t-subtitle">Kenali Kawasan Anda</div>
+        <div class="top-controls">
+            <button class="btn btn-translate" onclick="toggleLanguage()">🌐 Translate</button>
+            <button class="btn btn-restart" onclick="startGame()">🔄 Restart</button>
+        </div>
+    </header>
+
+    <div class="hud">
+        <div class="hud-box">
+            <div class="hud-label" id="t-score">MARKAH</div>
+            <div class="hud-val" id="score">0</div>
+        </div>
+        <div class="hud-box">
+            <div class="hud-label" id="t-time">MASA</div>
+            <div class="hud-val" id="timer">60</div>
+        </div>
+        <div class="hud-box">
+            <div class="hud-label" id="t-level">TAHAP</div>
+            <div class="hud-val" id="level">1</div>
+        </div>
+    </div>
+
+    <div class="game-wrapper">
+        <div class="game-container">
+            <div class="grid" id="grid"></div>
+        </div>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+        <div class="info-header">
+            <span id="infoIcon">💡</span> 
+            <span id="infoTitle">Info Sejarah</span>
+        </div>
+        <div class="info-text" id="infoDesc">Klik ikon untuk belajar mengenai tempat tinggal kita!</div>
+        <span class="info-hint" id="infoHint">(Click an icon to learn)</span>
+    </div>
+
+    <div id="endModal" class="modal">
+        <div class="modal-content">
+            <h2 id="t-end">Tahniah!</h2>
+            <div class="stars" id="endStars">★★★</div>
+            <p><span id="t-final">Markah Akhir:</span> <strong id="finalScore">0</strong></p>
+            <button class="btn btn-translate" onclick="startGame()" id="t-play">Main Semula</button>
+        </div>
+    </div>
+
+<script>
+    // --- Data: Year 4 History Unit 4 Topics ---
+    const tilesData = [
+        { 
+            id: 0, 
+            icon: '🏠', 
+            color: '#e74c3c', // Red
+            ms: { name: "Tempat Tinggal", desc: "Keperluan asas untuk melindungi diri dan keluarga daripada bahaya." }, 
+            en: { name: "Residence", desc: "A basic need to protect ourselves and our family from danger." } 
+        },
+        { 
+            id: 1, 
+            icon: '📍', 
+            color: '#e67e22', // Orange
+            ms: { name: "Alamat Lengkap", desc: "Nombor rumah, nama jalan, dan poskod penting untuk mencari lokasi." }, 
+            en: { name: "Address", desc: "House number, street name, and postcode are vital for finding locations." } 
+        },
+        { 
+            id: 2, 
+            icon: '🏞️', 
+            color: '#27ae60', // Green
+            ms: { name: "Bentuk Muka Bumi", desc: "Ciri fizikal kawasan seperti tanah pamah, sungai, atau tanah tinggi." }, 
+            en: { name: "Physical Features", desc: "Landforms of the area such as flatlands, rivers, or highlands." } 
+        },
+        { 
+            id: 3, 
+            icon: '🎖️', 
+            color: '#f1c40f', // Gold
+            ms: { name: "Tokoh Setempat", desc: "Individu yang berjasa dan menyumbang kepada kemajuan kawasan setempat." }, 
+            en: { name: "Local Figure", desc: "An individual who contributes to the progress of the local area." } 
+        },
+        { 
+            id: 4, 
+            icon: '🏫', 
+            color: '#3498db', // Blue
+            ms: { name: "Sekolah", desc: "Institusi pendidikan yang menjadi nadi kemajuan masyarakat setempat." }, 
+            en: { name: "School", desc: "An educational institution that is the heart of community progress." } 
+        },
+        { 
+            id: 5, 
+            icon: '🚑', 
+            color: '#9b59b6', // Purple
+            ms: { name: "Kemudahan Awam", desc: "Hospital, balai polis, dan taman permainan menjamin kesejahteraan penduduk." }, 
+            en: { name: "Public Amenities", desc: "Hospitals, police stations, and parks ensure the well-being of residents." } 
+        }
+    ];
+
+    const uiText = {
+        ms: { title: "Sejarah Unit 4", sub: "Misi Tempat Tinggal", score: "MARKAH", time: "MASA", level: "TAHAP", end: "Tamat!", final: "Markah:", play: "Main Semula", defaultTitle: "Info Sejarah", defaultDesc: "Klik ikon untuk belajar!" },
+        en: { title: "History Unit 4", sub: "My Local Area Mission", score: "SCORE", time: "TIME", level: "LEVEL", end: "Game Over", final: "Score:", play: "Play Again", defaultTitle: "History Info", defaultDesc: "Click an icon to learn!" }
+    };
+
+    // --- Game Variables ---
+    const width = 8;
+    const grid = document.getElementById('grid');
+    let squares = [];
+    let score = 0;
+    let timer = 90; // Increased time slightly for reading
+    let lang = 'ms';
+    let intervalId;
+    let isGameOver = false;
+    let isProcessing = false;
+    let selectedTile = null;
+
+    // --- Audio System ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'select') {
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'match') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.linearRampToValueAtTime(800, now + 0.15);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'bad') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+        }
+    }
+
+    // --- Core Game Functions ---
+    function startGame() {
+        document.getElementById('endModal').style.display = 'none';
+        score = 0; timer = 90; isGameOver = false; isProcessing = false; selectedTile = null;
+        clearInterval(intervalId);
+        updateUI();
+        createBoard();
+        
+        intervalId = setInterval(() => {
+            timer--;
+            updateUI();
+            if(timer <= 0) endGame();
+        }, 1000);
+    }
+
+    function createBoard() {
+        grid.innerHTML = '';
+        squares = [];
+        for (let i = 0; i < width * width; i++) {
+            const square = document.createElement('div');
+            square.id = i;
+            const rand = Math.floor(Math.random() * tilesData.length);
+            setTileData(square, rand);
+            square.className = 'tile';
+            square.style.animation = `dropIn 0.5s ease-out ${Math.random() * 0.5}s backwards`; 
+            square.addEventListener('click', () => clickTile(square));
+            grid.appendChild(square);
+            squares.push(square);
+        }
+        setTimeout(resolveMatches, 600); 
+    }
+
+    function setTileData(el, typeId) {
+        el.setAttribute('data-type', typeId);
+        el.innerHTML = tilesData[typeId].icon;
+    }
+
+    async function clickTile(square) {
+        if (isGameOver || isProcessing) return;
+
+        // Display Edu Info immediately on click
+        displayInfo(square.getAttribute('data-type'));
+
+        if (!selectedTile) {
+            selectedTile = square;
+            square.classList.add('selected');
+            playSound('select');
+        } else {
+            const prev = selectedTile;
+            const curr = square;
+
+            if (prev === curr) {
+                prev.classList.remove('selected');
+                selectedTile = null;
+                return;
+            }
+
+            const pId = parseInt(prev.id);
+            const cId = parseInt(curr.id);
+            const validMoves = [pId-1, pId+1, pId-width, pId+width];
+            const isRowWrap = (pId % width === 0 && cId === pId - 1) || (pId % width === width - 1 && cId === pId + 1);
+
+            if (validMoves.includes(cId) && !isRowWrap) {
+                isProcessing = true; 
+                prev.classList.remove('selected');
+                selectedTile = null;
+
+                await swapVisuals(prev, curr);
+                swapData(prev, curr);
+
+                const hasMatch = checkMatches();
+                if (hasMatch) {
+                    await resolveMatches();
+                } else {
+                    playSound('bad');
+                    await swapVisuals(prev, curr);
+                    swapData(prev, curr);
+                }
+                isProcessing = false;
+            } else {
+                playSound('bad');
+                prev.classList.remove('selected');
+                selectedTile = square;
+                square.classList.add('selected');
+                playSound('select');
+            }
+        }
+    }
+
+    // --- Animation Logic ---
+    function swapVisuals(t1, t2) {
+        return new Promise(resolve => {
+            const x1 = t1.offsetLeft;
+            const y1 = t1.offsetTop;
+            const x2 = t2.offsetLeft;
+            const y2 = t2.offsetTop;
+
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+
+            t1.style.transform = `translate(${dx}px, ${dy}px)`;
+            t2.style.transform = `translate(${-dx}px, ${-dy}px)`;
+            t1.style.zIndex = 10; 
+
+            setTimeout(() => {
+                t1.style.transform = '';
+                t2.style.transform = '';
+                t1.style.zIndex = '';
+                resolve();
+            }, 200); 
+        });
+    }
+
+    function swapData(t1, t2) {
+        const type1 = t1.getAttribute('data-type');
+        const type2 = t2.getAttribute('data-type');
+        setTileData(t1, type2);
+        setTileData(t2, type1);
+    }
+
+    function checkMatches() {
+        for (let i = 0; i < 64; i++) {
+            // Row Check
+            if (i % width < width - 2) {
+                if (squares[i].getAttribute('data-type') === squares[i+1].getAttribute('data-type') &&
+                    squares[i].getAttribute('data-type') === squares[i+2].getAttribute('data-type')) {
+                    return true;
+                }
+            }
+            // Col Check
+            if (i < width * (width - 2)) {
+                if (squares[i].getAttribute('data-type') === squares[i+width].getAttribute('data-type') &&
+                    squares[i].getAttribute('data-type') === squares[i+width*2].getAttribute('data-type')) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    async function resolveMatches() {
+        let matchedIndices = new Set();
+        
+        for (let i = 0; i < 64; i++) {
+            let t = squares[i].getAttribute('data-type');
+            // Row
+            if (i % width < width - 2) {
+                if (squares[i+1].getAttribute('data-type') === t && squares[i+2].getAttribute('data-type') === t) {
+                    matchedIndices.add(i); matchedIndices.add(i+1); matchedIndices.add(i+2);
+                }
+            }
+            // Col
+            if (i < width * (width - 2)) {
+                if (squares[i+width].getAttribute('data-type') === t && squares[i+width*2].getAttribute('data-type') === t) {
+                    matchedIndices.add(i); matchedIndices.add(i+width); matchedIndices.add(i+width*2);
+                }
+            }
+        }
+
+        if (matchedIndices.size > 0) {
+            playSound('match');
+            score += matchedIndices.size * 10;
+            updateUI();
+
+            matchedIndices.forEach(idx => {
+                squares[idx].classList.add('matched');
+                spawnParticles(squares[idx]);
+            });
+
+            await new Promise(r => setTimeout(r, 300)); 
+
+            matchedIndices.forEach(idx => {
+                squares[idx].classList.remove('matched');
+                const rand = Math.floor(Math.random() * tilesData.length);
+                setTileData(squares[idx], rand);
+                
+                squares[idx].style.animation = 'none';
+                squares[idx].offsetHeight; /* trigger reflow */
+                const row = Math.floor(idx / width);
+                squares[idx].style.animation = `dropIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) ${row * 0.05}s`; 
+            });
+
+            await new Promise(r => setTimeout(r, 450)); 
+
+            if (checkMatches()) {
+                await resolveMatches();
+            }
+        }
+    }
+
+    function spawnParticles(element) {
+        const rect = element.getBoundingClientRect();
+        // Adjust for scroll position
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2 + window.scrollY;
+
+        // Get color based on tile type
+        const typeId = element.getAttribute('data-type');
+        const color = tilesData[typeId] ? tilesData[typeId].color : '#f1c40f';
+
+        for (let i = 0; i < 6; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.backgroundColor = color;
+            
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = 30 + Math.random() * 50;
+            const tx = Math.cos(angle) * velocity + 'px';
+            const ty = Math.sin(angle) * velocity + 'px';
+            
+            p.style.setProperty('--tx', tx);
+            p.style.setProperty('--ty', ty);
+            p.style.left = centerX + 'px';
+            p.style.top = centerY + 'px';
+            
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 600);
+        }
+    }
+
+    // --- UI Logic ---
+    function toggleLanguage() {
+        lang = lang === 'ms' ? 'en' : 'ms';
+        updateUI();
+        displayInfo(null);
+    }
+
+    function updateUI() {
+        const t = uiText[lang];
+        document.getElementById('t-title').innerText = t.title;
+        document.getElementById('t-subtitle').innerText = t.sub;
+        document.getElementById('t-score').innerText = t.score;
+        document.getElementById('t-time').innerText = t.time;
+        document.getElementById('t-level').innerText = t.level;
+        document.getElementById('t-end').innerText = t.end;
+        document.getElementById('t-final').innerText = t.final;
+        document.getElementById('t-play').innerText = t.play;
+        document.getElementById('score').innerText = score;
+        document.getElementById('timer').innerText = timer;
+        document.getElementById('level').innerText = Math.floor(score / 500) + 1;
+    }
+
+    function displayInfo(typeId) {
+        const panel = document.getElementById('infoPanel');
+        
+        if(typeId === null) {
+            document.getElementById('infoTitle').innerText = uiText[lang].defaultTitle;
+            document.getElementById('infoDesc').innerText = uiText[lang].defaultDesc;
+            panel.style.borderLeftColor = "#27ae60";
+            return;
+        }
+        
+        const data = tilesData.find(t => t.id == typeId);
+        if(!data) return;
+        
+        const info = data[lang];
+        document.getElementById('infoIcon').innerText = data.icon;
+        document.getElementById('infoTitle').innerText = info.name;
+        document.getElementById('infoDesc').innerText = info.desc;
+        
+        // Color code the side of the panel to match the tile
+        panel.style.borderLeftColor = data.color;
+
+        // Pop Animation
+        panel.style.transform = "scale(1.02)";
+        setTimeout(() => panel.style.transform = "scale(1)", 150);
+        
+        // Mobile Autoscroll check
+        if(window.innerWidth < 600) {
+           panel.scrollIntoView({behavior: "smooth", block: "nearest"});
+        }
+    }
+
+    function endGame() {
+        isGameOver = true;
+        clearInterval(intervalId);
+        document.getElementById('endModal').style.display = 'flex';
+        document.getElementById('finalScore').innerText = score;
+        
+        let stars = "★";
+        if (score > 500) stars = "★★";
+        if (score > 1000) stars = "★★★";
+        document.getElementById('endStars').innerText = stars;
+    }
+
+    // Start
+    startGame();
+
+</script>
+</body>
+</html>

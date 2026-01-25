@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Larian Rentas Zaman (Fixed Translation)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Nunito:wght@400;800&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            font-family: 'Nunito', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            background: #000;
+            border: 4px solid #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        /* Top HUD Bar */
+        #hud-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 25px;
+            box-sizing: border-box;
+            z-index: 10;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .hud-group {
+            display: flex;
+            gap: 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: 800;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        #level-display {
+            color: #FFD700;
+            font-family: 'Black Ops One', cursive;
+            font-size: 26px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        #lang-btn {
+            background: #e74c3c;
+            color: white;
+            border: 2px solid #c0392b;
+            padding: 5px 15px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+            transition: 0.2s;
+        }
+        #lang-btn:hover { background: #ff5e4d; transform: scale(1.05); }
+
+        canvas {
+            display: block;
+            margin-top: 0; 
+            background: #87CEEB;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 20;
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
+
+        h1 {
+            font-family: 'Black Ops One', cursive;
+            font-size: 56px;
+            margin: 0 0 10px 0;
+            color: #FFD700;
+            text-shadow: 4px 4px 0 #3e2723;
+        }
+
+        p { font-size: 20px; color:#ddd; max-width: 600px; line-height: 1.6; margin-bottom: 40px; }
+
+        .btn-main {
+            padding: 15px 60px;
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(to bottom, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #1e8449, 0 10px 20px rgba(0,0,0,0.4);
+            transition: transform 0.1s;
+        }
+        .btn-main:active { transform: translateY(6px); box-shadow: none; }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+
+    <div id="hud-bar">
+        <div class="hud-group">
+            <div><span id="lbl-score">Markah:</span> <span id="val-score" style="color:#2ecc71">0</span></div>
+            <div><span id="lbl-time">Masa:</span> <span id="val-time" style="color:#f1c40f">60</span>s</div>
+        </div>
+        
+        <div id="level-display">ZAMAN PALEOLITIK</div>
+
+        <div>
+            <button id="lang-btn" onclick="toggleLang()">EN / BM</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+    <div id="start-screen" class="screen">
+        <h1 id="txt-title">LARIAN SEJARAH</h1>
+        <p id="txt-desc">
+            Lompat elak halangan dan kutip artifak.<br>
+            Setiap 20 saat, zaman akan berubah!<br>
+            Tekan <b>SPACEBAR</b> untuk melompat.
+        </p>
+        <button class="btn-main" onclick="startGame()" id="btn-start">MULA</button>
+    </div>
+
+    <div id="end-screen" class="screen hidden">
+        <h1 id="txt-end">TAMAT</h1>
+        <div style="font-size: 60px; margin-bottom: 20px;">
+            <span id="star1" style="color:#444">★</span>
+            <span id="star2" style="color:#444">★</span>
+            <span id="star3" style="color:#444">★</span>
+        </div>
+        <h2><span id="lbl-final">Markah Akhir:</span> <span id="final-score">0</span></h2>
+        <button class="btn-main" onclick="startGame()" id="btn-restart">MAIN SEMULA</button>
+    </div>
+
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // --- Settings ---
+    const GRAVITY = 0.6;
+    const JUMP_FORCE = 13;
+    const SPEED_BASE = 7;
+    const GROUND_Y = 420; 
+    
+    const player = {
+        x: 100, y: GROUND_Y, w: 30, h: 60,
+        dy: 0, grounded: true, runAngle: 0
+    };
+
+    let gameActive = false;
+    let score = 0;
+    let timeLeft = 60;
+    let frame = 0;
+    let gameSpeed = SPEED_BASE;
+    let currentEra = 0;
+    let bgOffset = 0;
+
+    let obstacles = [];
+    let items = [];
+    let timerInterval;
+
+    const eras = [
+        {
+            nameMS: "ZAMAN PALEOLITIK", nameEN: "PALEOLITHIC ERA",
+            skyTop: "#87CEEB", skyBot: "#E0F7FA",
+            mountain: "#5D4037", ground: "#3E2723",
+            item: "🍖", obsType: "fire" 
+        },
+        {
+            nameMS: "ZAMAN NEOLITIK", nameEN: "NEOLITHIC ERA",
+            skyTop: "#4FC3F7", skyBot: "#B3E5FC",
+            mountain: "#2E7D32", ground: "#558B2F",
+            item: "🏺", obsType: "wood" 
+        },
+        {
+            nameMS: "ZAMAN LOGAM", nameEN: "METAL AGE",
+            skyTop: "#FFA726", skyBot: "#FFE0B2",
+            mountain: "#455A64", ground: "#37474F",
+            item: "🔔", obsType: "spike" 
+        }
+    ];
+
+    let lang = 'ms';
+    const texts = {
+        ms: {
+            lblScore: "Markah:", 
+            lblTime: "Masa:",
+            title: "LARIAN SEJARAH", 
+            desc: "Lompat elak halangan dan kutip artifak.<br>Setiap 20 saat, zaman akan berubah!<br>Tekan <b>SPACEBAR</b> untuk melompat.",
+            start: "MULA", 
+            end: "TAMAT", 
+            restart: "MAIN SEMULA", 
+            lblFinal: "Markah Akhir:" // New specific label
+        },
+        en: {
+            lblScore: "Score:", 
+            lblTime: "Time:",
+            title: "HISTORY RUN", 
+            desc: "Jump over obstacles and collect artifacts.<br>Every 20 seconds, the era changes!<br>Press <b>SPACEBAR</b> to jump.",
+            start: "START", 
+            end: "GAME OVER", 
+            restart: "PLAY AGAIN", 
+            lblFinal: "Final Score:" // New specific label
+        }
+    };
+
+    // --- Controls ---
+    function jump() {
+        if (!gameActive) return;
+        if (player.grounded) {
+            player.dy = -JUMP_FORCE;
+            player.grounded = false;
+        }
+    }
+    window.addEventListener('keydown', (e) => { if (e.code === 'Space') jump(); });
+    canvas.addEventListener('mousedown', jump);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); });
+
+    // --- Translation Logic (Fixed) ---
+    function toggleLang() {
+        lang = lang === 'ms' ? 'en' : 'ms';
+        updateUI();
+    }
+
+    function updateUI() {
+        const t = texts[lang];
+        
+        // HUD
+        document.getElementById('lbl-score').innerText = t.lblScore;
+        document.getElementById('lbl-time').innerText = t.lblTime;
+        
+        // Start Screen
+        document.getElementById('txt-title').innerText = t.title;
+        document.getElementById('txt-desc').innerHTML = t.desc;
+        document.getElementById('btn-start').innerText = t.start;
+        
+        // End Screen
+        document.getElementById('txt-end').innerText = t.end;
+        document.getElementById('btn-restart').innerText = t.restart;
+        document.getElementById('lbl-final').innerText = t.lblFinal; // Updates label ONLY, not the score number
+
+        // Level Name
+        const e = eras[currentEra];
+        document.getElementById('level-display').innerText = lang === 'ms' ? e.nameMS : e.nameEN;
+    }
+
+    function startGame() {
+        gameActive = true;
+        score = 0;
+        timeLeft = 60;
+        frame = 0;
+        currentEra = 0;
+        gameSpeed = SPEED_BASE;
+        
+        obstacles = [];
+        items = [];
+        player.y = GROUND_Y;
+        player.dy = 0;
+
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('end-screen').classList.add('hidden');
+        document.getElementById('val-score').innerText = "0";
+        
+        updateUI();
+
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('val-time').innerText = timeLeft;
+            
+            if (timeLeft === 40) changeEra(1);
+            if (timeLeft === 20) changeEra(2);
+            if (timeLeft <= 0) gameOver();
+        }, 1000);
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function changeEra(index) {
+        currentEra = index;
+        gameSpeed += 1.5; 
+        updateUI(); // Updates the Era name immediately
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const era = eras[currentEra];
+        frame++;
+
+        drawBackground(era);
+
+        // Physics
+        player.dy += GRAVITY;
+        player.y += player.dy;
+        if (player.y > GROUND_Y) {
+            player.y = GROUND_Y;
+            player.dy = 0;
+            player.grounded = true;
+        }
+
+        drawPlayer(player.x, player.y);
+
+        // Spawning
+        if (frame % 90 === 0 && Math.random() > 0.3) {
+            obstacles.push({
+                x: canvas.width, y: GROUND_Y, w: 40, h: 50, type: era.obsType, active: true
+            });
+        }
+        if (frame % 60 === 0 && Math.random() > 0.5) {
+            let isAir = Math.random() > 0.6;
+            items.push({
+                x: canvas.width, y: isAir ? GROUND_Y - 120 : GROUND_Y - 40, w: 35, h: 35, type: era.item, active: true, floatOffset: Math.random() * 10
+            });
+        }
+
+        updateEntities(obstacles, 'obs');
+        updateEntities(items, 'item');
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    // --- Drawing Functions ---
+    function drawBackground(era) {
+        let grd = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grd.addColorStop(0, era.skyTop);
+        grd.addColorStop(1, era.skyBot);
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        bgOffset -= (gameSpeed * 0.2); 
+        if(bgOffset <= -canvas.width) bgOffset = 0;
+        
+        ctx.fillStyle = era.mountain;
+        ctx.beginPath();
+        for(let i=0; i<2; i++) {
+            let start = bgOffset + (i * canvas.width);
+            ctx.moveTo(start, GROUND_Y);
+            ctx.lineTo(start + 200, GROUND_Y - 150);
+            ctx.lineTo(start + 400, GROUND_Y - 50);
+            ctx.lineTo(start + 600, GROUND_Y - 200);
+            ctx.lineTo(start + 800, GROUND_Y);
+        }
+        ctx.fill();
+
+        ctx.fillStyle = era.ground;
+        ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+        
+        ctx.fillStyle = "rgba(0,0,0,0.2)";
+        let stripeOffset = (frame * gameSpeed) % 50;
+        for(let i=0; i<canvas.width + 50; i+=50) {
+            ctx.fillRect(i - stripeOffset, GROUND_Y, 20, 10);
+        }
+    }
+
+    function drawPlayer(x, y) {
+        let runAnim = Math.sin(frame * 0.3) * 0.8; 
+        if(!player.grounded) runAnim = 0.5; 
+
+        ctx.strokeStyle = "#333";
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        const hipX = x + 15;
+        const hipY = y - 30;
+        const headY = y - 55;
+
+        // Shadow
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.beginPath();
+        ctx.ellipse(hipX, GROUND_Y + 5, 20, 5, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Legs
+        ctx.beginPath();
+        ctx.moveTo(hipX, hipY);
+        ctx.lineTo(hipX - Math.sin(runAnim)*20, hipY + 30);
+        ctx.lineTo(hipX - Math.sin(runAnim)*20 - Math.cos(runAnim)*10, hipY + 50);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(hipX, hipY);
+        ctx.lineTo(hipX + 5, headY + 10);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(hipX, hipY);
+        ctx.lineTo(hipX + Math.sin(runAnim)*20, hipY + 30);
+        ctx.lineTo(hipX + Math.sin(runAnim)*20 - Math.cos(runAnim)*10, hipY + 50);
+        ctx.stroke();
+
+        // Arms
+        ctx.beginPath();
+        ctx.moveTo(hipX + 5, headY + 15);
+        ctx.lineTo(hipX + 20 - Math.sin(runAnim)*15, headY + 30);
+        ctx.stroke();
+
+        // Head
+        ctx.fillStyle = "#ffccaa";
+        ctx.beginPath();
+        ctx.arc(hipX + 5, headY, 12, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "#000";
+        ctx.beginPath();
+        ctx.arc(hipX + 5, headY - 2, 13, Math.PI, 0);
+        ctx.fill();
+    }
+
+    function updateEntities(list, type) {
+        for (let i = 0; i < list.length; i++) {
+            let obj = list[i];
+            obj.x -= gameSpeed;
+
+            if (obj.active) {
+                if (type === 'obs') {
+                    drawObstacle(obj);
+                } else {
+                    let floatY = Math.sin((frame + obj.floatOffset) * 0.1) * 5;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = "yellow";
+                    ctx.font = "35px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText(obj.type, obj.x + obj.w/2, obj.y + obj.h/2 + floatY);
+                    ctx.shadowBlur = 0;
+                }
+            }
+
+            if (obj.active && checkCollision(player, obj)) {
+                if (type === 'obs') {
+                    score = Math.max(0, score - 5);
+                    obj.active = false;
+                    shakeCanvas();
+                } else {
+                    score += 10;
+                    obj.active = false;
+                }
+                document.getElementById('val-score').innerText = score;
+            }
+
+            if (obj.x + obj.w < -50) {
+                list.splice(i, 1);
+                i--;
+            }
+        }
+    }
+
+    function drawObstacle(obj) {
+        if(obj.type === 'fire') {
+            ctx.fillStyle = `rgb(255, ${Math.random()*150}, 0)`;
+            ctx.beginPath();
+            ctx.moveTo(obj.x, obj.y);
+            ctx.lineTo(obj.x + 10, obj.y - 40 - Math.random()*10);
+            ctx.lineTo(obj.x + 20, obj.y - 20);
+            ctx.lineTo(obj.x + 30, obj.y - 50 - Math.random()*10);
+            ctx.lineTo(obj.x + 40, obj.y);
+            ctx.fill();
+        } else if (obj.type === 'spike') {
+            ctx.fillStyle = "#7f8c8d";
+            ctx.beginPath();
+            ctx.moveTo(obj.x, obj.y);
+            ctx.lineTo(obj.x + 10, obj.y - 40);
+            ctx.lineTo(obj.x + 20, obj.y);
+            ctx.lineTo(obj.x + 30, obj.y - 40);
+            ctx.lineTo(obj.x + 40, obj.y);
+            ctx.fill();
+        } else {
+            ctx.fillStyle = "#5D4037";
+            ctx.fillRect(obj.x, obj.y - 20, obj.w, 20);
+            ctx.fillStyle = "#3E2723"; 
+            ctx.beginPath();
+            ctx.arc(obj.x + 10, obj.y - 10, 5, 0, Math.PI*2);
+            ctx.fill();
+        }
+    }
+
+    function checkCollision(p, o) {
+        let pX = p.x + 10;
+        let pW = 20;
+        let pY = p.y - 50;
+        let pH = 50;
+        let oY = o.y - 30;
+
+        return (
+            pX < o.x + o.w &&
+            pX + pW > o.x &&
+            pY < oY + o.h &&
+            pY + pH > oY
+        );
+    }
+
+    function shakeCanvas() {
+        canvas.style.transform = "translate(5px, 5px)";
+        setTimeout(() => canvas.style.transform = "translate(-5px, -5px)", 50);
+        setTimeout(() => canvas.style.transform = "none", 100);
+    }
+
+    function gameOver() {
+        gameActive = false;
+        clearInterval(timerInterval);
+        document.getElementById('end-screen').classList.remove('hidden');
+        document.getElementById('final-score').innerText = score;
+
+        const s1 = document.getElementById('star1');
+        const s2 = document.getElementById('star2');
+        const s3 = document.getElementById('star3');
+        
+        s1.style.color = score > 50 ? "gold" : "#444";
+        s2.style.color = score > 150 ? "gold" : "#444";
+        s3.style.color = score > 300 ? "gold" : "#444";
+    }
+    
+    updateUI();
+
+</script>
+</body>
+</html>

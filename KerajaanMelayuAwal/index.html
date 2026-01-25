@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pertahanan Kerajaan - Sistem Adil</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bungee&family=Roboto:wght@500&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #2c3e50;
+            font-family: 'Roboto', sans-serif;
+            user-select: none;
+        }
+
+        /* --- Game Area --- */
+        #game-area {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #34495e 0%, #000000 100%);
+            overflow: hidden;
+            cursor: crosshair; /* Kursor sasaran */
+        }
+
+        /* --- UI Elements --- */
+        .hud-panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #3498db;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Bungee', cursive;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        #score-box { top: 20px; left: 20px; font-size: 20px; }
+        #timer-box { top: 20px; right: 160px; font-size: 20px; color: #f1c40f; }
+
+        /* --- HINT PANEL --- */
+        #hint-panel {
+            top: 80px;
+            right: 20px;
+            width: 220px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 3px solid #f1c40f;
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            pointer-events: none; /* Pastikan tidak menghalang klik */
+        }
+
+        #hint-title {
+            font-size: 16px;
+            color: #f1c40f;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+
+        #hint-list {
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #ecf0f1;
+            margin: 0;
+            font-weight: normal;
+        }
+
+        /* --- Buttons --- */
+        #lang-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #f1c40f;
+            border: 2px solid #fff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Bungee', cursive;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #c0392b;
+            z-index: 101;
+        }
+        #lang-btn:active { transform: translateY(4px); box-shadow: none; }
+
+        /* --- Turret & Ammo --- */
+        #turret-base {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 100px;
+            background: #7f8c8d;
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        #turret-barrel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            width: 20px;
+            height: 80px;
+            background: #95a5a6;
+            transform-origin: bottom center;
+            z-index: 11;
+            border: 2px solid #555;
+            transition: background-color 0.2s;
+            pointer-events: none; /* Penting supaya tidak menghalang klik butang */
+        }
+
+        #ammo-selector {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000; /* Z-Index TINGGI supaya sentiasa boleh diklik */
+        }
+
+        .ammo-btn {
+            width: 100px;
+            height: 60px;
+            background: #ecf0f1;
+            border: 4px solid #bdc3c7;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .ammo-btn span.key-hint {
+            font-size: 10px;
+            background: #333;
+            color: white;
+            padding: 2px 5px;
+            border-radius: 4px;
+            margin-bottom: 2px;
+        }
+
+        .ammo-btn.active {
+            transform: translateY(-15px);
+            border-color: #fff;
+            background: #fff;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+            z-index: 1001;
+        }
+
+        /* --- Game Objects --- */
+        .enemy {
+            position: absolute;
+            width: 130px;
+            height: 60px;
+            background: #34495e;
+            color: white;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+            padding: 5px;
+            z-index: 5;
+        }
+        
+        .enemy::after {
+            content: '▼';
+            position: absolute;
+            bottom: -18px;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .projectile {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            z-index: 4;
+            box-shadow: 0 0 10px #fff;
+        }
+
+        .explosion {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: orange;
+            border-radius: 50%;
+            animation: explode 0.3s forwards;
+            z-index: 6;
+        }
+
+        .floating-text {
+            position: absolute;
+            font-family: 'Bungee', cursive;
+            color: #e74c3c;
+            font-size: 20px;
+            text-shadow: 2px 2px 0 #000;
+            pointer-events: none;
+            animation: floatUp 1s forwards;
+            z-index: 200;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        /* --- Screens --- */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            color: white;
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+        .hidden { display: none !important; }
+        
+        h1 { font-family: 'Bungee', cursive; font-size: 50px; color: #f1c40f; margin-bottom: 10px; }
+        p { font-size: 18px; max-width: 600px; line-height: 1.6; color: #ecf0f1; }
+        .btn {
+            margin-top: 30px; padding: 15px 40px; font-size: 24px;
+            font-family: 'Bungee', cursive; background: #e67e22; color: white;
+            border: none; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 6px 0 #d35400; transition: transform 0.1s;
+        }
+        .btn:hover { background: #d35400; }
+        .btn:active { transform: translateY(6px); box-shadow: none; }
+        
+        /* Stars background */
+        .star-bg { position: absolute; background: white; border-radius: 50%; opacity: 0.5; }
+        #level-indicator {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-family: 'Bungee', cursive; font-size: 80px; color: rgba(255,255,255,0.15);
+            pointer-events: none; z-index: 1;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-area">
+        <div id="star-container"></div>
+
+        <div class="hud-panel" id="score-box">Markah: 0</div>
+        <div class="hud-panel" id="timer-box">Masa: 120</div>
+        
+        <div class="hud-panel" id="hint-panel">
+            <div id="hint-title">SASARAN SENJATA</div>
+            <p id="hint-list">Pilih senjata untuk melihat sasaran.</p>
+        </div>
+
+        <button id="lang-btn" onclick="toggleLang()">English</button>
+        <div id="level-indicator">Level 1</div>
+
+        <div id="turret-base"></div>
+        <div id="turret-barrel"></div>
+
+        <div id="ammo-selector"></div>
+
+        <div id="start-screen" class="screen">
+            <h1 id="title-txt">Pertahanan Kerajaan</h1>
+            <p id="instr-txt">
+                <strong>MISI MASA (120 Saat):</strong><br><br>
+                1. Bertahan selama mungkin!<br>
+                2. Kerajaan baru akan muncul mengikut masa.<br>
+                3. Salah tembak = Tolak Markah.<br>
+                4. Musuh jatuh = Tiada Penalti.
+            </p>
+            <button class="btn" id="start-btn" onclick="startGame()">MULA MISI</button>
+        </div>
+
+        <div id="end-screen" class="screen hidden">
+            <h1 id="end-title">Masa Tamat!</h1>
+            <p id="final-score">Markah Akhir: 0</p>
+            <button class="btn" id="restart-btn" onclick="startGame()">MAIN SEMULA</button>
+        </div>
+    </div>
+
+<script>
+    // --- Configuration ---
+    const GAME_DURATION = 120; // 2 Minit
+    
+    // Database (Senarai Jawapan)
+    const KINGDOM_DATA = {
+        funan: { 
+            color: '#e74c3c', 
+            clues: ['Sungai Mekong', 'Oc Eo', 'Vyadhapura', 'Fan Shih-man'] 
+        },
+        champa: { 
+            color: '#3498db', 
+            clues: ['Indrapura', 'Kauthara', 'Che Bong Nga', 'Panduranga'] 
+        },
+        kedahtua: { 
+            color: '#2ecc71', 
+            clues: ['Sungai Mas', 'Lembah Bujang', 'Gunung Jerai', 'Kataha'] 
+        },
+        srivijaya: { 
+            color: '#9b59b6', 
+            clues: ['Palembang', 'Sungai Musi', 'Sangrama', 'Dapunta Hyang'] 
+        },
+        majapahit: { 
+            color: '#e67e22', 
+            clues: ['Raden Wijaya', 'Patih Gajah Mada', 'Jawa Timur', 'Trowulan'] 
+        },
+        gangganagara: { 
+            color: '#1abc9c', 
+            clues: ['Perak', 'Raja Ganji Sarjuna', 'Sungai Dinding', 'Beruas'] 
+        }
+    };
+
+    const TRANSLATIONS = {
+        ms: {
+            title: "Pertahanan Kerajaan",
+            instr: "<strong>MISI MASA (120 Saat):</strong><br><br>1. Tekan nombor <strong>[1-3]</strong> atau <strong>KLIK butang bawah</strong> untuk tukar senjata.<br>2. Tembak musuh dengan warna yang betul!",
+            start: "MULA MISI",
+            score: "Markah",
+            time: "Masa",
+            endTitle: "Masa Tamat!",
+            finalScore: "Markah Akhir",
+            restart: "MAIN SEMULA",
+            langBtn: "English",
+            hintTitle: "SASARAN: ",
+            wrong: "SALAH SENJATA!"
+        },
+        en: {
+            title: "Kingdom Defense",
+            instr: "<strong>TIMED MISSION (120s):</strong><br><br>1. Press <strong>[1-3]</strong> or <strong>CLICK bottom buttons</strong> to switch weapon.<br>2. Shoot enemies with the matching color!",
+            start: "START MISSION",
+            score: "Score",
+            time: "Time",
+            endTitle: "Time's Up!",
+            finalScore: "Final Score",
+            restart: "PLAY AGAIN",
+            langBtn: "Bahasa Melayu",
+            hintTitle: "TARGETS: ",
+            wrong: "WRONG WEAPON!"
+        }
+    };
+
+    // --- State ---
+    let state = {
+        lang: 'ms',
+        score: 0,
+        time: GAME_DURATION,
+        isPlaying: false,
+        activeKingdoms: [],
+        selectedAmmo: null,
+        level: 1,
+        spawnRate: 3000, 
+        lastSpawn: 0,
+        enemies: [],
+        projectiles: []
+    };
+
+    let loopId, timerId;
+    let lastEnemyId = null; 
+
+    // --- DOM Elements ---
+    const gameArea = document.getElementById('game-area');
+    const turretBarrel = document.getElementById('turret-barrel');
+    const ammoContainer = document.getElementById('ammo-selector');
+    const hintPanel = document.getElementById('hint-panel');
+    const hintTitle = document.getElementById('hint-title');
+    const hintList = document.getElementById('hint-list');
+
+    function initStars() {
+        const con = document.getElementById('star-container');
+        for(let i=0; i<50; i++) {
+            const s = document.createElement('div');
+            s.className = 'star-bg';
+            s.style.width = Math.random() * 3 + 'px';
+            s.style.height = s.style.width;
+            s.style.left = Math.random() * 100 + 'vw';
+            s.style.top = Math.random() * 100 + 'vh';
+            con.appendChild(s);
+        }
+    }
+    initStars();
+
+    // --- Input Handling ---
+    window.addEventListener('mousemove', (e) => {
+        if(!state.isPlaying) return;
+        const rect = gameArea.getBoundingClientRect();
+        const turretX = rect.width / 2;
+        const turretY = rect.height - 30;
+        const angle = Math.atan2(e.clientY - turretY, e.clientX - turretX);
+        const deg = angle * (180 / Math.PI) + 90;
+        turretBarrel.style.transform = `translateX(-50%) rotate(${deg}deg)`;
+    });
+
+    window.addEventListener('mousedown', (e) => {
+        if(!state.isPlaying) return;
+        // Pastikan kita tidak menembak jika menekan butang UI
+        if(e.target.closest('button') || e.target.closest('.ammo-btn')) return;
+        
+        shoot(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if(!state.isPlaying) return;
+        const key = parseInt(e.key);
+        if(key >= 1 && key <= state.activeKingdoms.length) {
+            selectAmmo(state.activeKingdoms[key-1]);
+        }
+    });
+
+    function toggleLang() {
+        state.lang = state.lang === 'ms' ? 'en' : 'ms';
+        updateText();
+        if(state.selectedAmmo) selectAmmo(state.selectedAmmo);
+    }
+
+    function updateText() {
+        const t = TRANSLATIONS[state.lang];
+        document.getElementById('title-txt').innerText = t.title;
+        document.getElementById('instr-txt').innerHTML = t.instr;
+        document.getElementById('start-btn').innerText = t.start;
+        document.getElementById('score-box').innerText = `${t.score}: ${state.score}`;
+        document.getElementById('timer-box').innerText = `${t.time}: ${state.time}`;
+        document.getElementById('end-title').innerText = t.endTitle;
+        document.getElementById('restart-btn').innerText = t.restart;
+        document.getElementById('lang-btn').innerText = t.langBtn;
+    }
+
+    // --- Game Logic ---
+    function startGame() {
+        state.score = 0;
+        state.time = GAME_DURATION;
+        state.level = 1;
+        state.enemies = [];
+        state.projectiles = [];
+        state.spawnRate = 3000;
+        state.isPlaying = true;
+        lastEnemyId = null;
+
+        document.querySelectorAll('.enemy, .projectile, .explosion, .floating-text').forEach(e => e.remove());
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('end-screen').classList.add('hidden');
+
+        setupLevel(1);
+        updateText();
+
+        timerId = setInterval(gameTimer, 1000);
+        requestAnimationFrame(gameLoop);
+    }
+
+    function setupLevel(lvl) {
+        state.level = lvl;
+        document.getElementById('level-indicator').innerText = `Level ${lvl}`;
+        
+        // --- LEVEL LOGIC ---
+        if(lvl === 1) {
+            state.activeKingdoms = ['funan', 'champa', 'kedahtua'];
+        }
+        else if(lvl === 2) {
+            state.activeKingdoms = ['funan', 'champa', 'kedahtua', 'majapahit', 'srivijaya'];
+        }
+        else if(lvl === 3) {
+            state.activeKingdoms = ['funan', 'champa', 'kedahtua', 'majapahit', 'srivijaya', 'gangganagara'];
+        }
+
+        renderAmmoButtons();
+        
+        // Pilih senjata pertama secara automatik jika tiada atau tidak wujud dalam level baru
+        if(!state.selectedAmmo || !state.activeKingdoms.includes(state.selectedAmmo)) {
+            selectAmmo(state.activeKingdoms[0]);
+        } else {
+            selectAmmo(state.selectedAmmo); // Refresh visual
+        }
+    }
+
+    function renderAmmoButtons() {
+        ammoContainer.innerHTML = '';
+        state.activeKingdoms.forEach((kId, index) => {
+            const btn = document.createElement('div');
+            btn.className = `ammo-btn`;
+            btn.style.borderBottom = `8px solid ${KINGDOM_DATA[kId].color}`;
+            btn.style.color = KINGDOM_DATA[kId].color;
+            
+            if(state.activeKingdoms.length > 4) {
+                btn.style.width = '70px';
+                btn.style.fontSize = '10px';
+            }
+            
+            const label = kId.charAt(0).toUpperCase() + kId.slice(1); 
+            // Tambah petunjuk butang keyboard [1], [2]
+            btn.innerHTML = `<span class="key-hint">[${index+1}]</span>${label}`;
+            
+            btn.onclick = (e) => {
+                e.stopPropagation(); // Elak trigger tembakan
+                selectAmmo(kId);
+            };
+            btn.dataset.id = kId;
+            ammoContainer.appendChild(btn);
+        });
+    }
+
+    function selectAmmo(kingdomId) {
+        state.selectedAmmo = kingdomId;
+        const kData = KINGDOM_DATA[kingdomId];
+
+        document.querySelectorAll('.ammo-btn').forEach(b => {
+            if(b.dataset.id === kingdomId) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+        
+        turretBarrel.style.backgroundColor = kData.color;
+
+        const t = TRANSLATIONS[state.lang];
+        hintPanel.style.borderColor = kData.color;
+        hintTitle.style.color = kData.color;
+        hintTitle.innerText = t.hintTitle + kingdomId.toUpperCase();
+        hintList.innerHTML = kData.clues.map(c => `• ${c}`).join('<br>');
+    }
+
+    function gameTimer() {
+        state.time--;
+        const t = TRANSLATIONS[state.lang];
+        document.getElementById('timer-box').innerText = `${t.time}: ${state.time}`;
+
+        if(state.time === 90) setupLevel(2);
+        if(state.time === 50) setupLevel(3);
+
+        if(state.time <= 0) endGame();
+    }
+
+    function spawnEnemy() {
+        let kId;
+        do {
+             kId = state.activeKingdoms[Math.floor(Math.random() * state.activeKingdoms.length)];
+        } while (kId === lastEnemyId && state.activeKingdoms.length > 1);
+
+        lastEnemyId = kId; 
+
+        const data = KINGDOM_DATA[kId];
+        const clue = data.clues[Math.floor(Math.random() * data.clues.length)];
+
+        const el = document.createElement('div');
+        el.className = 'enemy';
+        el.innerText = clue;
+        
+        // Limit spawn area to avoid edges
+        const x = Math.random() * (window.innerWidth - 160) + 20;
+        el.style.left = x + 'px';
+        el.style.top = '-80px';
+        
+        const speed = 0.5 + (state.level * 0.3); 
+
+        state.enemies.push({
+            el: el, id: kId, x: x, y: -80, speed: speed
+        });
+
+        gameArea.appendChild(el);
+    }
+
+    function shoot(targetX, targetY) {
+        if(!state.selectedAmmo) return;
+        const startX = window.innerWidth / 2;
+        const startY = window.innerHeight - 50;
+        const angle = Math.atan2(targetY - startY, targetX - startX);
+        const velocity = 15;
+        
+        const el = document.createElement('div');
+        el.className = 'projectile';
+        el.style.backgroundColor = KINGDOM_DATA[state.selectedAmmo].color;
+        
+        state.projectiles.push({
+            el: el, x: startX, y: startY,
+            vx: Math.cos(angle) * velocity,
+            vy: Math.sin(angle) * velocity,
+            type: state.selectedAmmo
+        });
+        gameArea.appendChild(el);
+    }
+
+    function createFloatingText(x, y, text) {
+        const div = document.createElement('div');
+        div.className = 'floating-text';
+        div.style.left = x + 'px';
+        div.style.top = y + 'px';
+        div.innerText = text;
+        gameArea.appendChild(div);
+        setTimeout(() => div.remove(), 1000);
+    }
+
+    function gameLoop(timestamp) {
+        if(!state.isPlaying) return;
+
+        // Spawning Logic
+        if(timestamp - state.lastSpawn > state.spawnRate) {
+            spawnEnemy();
+            state.lastSpawn = timestamp;
+            if(state.spawnRate > 1500) state.spawnRate -= 50; 
+        }
+
+        // --- 1. LOGIK MUSUH ---
+        state.enemies.forEach((enemy, idx) => {
+            enemy.y += enemy.speed;
+            enemy.el.style.top = enemy.y + 'px';
+
+            if(enemy.y > window.innerHeight - 150) {
+                enemy.el.remove();            
+                state.enemies.splice(idx, 1); 
+                
+                gameArea.style.backgroundColor = '#500';
+                setTimeout(()=> gameArea.style.backgroundColor = '', 100);
+            }
+        });
+
+        // --- 2. LOGIK PELURU ---
+        state.projectiles.forEach((proj, pIdx) => {
+            proj.x += proj.vx;
+            proj.y += proj.vy;
+            proj.el.style.left = proj.x + 'px';
+            proj.el.style.top = proj.y + 'px';
+
+            if(proj.x < 0 || proj.x > window.innerWidth || proj.y < 0 || proj.y > window.innerHeight) {
+                proj.el.remove();
+                state.projectiles.splice(pIdx, 1);
+                return;
+            }
+
+            // Simple Collision Detection
+            state.enemies.forEach((enemy, eIdx) => {
+                // Hitbox slightly larger for easier hits
+                if (proj.x > enemy.x - 10 && proj.x < enemy.x + 140 &&
+                    proj.y > enemy.y && proj.y < enemy.y + 70) {
+                    
+                    if(proj.type === enemy.id) {
+                        // KENA: Tambah markah
+                        state.score += 10;
+                        createExplosion(enemy.x + 65, enemy.y + 30);
+                        enemy.el.remove();
+                        state.enemies.splice(eIdx, 1);
+                        proj.el.remove();
+                        state.projectiles.splice(pIdx, 1);
+                    } else {
+                        // SALAH: Tolak markah + Visual Feedback
+                        state.score = Math.max(0, state.score - 5); 
+                        createFloatingText(enemy.x, enemy.y, TRANSLATIONS[state.lang].wrong);
+                        proj.el.remove(); 
+                        state.projectiles.splice(pIdx, 1); 
+                    }
+                    updateScore();
+                }
+            });
+        });
+        requestAnimationFrame(gameLoop);
+    }
+
+    function createExplosion(x, y) {
+        const div = document.createElement('div');
+        div.className = 'explosion';
+        div.style.left = x + 'px';
+        div.style.top = y + 'px';
+        gameArea.appendChild(div);
+        setTimeout(() => div.remove(), 350);
+    }
+
+    function updateScore() {
+        const t = TRANSLATIONS[state.lang];
+        document.getElementById('score-box').innerText = `${t.score}: ${state.score}`;
+    }
+
+    function endGame() {
+        state.isPlaying = false;
+        clearInterval(timerId);
+        const t = TRANSLATIONS[state.lang];
+        document.getElementById('end-screen').classList.remove('hidden');
+        document.getElementById('final-score').innerText = `${t.finalScore}: ${state.score}`;
+    }
+
+    updateText();
+</script>
+</body>
+</html>

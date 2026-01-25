@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Zaman Air Batu</title>
+    <style>
+        :root {
+            --bg-color: #e3f2fd;
+            --game-bg: #bbdefb;
+            --text-color: #0d47a1;
+            --accent: #ff6f00;
+        }
+
+        body {
+            font-family: 'Verdana', sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+            touch-action: none;
+        }
+
+        h1 {
+            color: var(--text-color);
+            margin: 5px 0;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        #ui-header {
+            display: flex;
+            justify-content: space-between;
+            width: 380px;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #01579b;
+        }
+
+        #game-area {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+
+        canvas {
+            background-color: var(--game-bg);
+            border: 4px solid #0277bd;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            display: block;
+        }
+
+        /* Overlay Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-radius: 8px;
+            z-index: 10;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .btn {
+            background: #0288d1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 15px;
+            box-shadow: 0 4px 0 #01579b;
+            transition: all 0.1s;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .btn-lang {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            background: #546e7a;
+            box-shadow: none;
+        }
+
+        .stars {
+            font-size: 3rem;
+            color: gold;
+            text-shadow: 2px 2px 0 #aaa;
+            margin: 10px 0;
+        }
+
+        /* Mobile Controls */
+        #mobile-controls {
+            display: none;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .d-btn {
+            background: rgba(2, 136, 209, 0.2);
+            border: 2px solid #0288d1;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .d-btn:active { background: rgba(2, 136, 209, 0.5); }
+
+        @media (max-width: 600px) {
+            #game-area { width: 340px; height: 340px; }
+            canvas { width: 340px; height: 340px; }
+            #ui-header { width: 320px; font-size: 0.9rem; }
+            #mobile-controls { display: grid; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="btn btn-lang" onclick="toggleLanguage()">🌐 EN / BM</button>
+
+    <h1 id="title-text">Ular Zaman Air Batu</h1>
+
+    <div id="ui-header">
+        <span id="score-label">Markah: 0</span>
+        <span id="level-label">Tahap: 1</span>
+        <span id="time-label">Masa: 30s</span>
+    </div>
+
+    <div id="game-area">
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+        <div id="start-screen" class="screen">
+            <h2 id="start-title">Misi Migrasi</h2>
+            <p id="start-desc" style="max-width: 80%;">Pandu Mamot makan Ais! Anda boleh tembus dinding.</p>
+            <div style="font-size: 2rem; margin: 10px;">🐘 ❄️ 🔥</div>
+            <button class="btn" onclick="startGame()" id="btn-start">MULA</button>
+        </div>
+
+        <div id="end-screen" class="screen hidden">
+            <h2 id="end-title">Tamat!</h2>
+            <p id="end-reason">Masa Habis!</p>
+            <div class="stars" id="stars">☆☆☆</div>
+            <p id="final-score">Markah: 0</p>
+            <button class="btn" onclick="startGame()" id="btn-restart">MAIN LAGI</button>
+        </div>
+    </div>
+
+    <div id="mobile-controls">
+        <div></div>
+        <div class="d-btn" onclick="changeDirection('up')">⬆️</div>
+        <div></div>
+        <div class="d-btn" onclick="changeDirection('left')">⬅️</div>
+        <div class="d-btn" onclick="changeDirection('down')">⬇️</div>
+        <div class="d-btn" onclick="changeDirection('right')">➡️</div>
+    </div>
+
+<script>
+    // --- Translations ---
+    const texts = {
+        ms: {
+            title: "Ular Zaman Air Batu",
+            score: "Markah: ",
+            level: "Tahap: ",
+            time: "Masa: ",
+            startTitle: "Misi Migrasi",
+            startDesc: "Pandu Mamot makan Ais! Anda boleh tembus dinding.",
+            btnStart: "MULA",
+            endTitle: "Tamat!",
+            endReasonTime: "Ais cair! (Masa Habis)",
+            endReasonCrash: "Terlanggar!",
+            btnRestart: "MAIN LAGI",
+            excellent: "Hebat!",
+            good: "Bagus!",
+            tryAgain: "Cuba Lagi"
+        },
+        en: {
+            title: "Ice Age Snake",
+            score: "Score: ",
+            level: "Level: ",
+            time: "Time: ",
+            startTitle: "Migration Mission",
+            startDesc: "Guide the Mammoth to eat Ice! You can walk through walls.",
+            btnStart: "START",
+            endTitle: "Game Over!",
+            endReasonTime: "Ice Melted! (Time Up)",
+            endReasonCrash: "Crashed!",
+            btnRestart: "PLAY AGAIN",
+            excellent: "Excellent!",
+            good: "Good Job!",
+            tryAgain: "Try Again"
+        }
+    };
+
+    let lang = 'ms';
+
+    // --- Game Configuration ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const gridSize = 20; 
+    const tileCount = 20; // 20x20 grid
+
+    let speed = 5; 
+    let score = 0;
+    let level = 1;
+    let timeLeft = 30;
+    
+    let snake = [];
+    let velocity = { x: 0, y: 0 };
+    let food = { x: 5, y: 5 };
+    let fireObstacles = []; 
+    
+    let gameInterval;
+    let timerInterval;
+    let isGameRunning = false;
+    
+    // Track why the game ended to fix translation bug
+    let lastDeathReason = null; 
+
+    // --- Game Logic ---
+
+    function startGame() {
+        snake = [{ x: 10, y: 10 }, { x: 10, y: 11 }, { x: 10, y: 12 }];
+        velocity = { x: 0, y: -1 };
+        score = 0;
+        level = 1;
+        timeLeft = 30;
+        speed = 5; 
+        fireObstacles = [];
+        lastDeathReason = null; // Reset death reason
+
+        isGameRunning = true;
+        
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('end-screen').classList.add('hidden');
+        
+        updateUI();
+        placeFood();
+        
+        if (gameInterval) clearInterval(gameInterval);
+        if (timerInterval) clearInterval(timerInterval);
+        
+        gameInterval = setInterval(gameLoop, 1000 / speed);
+        timerInterval = setInterval(countDown, 1000);
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+    }
+
+    function countDown() {
+        timeLeft--;
+        updateUI();
+        if (timeLeft <= 0) {
+            gameOver('time');
+        }
+    }
+
+    function update() {
+        // Move Head
+        let head = { x: snake[0].x + velocity.x, y: snake[0].y + velocity.y };
+
+        // Wrap Around Logic
+        if (head.x < 0) head.x = tileCount - 1;
+        if (head.x >= tileCount) head.x = 0;
+        if (head.y < 0) head.y = tileCount - 1;
+        if (head.y >= tileCount) head.y = 0;
+
+        // Check Self Collision
+        for (let part of snake) {
+            if (head.x === part.x && head.y === part.y) {
+                gameOver('crash');
+                return;
+            }
+        }
+
+        // Check Fire Collision
+        for (let fire of fireObstacles) {
+            if (head.x === fire.x && head.y === fire.y) {
+                gameOver('crash');
+                return;
+            }
+        }
+
+        snake.unshift(head); 
+
+        // Check Food
+        if (head.x === food.x && head.y === food.y) {
+            score += 10;
+            timeLeft += 3;
+            
+            // Level Up Check
+            if (score % 50 === 0) {
+                level++;
+                speed += 0.5; 
+                addFireObstacle();
+                clearInterval(gameInterval);
+                gameInterval = setInterval(gameLoop, 1000 / speed);
+            }
+            
+            placeFood();
+            updateUI();
+        } else {
+            snake.pop(); 
+        }
+    }
+
+    function draw() {
+        ctx.fillStyle = '#bbdefb'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw Snake
+        snake.forEach((part, index) => {
+            if (index === 0) {
+                ctx.fillStyle = '#5d4037';
+                ctx.font = '18px Arial';
+                ctx.fillText('🐘', part.x * gridSize, part.y * gridSize + 18);
+            } else {
+                ctx.fillStyle = '#0277bd';
+                ctx.beginPath();
+                ctx.arc(part.x * gridSize + 10, part.y * gridSize + 10, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        // Draw Food
+        ctx.font = '18px Arial';
+        ctx.fillText('❄️', food.x * gridSize, food.y * gridSize + 18);
+
+        // Draw Fire
+        for (let fire of fireObstacles) {
+            ctx.fillText('🔥', fire.x * gridSize, fire.y * gridSize + 18);
+        }
+    }
+
+    function placeFood() {
+        food.x = Math.floor(Math.random() * tileCount);
+        food.y = Math.floor(Math.random() * tileCount);
+
+        for (let part of snake) {
+            if (food.x === part.x && food.y === part.y) placeFood();
+        }
+        for (let fire of fireObstacles) {
+            if (food.x === fire.x && food.y === fire.y) placeFood();
+        }
+    }
+
+    function addFireObstacle() {
+        let fireX, fireY;
+        let safe = false;
+        while (!safe) {
+            fireX = Math.floor(Math.random() * tileCount);
+            fireY = Math.floor(Math.random() * tileCount);
+            safe = true;
+            for (let part of snake) {
+                if (fireX === part.x && fireY === part.y) safe = false;
+            }
+            if (fireX === food.x && fireY === food.y) safe = false;
+            if (Math.abs(fireX - snake[0].x) < 4 && Math.abs(fireY - snake[0].y) < 4) safe = false;
+        }
+        fireObstacles.push({x: fireX, y: fireY});
+    }
+
+    function gameOver(reason) {
+        isGameRunning = false;
+        lastDeathReason = reason; // Save reason for translation toggling
+        clearInterval(gameInterval);
+        clearInterval(timerInterval);
+
+        renderGameOverScreen();
+    }
+
+    // New helper to ensure text stays updated when language toggles
+    function renderGameOverScreen() {
+        const t = texts[lang];
+        let reasonText = lastDeathReason === 'time' ? t.endReasonTime : t.endReasonCrash;
+        
+        let stars = "☆";
+        let msg = t.tryAgain;
+        if (score > 50) { stars = "⭐⭐"; msg = t.good; }
+        if (score > 100) { stars = "⭐⭐⭐"; msg = t.excellent; }
+
+        document.getElementById('end-screen').classList.remove('hidden');
+        document.getElementById('end-reason').innerText = reasonText;
+        document.getElementById('final-score').innerText = t.score + score;
+        document.getElementById('stars').innerText = stars;
+        document.getElementById('end-title').innerText = msg;
+    }
+
+    function changeDirection(dir) {
+        if (!isGameRunning) return;
+        if (dir === 'up' && velocity.y === 0) velocity = { x: 0, y: -1 };
+        if (dir === 'down' && velocity.y === 0) velocity = { x: 0, y: 1 };
+        if (dir === 'left' && velocity.x === 0) velocity = { x: -1, y: 0 };
+        if (dir === 'right' && velocity.x === 0) velocity = { x: 1, y: 0 };
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp') changeDirection('up');
+        if (e.key === 'ArrowDown') changeDirection('down');
+        if (e.key === 'ArrowLeft') changeDirection('left');
+        if (e.key === 'ArrowRight') changeDirection('right');
+    });
+
+    function toggleLanguage() {
+        lang = lang === 'ms' ? 'en' : 'ms';
+        const t = texts[lang];
+        
+        // Update Static Texts
+        document.getElementById('title-text').innerText = t.title;
+        document.getElementById('start-title').innerText = t.startTitle;
+        document.getElementById('start-desc').innerText = t.startDesc;
+        document.getElementById('btn-start').innerText = t.btnStart;
+        document.getElementById('btn-restart').innerText = t.btnRestart;
+        
+        // Update HUD
+        updateUI();
+
+        // If Game Over screen is open, force update its text
+        if (!document.getElementById('end-screen').classList.contains('hidden')) {
+            renderGameOverScreen();
+        }
+    }
+
+    function updateUI() {
+        const t = texts[lang];
+        document.getElementById('score-label').innerText = t.score + score;
+        document.getElementById('level-label').innerText = t.level + level;
+        document.getElementById('time-label').innerText = t.time + timeLeft + "s";
+    }
+
+    // Init
+    updateUI();
+</script>
+</body>
+</html>

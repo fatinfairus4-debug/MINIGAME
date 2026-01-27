@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Misi Di Selat Melaka - Edisi Lengkap</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background-color: #1a252f;
+        font-family: 'Segoe UI', sans-serif;
+        touch-action: none; 
+    }
+
+    #game-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        background: #006994;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    canvas {
+        box-shadow: 0 0 30px rgba(0,0,0,0.6);
+        border-radius: 4px;
+        background: radial-gradient(circle at center, #1e90ff, #00008B);
+    }
+
+    /* UI OVERLAY */
+    .ui-layer {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none;
+        display: flex; flex-direction: column; justify-content: space-between;
+    }
+
+    .top-bar {
+        background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0));
+        color: white; padding: 15px 20px;
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 18px; font-weight: bold; text-shadow: 1px 1px 2px black;
+    }
+
+    .info-box span { margin-left: 15px; }
+    #timer-display { color: #f1c40f; }
+    #score-display { color: #2ecc71; }
+
+    /* MENU SCREENS */
+    .screen {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(20, 30, 48, 0.95);
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        color: white; z-index: 20; text-align: center; pointer-events: auto;
+        backdrop-filter: blur(5px);
+    }
+    .hidden { display: none !important; }
+
+    h1, h2 { font-family: 'Times New Roman', serif; text-shadow: 3px 3px 0 #000; }
+    h1 { color: #f39c12; font-size: 2.8rem; margin-bottom: 10px; }
+    h2 { color: #e74c3c; font-size: 2.5rem; margin-bottom: 10px; }
+    
+    p { font-size: 1.1rem; max-width: 600px; line-height: 1.6; color: #ecf0f1; margin: 10px 20px;}
+
+    .btn {
+        background: linear-gradient(to bottom, #d35400, #a04000);
+        border: 2px solid #e67e22; padding: 15px 50px;
+        color: white; font-size: 1.3rem; font-weight: bold;
+        border-radius: 5px; cursor: pointer; margin-top: 25px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.2s;
+    }
+    .btn:active { transform: scale(0.95); }
+    
+    .btn-small { 
+        position: absolute; top: 15px; right: 15px; 
+        padding: 8px 15px; font-size: 0.9rem; z-index: 100;
+        background: #34495e; border: 1px solid #7f8c8d;
+    }
+
+    /* SCORE & STARS */
+    .score-box {
+        background: rgba(0,0,0,0.5);
+        padding: 10px 30px;
+        border-radius: 20px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2ecc71;
+        margin: 10px 0;
+        border: 1px solid #27ae60;
+    }
+    .stars { font-size: 60px; margin: 10px; color: #444; text-shadow: 2px 2px 5px black; }
+    .star-filled { color: #f1c40f; text-shadow: 0 0 15px #f39c12; }
+
+    /* JOYSTICK */
+    #joystick-zone {
+        position: absolute; bottom: 40px; left: 40px;
+        width: 140px; height: 140px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%; border: 2px dashed rgba(255,255,255,0.2);
+        display: none; pointer-events: auto; touch-action: none;
+    }
+    #joystick-knob {
+        position: absolute; top: 50%; left: 50%;
+        width: 60px; height: 60px;
+        background: radial-gradient(circle at 30% 30%, #f1c40f, #f39c12);
+        border-radius: 50%; transform: translate(-50%, -50%);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    }
+
+</style>
+</head>
+<body>
+
+<div id="game-container">
+    <button class="btn btn-small" onclick="toggleLang()" id="btn-lang">English</button>
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="ui-layer">
+        <div class="top-bar">
+            <div id="level-title">Palembang</div>
+            <div class="info-box">
+                <span>⏱️ <span id="timer-display">45</span>s</span>
+                <span>💎 <span id="score-display">0</span></span>
+            </div>
+        </div>
+        <div id="joystick-zone"><div id="joystick-knob"></div></div>
+    </div>
+
+    <div id="start-screen" class="screen">
+        <h1 id="txt-title">Misi Di Selat Melaka</h1>
+        <p id="txt-story">Pandu Bahtera Parameswara. Selamatkan pengikut Orang Laut (rakit) dan elak kapal perang Majapahit.</p>
+        
+        <div style="background:rgba(0,0,0,0.5); padding:15px; border-radius:10px; margin:20px; display:flex; gap:30px;">
+            <div style="text-align:center"><div style="font-size:30px">⛵</div><small>Anda</small></div>
+            <div style="text-align:center"><div style="font-size:30px">🚣</div><small id="leg-col">Pengikut</small></div>
+            <div style="text-align:center"><div style="font-size:30px">🏴‍☠️</div><small id="leg-ene">Musuh</small></div>
+        </div>
+
+        <button class="btn" onclick="initGame()" id="btn-start">BELAYAR SEKARANG</button>
+    </div>
+
+    <div id="level-screen" class="screen hidden">
+        <h1 id="txt-lvl-comp">Lolos!</h1>
+        <p id="txt-lvl-desc">Anda berjaya melarikan diri.</p>
+        <button class="btn" onclick="nextLevel()" id="btn-next">KE LOKASI SETERUSNYA</button>
+    </div>
+
+    <div id="gameover-screen" class="screen hidden">
+        <h2 id="title-fail">💀 Karam!</h2>
+        <p id="txt-fail">Bahtera anda diserang.</p>
+        
+        <div class="score-box">
+            <span class="lbl-score">Skor Akhir</span>: <span id="fail-score-val">0</span>
+        </div>
+
+        <button class="btn" onclick="restartGame()" id="btn-retry">CUBA LAGI</button>
+    </div>
+
+    <div id="victory-screen" class="screen hidden">
+        <h1 style="color:#f1c40f" id="title-win">👑 Daulat Tuanku!</h1>
+        <p id="txt-win">Di bawah pokok Melaka, pelanduk menendang anjing. Kerajaan baru diasaskan!</p>
+        
+        <div class="stars" id="star-container">★ ★ ★</div>
+        
+        <div class="score-box">
+            <span class="lbl-score">Skor Akhir</span>: <span id="win-score-val">0</span>
+        </div>
+
+        <button class="btn" onclick="restartGame()" id="btn-replay">MAIN SEMULA</button>
+    </div>
+</div>
+
+<script>
+/** * GAME CONFIGURATION */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let gameState = 'MENU';
+let currentLevel = 1;
+let score = 0;
+let timer = 0;
+let gameInterval, timerInterval;
+let frameCount = 0;
+let gameOverReason = ''; // 'collision' or 'time'
+
+// Player
+let player = { 
+    x: 0, y: 0, size: 25, speed: 4, 
+    angle: 0, targetAngle: 0 
+};
+
+let enemies = [];
+let collectibles = [];
+let particles = []; 
+let exitZone = { x: 0, y: 0, active: false };
+
+// Inputs
+const keys = { ArrowUp:false, ArrowDown:false, ArrowLeft:false, ArrowRight:false };
+let touchInput = { active:false, x:0, y:0 };
+
+// Language Data
+let curLang = 'ms';
+const texts = {
+    ms: {
+        title: "Misi Di Selat Melaka",
+        story: "Pandu Bahtera Parameswara. Kumpul pengikut Orang Laut (rakit) dan elak kapal perang Majapahit.",
+        legCol: "Pengikut", legEne: "Musuh",
+        btnStart: "BELAYAR",
+        loc1: "Lokasi: Palembang", loc2: "Lokasi: Temasik", loc3: "Lokasi: Melaka",
+        lvlComp: "Misi Selesai!",
+        desc1: "Angkatan Majapahit tertinggal di belakang!",
+        desc2: "Temasik diserang Siam! Kita mesti bergerak ke Utara.",
+        btnNext: "TERUSKAN",
+        
+        // Game Over Logic
+        titleFail: "💀 Karam!",
+        failCrash: "Bahtera anda karam dilanggar musuh!",
+        failTime: "Masa telah tamat! Misi gagal.",
+        btnRetry: "CUBA LAGI",
+        
+        // Victory
+        titleWin: "👑 Daulat Tuanku!",
+        winDesc: "Tanah ini sungguh bertuah. Disini kita bina empayar.",
+        btnReplay: "MAIN SEMULA",
+        lblScore: "Skor Akhir"
+    },
+    en: {
+        title: "Mission: Straits of Melaka",
+        story: "Steer Parameswara's Ship. Rescue the Orang Laut (rafts) and dodge Majapahit Warships.",
+        legCol: "Followers", legEne: "Enemies",
+        btnStart: "SET SAIL",
+        loc1: "Loc: Palembang", loc2: "Loc: Temasik", loc3: "Loc: Melaka",
+        lvlComp: "Mission Accomplished!",
+        desc1: "You outran the Majapahit navy!",
+        desc2: "Temasik is under attack by Siam! We must go North.",
+        btnNext: "CONTINUE",
+        
+        // Game Over Logic
+        titleFail: "💀 Ship Sunk!",
+        failCrash: "Your ship was sunk by the enemy!",
+        failTime: "Time is up! Mission failed.",
+        btnRetry: "TRY AGAIN",
+        
+        // Victory
+        titleWin: "👑 Long Live The King!",
+        winDesc: "This land is auspicious. Here we shall build an empire.",
+        btnReplay: "PLAY AGAIN",
+        lblScore: "Final Score"
+    }
+};
+
+/** SETUP */
+function resize() {
+    canvas.width = Math.min(window.innerWidth - 20, 800);
+    canvas.height = Math.min(window.innerHeight - 100, 600);
+}
+window.addEventListener('resize', resize);
+resize();
+
+/** CORE FUNCTIONS */
+function initGame() {
+    score = 0; currentLevel = 1;
+    startGame();
+}
+function restartGame() { initGame(); }
+
+function startGame() {
+    gameState = 'PLAY';
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    setupLevel(currentLevel);
+    
+    clearInterval(gameInterval); clearInterval(timerInterval);
+    gameInterval = setInterval(update, 1000/60);
+    timerInterval = setInterval(() => {
+        if(gameState === 'PLAY') {
+            timer--;
+            document.getElementById('timer-display').innerText = timer;
+            if(timer <= 0) gameOver('time'); // Pass 'time' as reason
+        }
+    }, 1000);
+}
+
+function setupLevel(lvl) {
+    player.x = 80; player.y = canvas.height/2; player.angle = 0;
+    enemies = []; collectibles = []; particles = [];
+    exitZone = { x: canvas.width - 80, y: canvas.height/2 - 40, active: false };
+    
+    let txt = texts[curLang];
+    let tLimit = 30, eCount = 3, cCount = 5;
+    let title = txt.loc1;
+
+    if(lvl === 2) { tLimit=25; eCount=5; cCount=6; title=txt.loc2; }
+    if(lvl === 3) { tLimit=20; eCount=7; cCount=8; title=txt.loc3; }
+
+    timer = tLimit;
+    document.getElementById('level-title').innerText = title;
+    document.getElementById('score-display').innerText = score;
+    document.getElementById('timer-display').innerText = timer;
+
+    for(let i=0; i<eCount; i++) {
+        enemies.push({
+            x: Math.random() * (canvas.width - 200) + 150,
+            y: Math.random() * (canvas.height - 50),
+            vx: (Math.random() - 0.5) * (3 + lvl),
+            vy: (Math.random() - 0.5) * (3 + lvl),
+            angle: 0
+        });
+    }
+    for(let i=0; i<cCount; i++) {
+        collectibles.push({
+            x: Math.random() * (canvas.width - 150) + 100,
+            y: Math.random() * (canvas.height - 50) + 20,
+            active: true
+        });
+    }
+}
+
+/** LOOP */
+function update() {
+    if(gameState !== 'PLAY') return;
+    frameCount++;
+
+    // Movement
+    let dx = 0, dy = 0;
+    if (keys.ArrowUp) dy = -1;
+    if (keys.ArrowDown) dy = 1;
+    if (keys.ArrowLeft) dx = -1;
+    if (keys.ArrowRight) dx = 1;
+    if (touchInput.active) { dx = touchInput.x; dy = touchInput.y; }
+
+    if (dx !== 0 || dy !== 0) {
+        player.x += dx * player.speed;
+        player.y += dy * player.speed;
+        player.targetAngle = Math.atan2(dy, dx);
+        if(frameCount % 5 === 0) particles.push({x: player.x, y: player.y, life: 20});
+    }
+    
+    // Smooth Rotation
+    let diff = player.targetAngle - player.angle;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    player.angle += diff * 0.1;
+
+    player.x = Math.max(20, Math.min(canvas.width-20, player.x));
+    player.y = Math.max(20, Math.min(canvas.height-20, player.y));
+
+    // Enemies
+    enemies.forEach(e => {
+        e.x += e.vx; e.y += e.vy;
+        e.angle = Math.atan2(e.vy, e.vx);
+        if(e.x < 0 || e.x > canvas.width) e.vx *= -1;
+        if(e.y < 0 || e.y > canvas.height) e.vy *= -1;
+
+        let dist = Math.hypot(player.x - e.x, player.y - e.y);
+        if(dist < 30) gameOver('collision'); // Pass 'collision' as reason
+    });
+
+    // Collectibles
+    let remaining = 0;
+    collectibles.forEach(c => {
+        if(c.active) {
+            remaining++;
+            let dist = Math.hypot(player.x - c.x, player.y - c.y);
+            if(dist < 30) {
+                c.active = false; score += 10;
+                document.getElementById('score-display').innerText = score;
+            }
+        }
+    });
+    if(remaining === 0) exitZone.active = true;
+
+    // Exit
+    if(exitZone.active) {
+        let dist = Math.hypot(player.x - (exitZone.x+25), player.y - (exitZone.y+25));
+        if(dist < 40) levelComplete();
+    }
+    draw();
+}
+
+/** DRAWING */
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach((p, i) => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${p.life/20})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+        p.life--; if(p.life<=0) particles.splice(i, 1);
+    });
+
+    if(exitZone.active) {
+        ctx.fillStyle = "rgba(46, 204, 113, 0.3)";
+        ctx.beginPath(); ctx.arc(exitZone.x+25, exitZone.y+25, 40, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.font = "30px Arial"; ctx.fillText("🚩", exitZone.x+10, exitZone.y+35);
+    } else {
+        ctx.fillStyle = "rgba(0,0,0,0.2)";
+        ctx.beginPath(); ctx.arc(exitZone.x+25, exitZone.y+25, 30, 0, Math.PI*2); ctx.fill();
+        ctx.font = "20px Arial"; ctx.fillText("🔒", exitZone.x+15, exitZone.y+32);
+    }
+
+    collectibles.forEach(c => { if(c.active) drawRaft(c.x, c.y); });
+    enemies.forEach(e => { drawShip(e.x, e.y, e.angle, '#c0392b', '🏴‍☠️'); });
+    drawShip(player.x, player.y, player.angle, '#f39c12', '🤴');
+}
+
+function drawShip(x, y, angle, color, icon) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(angle);
+    ctx.fillStyle = '#5d4037'; 
+    ctx.beginPath(); ctx.ellipse(0, 0, 25, 12, 0, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+    
+    ctx.fillStyle = '#ecf0f1';
+    ctx.beginPath(); ctx.moveTo(5, -5); ctx.quadraticCurveTo(15, -15, 5, -25);
+    ctx.lineTo(-5, -25); ctx.quadraticCurveTo(5, -15, -5, -5); ctx.fill();
+    
+    ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-25); ctx.stroke();
+    
+    ctx.font = "14px Arial"; ctx.textAlign = "center"; ctx.fillText(icon, 0, 5);
+    ctx.restore();
+}
+
+function drawRaft(x, y) {
+    ctx.font = "28px Arial"; 
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "black";
+    ctx.fillText("🚣", x, y);
+}
+
+/** LOGIC HANDLERS */
+function levelComplete() {
+    gameState = 'LEVEL_END';
+    clearInterval(gameInterval); clearInterval(timerInterval);
+    if (currentLevel >= 3) showVictory();
+    else {
+        let txt = texts[curLang];
+        document.getElementById('level-screen').classList.remove('hidden');
+        document.getElementById('txt-lvl-desc').innerText = (currentLevel===1)?txt.desc1:txt.desc2;
+    }
+}
+function nextLevel() { currentLevel++; startGame(); }
+
+function gameOver(reason) {
+    gameState = 'GAMEOVER';
+    gameOverReason = reason;
+    clearInterval(gameInterval); clearInterval(timerInterval);
+    document.getElementById('gameover-screen').classList.remove('hidden');
+    document.getElementById('fail-score-val').innerText = score;
+    updateFailText();
+}
+
+function updateFailText() {
+    let t = texts[curLang];
+    let msg = "";
+    if (gameOverReason === 'collision') msg = t.failCrash;
+    else if (gameOverReason === 'time') msg = t.failTime;
+    
+    document.getElementById('txt-fail').innerText = msg;
+    document.getElementById('title-fail').innerText = t.titleFail;
+}
+
+function showVictory() {
+    gameState = 'VICTORY';
+    document.getElementById('victory-screen').classList.remove('hidden');
+    document.getElementById('win-score-val').innerText = score;
+    
+    let stars = score > 150 ? 3 : (score > 80 ? 2 : 1);
+    let sHtml = "";
+    for(let i=0; i<3; i++) sHtml += (i<stars)?'<span class="star-filled">★</span> ':'<span>★</span> ';
+    document.getElementById('star-container').innerHTML = sHtml;
+}
+
+/** INPUTS & LANG */
+window.addEventListener('keydown', e => keys[e.code] = true);
+window.addEventListener('keyup', e => keys[e.code] = false);
+
+const joyZone = document.getElementById('joystick-zone');
+const joyKnob = document.getElementById('joystick-knob');
+let joyCenter = {x:0, y:0};
+
+if('ontouchstart' in window) joyZone.style.display = 'block';
+
+joyZone.addEventListener('touchstart', e => {
+    e.preventDefault(); touchInput.active = true;
+    let r = joyZone.getBoundingClientRect();
+    joyCenter = {x: r.left + r.width/2, y: r.top + r.height/2 };
+    moveJoy(e.touches[0]);
+});
+joyZone.addEventListener('touchmove', e => { e.preventDefault(); moveJoy(e.touches[0]); });
+joyZone.addEventListener('touchend', e => {
+    e.preventDefault(); touchInput.active = false;
+    touchInput.x = 0; touchInput.y = 0;
+    joyKnob.style.transform = `translate(-50%,-50%)`;
+});
+
+function moveJoy(t) {
+    let dx = t.clientX - joyCenter.x; let dy = t.clientY - joyCenter.y;
+    let dist = Math.hypot(dx, dy); let max = 35;
+    if(dist > max) { dx *= max/dist; dy *= max/dist; }
+    joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    touchInput.x = dx/max; touchInput.y = dy/max;
+}
+
+function toggleLang() {
+    curLang = (curLang==='ms')?'en':'ms';
+    let t = texts[curLang];
+    document.getElementById('btn-lang').innerText = (curLang==='ms')?'English':'B. Melayu';
+    document.getElementById('txt-title').innerText = t.title;
+    document.getElementById('txt-story').innerText = t.story;
+    document.getElementById('leg-col').innerText = t.legCol;
+    document.getElementById('leg-ene').innerText = t.legEne;
+    document.getElementById('btn-start').innerText = t.btnStart;
+    document.getElementById('txt-lvl-comp').innerText = t.lvlComp;
+    document.getElementById('btn-next').innerText = t.btnNext;
+    document.getElementById('btn-retry').innerText = t.btnRetry;
+    document.getElementById('txt-win').innerText = t.winDesc;
+    document.getElementById('title-win').innerText = t.titleWin;
+    document.getElementById('btn-replay').innerText = t.btnReplay;
+    
+    // Update Score Labels
+    document.querySelectorAll('.lbl-score').forEach(el => el.innerText = t.lblScore);
+    
+    if(gameState === 'GAMEOVER') {
+        updateFailText();
+    }
+}
+</script>
+</body>
+</html>

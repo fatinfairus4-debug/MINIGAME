@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hang Tuah: Misi Bijaksana (Fixed)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Roboto:wght@700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+            font-family: 'Fredoka', sans-serif;
+            touch-action: none;
+        }
+
+        /* --- UI LAYER --- */
+        #game-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top HUD */
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            pointer-events: auto;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid #34495e;
+        }
+
+        /* Question Banner */
+        #question-banner {
+            margin-top: 10px;
+            align-self: center;
+            background: linear-gradient(to right, #2c3e50, #4ca1af);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 15px;
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+            font-size: 1.2rem;
+            max-width: 80%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 2px solid #fff;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* Buttons */
+        .btn-action {
+            background: #fff;
+            border: 2px solid #333;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        .btn-action:hover { background: #eee; }
+
+        /* Screens */
+        .modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            pointer-events: auto;
+            transition: opacity 0.3s;
+        }
+        .hidden { opacity: 0; pointer-events: none; }
+
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border-bottom: 8px solid #3498db;
+        }
+
+        h1 { color: #2c3e50; font-size: 2rem; margin-bottom: 10px; }
+        p { color: #555; font-size: 1.1rem; line-height: 1.5; margin-bottom: 25px; }
+
+        .btn-main {
+            background: linear-gradient(to right, #11998e, #38ef7d);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .btn-main:active { transform: scale(0.95); }
+
+        .stars { font-size: 3rem; color: #f1c40f; margin: 15px 0; }
+        
+        .feedback-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px black;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        /* Mobile Controls */
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 40px;
+            box-sizing: border-box;
+            pointer-events: none; 
+        }
+        .control-arrow {
+            font-size: 3rem;
+            color: rgba(255,255,255,0.5);
+            background: rgba(0,0,0,0.2);
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto; /* Buttons are clickable */
+            user-select: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="feedback-msg" class="feedback-text">BETUL!</div>
+
+    <div id="game-ui">
+        <div class="hud">
+            <div class="stat-card">
+                <span>⭐</span> <span id="score-val">0</span>
+            </div>
+            <div class="stat-card">
+                <span>❤️</span> <span id="life-val">3</span>
+            </div>
+            <button class="btn-action" onclick="toggleLanguage()" id="lang-btn">English</button>
+        </div>
+
+        <div id="question-banner">Soalan akan muncul di sini...</div>
+
+        <div id="mobile-controls">
+            <div class="control-arrow" onmousedown="moveUp()" ontouchstart="moveUp()">▲</div>
+            <div class="control-arrow" onmousedown="moveDown()" ontouchstart="moveDown()">▼</div>
+        </div>
+    </div>
+
+    <div id="start-screen" class="modal">
+        <div class="modal-box">
+            <h1 id="title-start">Misi Laksamana</h1>
+            <p id="desc-start">
+                Bantu Hang Tuah menjawab soalan Sejarah!<br>
+                Pandu kapal ke gerbang jawapan yang <b>BETUL</b>.<br>
+                Elak jawapan yang <b>SALAH</b> dan batu karang.
+            </p>
+            <button class="btn-main" onclick="startGame()" id="btn-start">MULA MISI</button>
+        </div>
+    </div>
+
+    <div id="end-screen" class="modal hidden">
+        <div class="modal-box">
+            <h1 id="title-end">Tamat Permainan</h1>
+            <div class="stars" id="end-stars">★☆☆</div>
+            <p><span id="txt-final">Markah Akhir:</span> <strong id="final-score">0</strong></p>
+            <button class="btn-main" onclick="startGame()" id="btn-restart">MAIN SEMULA</button>
+        </div>
+    </div>
+
+    <script>
+        // --- EDUCATIONAL DATA (Standard 4 History - Topic 11) ---
+        const questionBank = {
+            ms: [
+                { q: "Siapakah Laksamana Melaka yang terbilang?", right: "Hang Tuah", wrong: "Tun Perak" },
+                { q: "Di manakah Hang Tuah dilahirkan?", right: "Sg. Duyung", wrong: "Klang" },
+                { q: "Nama keris sakti Hang Tuah?", right: "Taming Sari", wrong: "Taming Hitam" },
+                { q: "Berapakah sahabat karib Hang Tuah?", right: "5 Orang", wrong: "3 Orang" },
+                { q: "Nilai utama Hang Tuah kepada Sultan?", right: "Taat Setia", wrong: "Derhaka" },
+                { q: "Hang Tuah mengetuai angkatan...?", right: "Laut", wrong: "Darat" },
+                { q: "Sahabat: Tuah, Jebat, Kasturi, Lekir dan...?", right: "Lekiu", wrong: "Lekas" },
+                { q: "Hang Tuah menjadi diplomat ke negara...?", right: "China", wrong: "Amerika" },
+                { q: "Hang Tuah mahir dalam seni...?", right: "Persilatan", wrong: "Lukisan" },
+                { q: "Tugas Laksamana ialah menjaga...?", right: "Perairan", wrong: "Hutan" }
+            ],
+            en: [
+                { q: "Who is the renowned Admiral of Melaka?", right: "Hang Tuah", wrong: "Tun Perak" },
+                { q: "Where was Hang Tuah born?", right: "Sg. Duyung", wrong: "Klang" },
+                { q: "Name of Hang Tuah's magic dagger?", right: "Taming Sari", wrong: "Taming Hitam" },
+                { q: "How many best friends did he have?", right: "5 Friends", wrong: "3 Friends" },
+                { q: "Hang Tuah's main value to the Sultan?", right: "Loyalty", wrong: "Rebellion" },
+                { q: "Hang Tuah led the...?", right: "Navy", wrong: "Army" },
+                { q: "Friends: Tuah, Jebat, Kasturi, Lekir and...?", right: "Lekiu", wrong: "Lekas" },
+                { q: "Hang Tuah was a diplomat to...?", right: "China", wrong: "USA" },
+                { q: "Hang Tuah was an expert in...?", right: "Silat", wrong: "Painting" },
+                { q: "The Admiral's duty is to protect...?", right: "The Seas", wrong: "The Jungle" }
+            ]
+        };
+
+        const translations = {
+            ms: {
+                title: "Misi Laksamana",
+                desc: "Bantu Hang Tuah menjawab soalan Sejarah!<br>Pandu kapal ke gerbang jawapan yang <b>BETUL</b>.<br>Elak jawapan yang <b>SALAH</b> dan batu karang.",
+                btnStart: "MULA MISI",
+                titleEnd: "Tamat Permainan",
+                finalTxt: "Markah Akhir:",
+                btnRestart: "MAIN SEMULA",
+                langBtn: "English",
+                correct: "TEPAT!",
+                wrong: "SALAH!",
+                wait: "Sedia untuk soalan..."
+            },
+            en: {
+                title: "Admiral's Mission",
+                desc: "Help Hang Tuah answer History questions!<br>Sail into the <b>CORRECT</b> answer gate.<br>Avoid the <b>WRONG</b> answer and rocks.",
+                btnStart: "START MISSION",
+                titleEnd: "Game Over",
+                finalTxt: "Final Score:",
+                btnRestart: "PLAY AGAIN",
+                langBtn: "Bahasa Melayu",
+                correct: "CORRECT!",
+                wrong: "WRONG!",
+                wait: "Ready for question..."
+            }
+        };
+
+        let currentLang = 'ms';
+        let activeQuestions = [];
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'ms' ? 'en' : 'ms';
+            const t = translations[currentLang];
+            document.getElementById('title-start').innerText = t.title;
+            document.getElementById('desc-start').innerHTML = t.desc;
+            document.getElementById('btn-start').innerText = t.btnStart;
+            document.getElementById('title-end').innerText = t.titleEnd;
+            document.getElementById('txt-final').innerText = t.finalTxt;
+            document.getElementById('btn-restart').innerText = t.btnRestart;
+            document.getElementById('lang-btn').innerText = t.langBtn;
+            activeQuestions = questionBank[currentLang];
+        }
+
+        // --- GAME ENGINE ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height, laneHeight, lanes;
+        let animationId;
+        
+        // State
+        let isPlaying = false;
+        let score = 0;
+        let lives = 3;
+        let speed = 5;
+        let frameCount = 0;
+        let questionMode = false; 
+
+        // Entities
+        let player = { lane: 1, x: 100, y: 0 };
+        let obstacles = []; 
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            laneHeight = height / 3;
+            lanes = [laneHeight * 0.5, laneHeight * 1.5, laneHeight * 2.5];
+            player.y = lanes[1];
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Controls
+        function moveUp() { 
+            if (player.lane > 0) player.lane--; 
+            // Add a small prevent default if event exists
+        }
+        function moveDown() { 
+            if (player.lane < 2) player.lane++; 
+        }
+
+        window.addEventListener('keydown', e => {
+            if(!isPlaying) return;
+            if (e.key === 'ArrowUp') moveUp();
+            if (e.key === 'ArrowDown') moveDown();
+        });
+        
+        // Touch Swipe
+        let touchStartY = 0;
+        window.addEventListener('touchstart', e => touchStartY = e.touches[0].clientY);
+        window.addEventListener('touchend', e => {
+            if (!isPlaying) return;
+            let touchEndY = e.changedTouches[0].clientY;
+            if (touchStartY - touchEndY > 50) moveUp();
+            if (touchEndY - touchStartY > 50) moveDown();
+        });
+
+        // --- GAMEPLAY LOGIC ---
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
+            activeQuestions = questionBank[currentLang];
+            
+            score = 0;
+            lives = 3;
+            speed = 6;
+            frameCount = 0;
+            isPlaying = true;
+            obstacles = [];
+            player.lane = 1;
+            questionMode = false;
+            
+            updateHUD();
+            document.getElementById('question-banner').style.opacity = 0;
+            
+            if(animationId) cancelAnimationFrame(animationId);
+            animate();
+        }
+
+        function spawnPattern() {
+            // Every 400 frames (approx 6 seconds), trigger a Question Event
+            if (frameCount % 400 === 0) {
+                spawnQuestionGates();
+            } 
+            // Otherwise spawn normal rocks occasionally
+            else if (frameCount % 60 === 0 && !questionMode) {
+                // Ensure we don't spawn rocks if a question is currently on screen
+                let isGateOnScreen = obstacles.some(o => o.type === 'gate');
+                if (!isGateOnScreen) spawnRock();
+            }
+        }
+
+        function spawnQuestionGates() {
+            questionMode = true;
+            const qData = activeQuestions[Math.floor(Math.random() * activeQuestions.length)];
+
+            // Show Question Banner
+            const banner = document.getElementById('question-banner');
+            banner.innerText = qData.q;
+            banner.style.opacity = 1;
+
+            const isTopCorrect = Math.random() > 0.5;
+
+            // Gate Top (Lane 0)
+            obstacles.push({
+                x: width + 200, 
+                y: lanes[0],
+                lane: 0,
+                type: 'gate',
+                text: isTopCorrect ? qData.right : qData.wrong,
+                isCorrect: isTopCorrect,
+                toRemove: false // Flag for deletion
+            });
+
+            // Gate Bottom (Lane 2)
+            obstacles.push({
+                x: width + 200,
+                y: lanes[2],
+                lane: 2,
+                type: 'gate',
+                text: !isTopCorrect ? qData.right : qData.wrong,
+                isCorrect: !isTopCorrect,
+                toRemove: false // Flag for deletion
+            });
+        }
+
+        function spawnRock() {
+            const l = Math.floor(Math.random() * 3);
+            obstacles.push({
+                x: width + 50,
+                y: lanes[l],
+                lane: l,
+                type: 'rock',
+                toRemove: false
+            });
+        }
+
+        function updateHUD() {
+            document.getElementById('score-val').innerText = score;
+            document.getElementById('life-val').innerText = lives;
+        }
+
+        function showFeedback(text, color) {
+            const el = document.getElementById('feedback-msg');
+            el.innerText = text;
+            el.style.color = color;
+            el.style.opacity = 1;
+            el.style.transform = "translate(-50%, -50%) scale(1.2)";
+            
+            setTimeout(() => {
+                el.style.opacity = 0;
+                el.style.transform = "translate(-50%, -50%) scale(1)";
+            }, 800);
+        }
+
+        function endGame() {
+            isPlaying = false;
+            document.getElementById('end-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = score;
+            
+            let stars = "★☆☆";
+            if (score > 500) stars = "★★☆";
+            if (score > 1000) stars = "★★★";
+            document.getElementById('end-stars').innerText = stars;
+        }
+
+        // --- DRAWING ---
+        function drawShip(x, y) {
+            ctx.fillStyle = '#8e44ad';
+            ctx.beginPath();
+            ctx.ellipse(x, y+20, 50, 20, 0, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#f1c40f';
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y-60);
+            ctx.lineTo(x+40, y-30);
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = "20px Arial";
+            ctx.fillText("HT", x-15, y+25);
+        }
+
+        function drawGate(obj) {
+            ctx.fillStyle = "#f39c12"; 
+            ctx.fillRect(obj.x - 10, 0, 10, height); 
+            
+            ctx.fillStyle = "#ecf0f1";
+            ctx.strokeStyle = "#34495e";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.rect(obj.x, obj.y - 50, 180, 100);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = "#2c3e50";
+            ctx.font = "bold 18px Roboto";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            const words = obj.text.split(" ");
+            if (words.length > 2) {
+                ctx.fillText(words.slice(0,2).join(" "), obj.x + 90, obj.y - 10);
+                ctx.fillText(words.slice(2).join(" "), obj.x + 90, obj.y + 20);
+            } else {
+                ctx.fillText(obj.text, obj.x + 90, obj.y);
+            }
+        }
+
+        function animate() {
+            if (!isPlaying) return;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Background
+            const grad = ctx.createLinearGradient(0, 0, 0, height);
+            grad.addColorStop(0, "#2980b9");
+            grad.addColorStop(1, "#2c3e50");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, width, height);
+
+            // Lanes
+            ctx.strokeStyle = "rgba(255,255,255,0.1)";
+            ctx.setLineDash([20,20]);
+            ctx.beginPath();
+            ctx.moveTo(0, laneHeight); ctx.lineTo(width, laneHeight);
+            ctx.moveTo(0, laneHeight*2); ctx.lineTo(width, laneHeight*2);
+            ctx.stroke();
+
+            // Player
+            const targetY = lanes[player.lane];
+            player.y += (targetY - player.y) * 0.15;
+            drawShip(player.x, player.y);
+
+            // Spawning
+            frameCount++;
+            spawnPattern();
+
+            // Obstacle Logic
+            // Iterate backwards to allow safe removal
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                
+                // If marked for removal by previous collision loop, splice and skip
+                if (obs.toRemove) {
+                    obstacles.splice(i, 1);
+                    continue;
+                }
+
+                obs.x -= speed;
+
+                // Draw
+                if (obs.type === 'rock') {
+                    ctx.fillStyle = "#7f8c8d";
+                    ctx.beginPath();
+                    ctx.arc(obs.x, obs.y, 30, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.fillStyle = "#95a5a6";
+                    ctx.beginPath();
+                    ctx.arc(obs.x-10, obs.y-10, 10, 0, Math.PI*2);
+                    ctx.fill();
+                } else if (obs.type === 'gate') {
+                    drawGate(obs);
+                }
+
+                // Collision
+                const dx = Math.abs(player.x - (obs.x + (obs.type==='gate'?90:0))); 
+                const dy = Math.abs(player.y - obs.y);
+
+                if (dx < 60 && dy < 40) {
+                    if (obs.type === 'rock') {
+                        lives--;
+                        showFeedback("OUCH!", "red");
+                        obstacles.splice(i, 1);
+                    } else if (obs.type === 'gate') {
+                        if (obs.isCorrect) {
+                            score += 100;
+                            speed += 0.5; 
+                            showFeedback(translations[currentLang].correct, "#2ecc71");
+                        } else {
+                            lives--;
+                            speed = Math.max(4, speed - 1); 
+                            showFeedback(translations[currentLang].wrong, "#e74c3c");
+                        }
+                        
+                        // FIX IS HERE:
+                        // Instead of filtering the array mid-loop (which caused the crash),
+                        // we mark all current gates for removal in the NEXT iterations or manually splice this one.
+                        
+                        // 1. Remove the one we hit immediately
+                        obstacles.splice(i, 1);
+                        
+                        // 2. Mark any other gates to disappear so they don't linger
+                        obstacles.forEach(o => { 
+                            if(o.type === 'gate') o.toRemove = true; 
+                        });
+
+                        document.getElementById('question-banner').style.opacity = 0;
+                        questionMode = false;
+                    }
+                    updateHUD();
+                    if (lives <= 0) endGame();
+                }
+
+                // Remove off-screen
+                if (obs.x < -200) {
+                    obstacles.splice(i, 1);
+                    // If a gate passed by without being hit, we still need to reset the banner eventually
+                    // Logic: if NO gates are left on screen, reset question mode
+                }
+            }
+            
+            // Safety check: If question mode is on, but no gates exist, turn it off
+            // (In case the user dodged BOTH gates)
+            if (questionMode) {
+                const gatesExist = obstacles.some(o => o.type === 'gate');
+                if (!gatesExist) {
+                    questionMode = false;
+                    document.getElementById('question-banner').style.opacity = 0;
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+    </script>
+</body>
+</html>

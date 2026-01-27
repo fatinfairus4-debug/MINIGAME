@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tun Perak: Legends of Melaka</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050510;
+            touch-action: none; /* Prevent zoom/scroll on mobile */
+            font-family: 'Press Start 2P', cursive;
+            color: white;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* UI Overlays */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            text-shadow: 2px 2px 0 #000;
+            pointer-events: auto;
+        }
+
+        .score-box { font-size: 20px; color: #f1c40f; }
+        .timer-box { font-size: 20px; color: #3498db; }
+
+        .btn-translate {
+            background: #e67e22;
+            border: 2px solid white;
+            color: white;
+            font-family: inherit;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 10px;
+            pointer-events: auto;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
+
+        h1 { font-size: 24px; color: #f1c40f; line-height: 1.5; padding: 0 20px; }
+        p { font-size: 12px; line-height: 2; color: #ccc; max-width: 600px; padding: 0 20px; }
+
+        .big-btn {
+            background: #2ecc71;
+            border: 4px solid #27ae60;
+            color: white;
+            font-family: inherit;
+            font-size: 18px;
+            padding: 20px 40px;
+            margin-top: 20px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #1e8449;
+            transition: transform 0.1s;
+        }
+        .big-btn:active { transform: translateY(6px); box-shadow: none; }
+
+        .tutorial-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 15px;
+            text-align: left;
+            margin: 20px 0;
+            font-size: 12px;
+        }
+        .icon { font-size: 20px; text-align: center; }
+
+        /* Controls Area */
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 0 20px;
+            pointer-events: auto;
+            z-index: 5;
+        }
+
+        .control-btn {
+            flex: 1;
+            max-width: 120px;
+            height: 100px;
+            border-radius: 12px;
+            border: 4px solid rgba(255,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.1s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.3);
+        }
+        .control-btn:active { transform: translateY(8px); box-shadow: none; }
+        
+        /* Flash animation for buttons */
+        @keyframes flash { 0% { opacity: 1; } 100% { opacity: 0; } }
+        .flash-overlay {
+            position: absolute;
+            top:0; left:0; width:100%; height:100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .flash-active { animation: flash 0.2s; }
+
+        /* Colors matching game entities */
+        #btn-jamung { background: #e74c3c; /* Red */ }
+        #btn-nasihat { background: #f1c40f; /* Yellow */ }
+        #btn-keris { background: #3498db; /* Blue */ }
+
+        .btn-icon { font-size: 30px; margin-bottom: 10px; }
+        .btn-label { font-size: 10px; text-transform: uppercase; }
+
+        #level-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            color: rgba(255,255,255,0.1);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="game-canvas"></canvas>
+
+    <div id="ui-layer">
+        <div class="header">
+            <div>
+                <div class="score-box">SCORE: <span id="score">0</span></div>
+                <div style="font-size: 10px; margin-top:5px; color:#aaa;">HEALTH: <span id="health">❤️❤️❤️</span></div>
+            </div>
+            <div>
+                <div class="timer-box">TIME: <span id="time">60</span></div>
+                <button class="btn-translate" style="margin-top:5px;" onclick="toggleLang()">EN / BM</button>
+            </div>
+        </div>
+
+        <div id="level-indicator">LVL 1</div>
+
+        <div id="controls">
+            <div class="control-btn" id="btn-jamung" onpointerdown="playerInput('jamung')">
+                <div class="flash-overlay"></div>
+                <div class="btn-icon">🔥</div>
+                <div class="btn-label" id="lbl-jamung">JAMUNG</div>
+            </div>
+            <div class="control-btn" id="btn-nasihat" onpointerdown="playerInput('nasihat')">
+                <div class="flash-overlay"></div>
+                <div class="btn-icon">📜</div>
+                <div class="btn-label" id="lbl-nasihat">NASIHAT</div>
+            </div>
+            <div class="control-btn" id="btn-keris" onpointerdown="playerInput('keris')">
+                <div class="flash-overlay"></div>
+                <div class="btn-icon">🛡️</div>
+                <div class="btn-label" id="lbl-keris">PENGAWAL</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="start-screen" class="screen">
+        <h1 id="t-title">PERTAHANAN MELAKA</h1>
+        <p id="t-desc">Gunakan kebijaksanaan Tun Perak.</p>
+        
+        <div class="tutorial-grid">
+            <div class="icon">⛵</div> <div id="t-tut1">SIAM (Merah) ➔ Tekan JAMUNG (🔥)</div>
+            <div class="icon">😠</div> <div id="t-tut2">GADUH (Kuning) ➔ Tekan NASIHAT (📜)</div>
+            <div class="icon">☠️</div> <div id="t-tut3">LANUN (Biru) ➔ Tekan PENGAWAL (🛡️)</div>
+        </div>
+
+        <button class="big-btn" onclick="startGame()" id="t-btn">MULA</button>
+        <p style="font-size:10px; color:#888; margin-top:10px;">(Sound On 🔊 Recommended)</p>
+    </div>
+
+    <div id="end-screen" class="screen hidden">
+        <h1 id="t-over">TAMAT PERMAINAN</h1>
+        
+        <div style="font-size:20px; margin-top:20px; color:white;">
+            <span id="t-final-lbl">Markah Akhir</span>: <span id="final-score" style="color:#f1c40f">0</span>
+        </div>
+
+        <div id="final-stars" style="font-size:60px; color:#f1c40f; margin:20px; text-shadow: 0 0 10px #e67e22; letter-spacing: 10px;">
+            ⭐⭐⭐
+        </div>
+
+        <button class="big-btn" onclick="startGame()" id="t-restart">MAIN SEMULA</button>
+    </div>
+
+<script>
+/**
+ * AUDIO ENGINE (Synthesizer)
+ */
+const AudioEngine = {
+    ctx: null,
+    init: function() {
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+    },
+    playTone: function(freq, type, duration, vol=0.1) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    },
+    playSound: function(name) {
+        if (!this.ctx) this.init();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        switch(name) {
+            case 'shoot':
+                this.playTone(600, 'square', 0.1, 0.1);
+                setTimeout(() => this.playTone(300, 'square', 0.1, 0.1), 50);
+                break;
+            case 'hit':
+                this.playTone(100, 'sawtooth', 0.2, 0.2);
+                break;
+            case 'damage':
+                this.playTone(80, 'sawtooth', 0.4, 0.3);
+                this.playTone(50, 'square', 0.4, 0.3);
+                break;
+        }
+    }
+};
+
+/**
+ * GAME LOGIC
+ */
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d', { alpha: false }); // Optimize
+let width, height;
+
+// State
+let game = {
+    active: false,
+    score: 0,
+    health: 3,
+    time: 60,
+    level: 1,
+    lastTime: 0,
+    spawnTimer: 0,
+    spawnRate: 1500,
+    enemies: [],
+    particles: [],
+    shake: 0,
+    lang: 'ms'
+};
+
+const COLORS = ['#e74c3c', '#f1c40f', '#3498db'];
+const ICONS = ['⛵', '😠', '☠️'];
+
+// Localization
+const TXT = {
+    ms: {
+        title: "PERTAHANAN MELAKA",
+        desc: "Gunakan kebijaksanaan Tun Perak untuk mempertahankan Melaka.",
+        tut1: "SIAM (Merah) ➔ Tekan JAMUNG (🔥)",
+        tut2: "GADUH (Kuning) ➔ Tekan NASIHAT (📜)",
+        tut3: "LANUN (Biru) ➔ Tekan PENGAWAL (🛡️)",
+        btn: "MULA",
+        over: "TAMAT PERMAINAN",
+        restart: "MAIN SEMULA",
+        l_jamung: "JAMUNG",
+        l_nasihat: "NASIHAT",
+        l_keris: "PENGAWAL",
+        l_final: "Markah Akhir"
+    },
+    en: {
+        title: "DEFENSE OF MELAKA",
+        desc: "Use Tun Perak's wisdom to defend Melaka.",
+        tut1: "SIAM (Red) ➔ Press TORCH (🔥)",
+        tut2: "FIGHT (Yellow) ➔ Press COUNSEL (📜)",
+        tut3: "PIRATE (Blue) ➔ Press GUARD (🛡️)",
+        btn: "START",
+        over: "GAME OVER",
+        restart: "PLAY AGAIN",
+        l_jamung: "TORCH",
+        l_nasihat: "COUNSEL",
+        l_keris: "GUARD",
+        l_final: "Final Score"
+    }
+};
+
+function toggleLang() {
+    game.lang = game.lang === 'ms' ? 'en' : 'ms';
+    const t = TXT[game.lang];
+    document.getElementById('t-title').innerText = t.title;
+    document.getElementById('t-desc').innerText = t.desc;
+    document.getElementById('t-tut1').innerText = t.tut1;
+    document.getElementById('t-tut2').innerText = t.tut2;
+    document.getElementById('t-tut3').innerText = t.tut3;
+    document.getElementById('t-btn').innerText = t.btn;
+    document.getElementById('t-over').innerText = t.over;
+    document.getElementById('t-restart').innerText = t.restart;
+    document.getElementById('lbl-jamung').innerText = t.l_jamung;
+    document.getElementById('lbl-nasihat').innerText = t.l_nasihat;
+    document.getElementById('lbl-keris').innerText = t.l_keris;
+    document.getElementById('t-final-lbl').innerText = t.l_final;
+}
+
+// Resize Handling
+function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// --- Game Loop ---
+function startGame() {
+    AudioEngine.init();
+    game.active = true;
+    game.score = 0;
+    game.health = 3;
+    game.time = 60;
+    game.level = 1;
+    game.enemies = [];
+    game.particles = [];
+    game.spawnRate = 1200;
+    
+    // UI Updates
+    document.getElementById('start-screen').classList.add('hidden');
+    document.getElementById('end-screen').classList.add('hidden');
+    updateHUD();
+
+    // Start Timer
+    if (window.timerInterval) clearInterval(window.timerInterval);
+    window.timerInterval = setInterval(() => {
+        if(!game.active) return;
+        game.time--;
+        updateHUD();
+        if(game.time <= 0) endGame();
+    }, 1000);
+
+    requestAnimationFrame(loop);
+}
+
+function updateHUD() {
+    document.getElementById('score').innerText = game.score;
+    document.getElementById('time').innerText = game.time;
+    let hStr = "";
+    for(let i=0; i<game.health; i++) hStr += "❤️";
+    document.getElementById('health').innerHTML = hStr;
+    document.getElementById('level-indicator').innerText = "LVL " + game.level;
+}
+
+function spawnEnemy() {
+    const type = Math.floor(Math.random() * 3);
+    const lane = Math.floor(Math.random() * 3); // 0, 1, 2
+    
+    const laneWidth = width / 3;
+    const x = (lane * laneWidth) + (laneWidth / 2);
+    
+    game.enemies.push({
+        x: x,
+        y: -50,
+        type: type, // 0, 1, 2
+        lane: lane,
+        speed: (height * 0.003) + (game.level * 0.5), // Responsive speed
+        radius: 30,
+        active: true
+    });
+}
+
+function createParticles(x, y, color) {
+    for(let i=0; i<10; i++) {
+        game.particles.push({
+            x: x,
+            y: y,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
+            life: 1.0,
+            color: color
+        });
+    }
+}
+
+// Input Handler
+function playerInput(action) {
+    if (!game.active) return;
+    
+    let type = -1;
+    if (action === 'jamung') type = 0;
+    if (action === 'nasihat') type = 1;
+    if (action === 'keris') type = 2;
+
+    // Visual Flash
+    const btn = document.getElementById('btn-'+action);
+    const flash = btn.querySelector('.flash-overlay');
+    flash.classList.remove('flash-active');
+    void flash.offsetWidth; // trigger reflow
+    flash.classList.add('flash-active');
+
+    AudioEngine.playSound('shoot');
+
+    // Check for hits
+    let hit = false;
+    // Sort enemies by Y (closest to bottom first)
+    game.enemies.sort((a,b) => b.y - a.y);
+
+    for (let e of game.enemies) {
+        if (!e.active) continue;
+        
+        // If enemy is within playable range (bottom half of screen)
+        if (e.y > height * 0.4 && e.y < height - 50) {
+            if (e.type === type) {
+                // SUCCESS
+                e.active = false;
+                createParticles(e.x, e.y, COLORS[type]);
+                game.score += 10;
+                game.shake = 5;
+                AudioEngine.playSound('hit');
+                hit = true;
+                
+                // Level Up mechanic
+                if(game.score % 100 === 0) {
+                    game.level++;
+                    game.spawnRate = Math.max(400, 1200 - (game.level * 100));
+                }
+                
+                updateHUD();
+                break; // Only kill one per tap
+            }
+        }
+    }
+}
+
+function loop(timestamp) {
+    if (!game.active) return;
+    const dt = timestamp - game.lastTime;
+    game.lastTime = timestamp;
+
+    // Clear Screen
+    ctx.fillStyle = '#050510';
+    ctx.fillRect(0, 0, width, height);
+
+    // Screen Shake
+    let sx = 0, sy = 0;
+    if (game.shake > 0) {
+        sx = (Math.random() - 0.5) * game.shake;
+        sy = (Math.random() - 0.5) * game.shake;
+        game.shake *= 0.9;
+        if(game.shake < 0.5) game.shake = 0;
+    }
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    // Draw Lanes (Background)
+    const laneWidth = width / 3;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#1a1a2e';
+    for(let i=1; i<3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * laneWidth, 0);
+        ctx.lineTo(i * laneWidth, height);
+        ctx.stroke();
+    }
+
+    // Draw Target Line
+    ctx.strokeStyle = '#rgba(255,255,255,0.2)';
+    ctx.setLineDash([10, 10]);
+    ctx.beginPath();
+    ctx.moveTo(0, height - 130);
+    ctx.lineTo(width, height - 130);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Spawner
+    if (timestamp - game.spawnTimer > game.spawnRate) {
+        spawnEnemy();
+        game.spawnTimer = timestamp;
+    }
+
+    // Update & Draw Enemies
+    game.enemies.forEach(e => {
+        if (!e.active) return;
+        
+        e.y += e.speed;
+
+        // Draw Glow
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = COLORS[e.type];
+        
+        // Draw Enemy Circle
+        ctx.fillStyle = COLORS[e.type];
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2);
+        ctx.fill();
+
+        // Draw Icon
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'white';
+        ctx.font = "20px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(ICONS[e.type], e.x, e.y);
+
+        // Collision with Bottom (Missed)
+        if (e.y > height - 120) {
+            e.active = false;
+            game.health--;
+            game.shake = 20;
+            AudioEngine.playSound('damage');
+            
+            // Red flash on screen
+            ctx.fillStyle = 'rgba(255,0,0,0.3)';
+            ctx.fillRect(0,0,width,height);
+            
+            updateHUD();
+            if (game.health <= 0) endGame();
+        }
+    });
+
+    // Update & Draw Particles
+    for (let i = game.particles.length - 1; i >= 0; i--) {
+        let p = game.particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.05;
+        
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 8, 8); // Square pixels
+        ctx.globalAlpha = 1.0;
+
+        if (p.life <= 0) game.particles.splice(i, 1);
+    }
+
+    ctx.restore();
+    requestAnimationFrame(loop);
+}
+
+// --- UPDATED END GAME LOGIC ---
+function endGame() {
+    game.active = false;
+    clearInterval(window.timerInterval);
+    
+    document.getElementById('end-screen').classList.remove('hidden');
+    
+    // Update labels and score text
+    const t = TXT[game.lang];
+    document.getElementById('t-final-lbl').innerText = t.l_final;
+    document.getElementById('final-score').innerText = game.score;
+
+    // Calculate Stars based on Score
+    let stars = "⭐"; // Default 1 star
+    if (game.score >= 150) stars = "⭐⭐";
+    if (game.score >= 400) stars = "⭐⭐⭐";
+
+    // If health is 0, maybe limit max stars to 2 (Optional, but I'll stick to score only for now)
+    if (game.health <= 0 && stars === "⭐⭐⭐") stars = "⭐⭐"; 
+
+    document.getElementById('final-stars').innerText = stars;
+}
+
+// Keyboard Support for PC
+window.addEventListener('keydown', (e) => {
+    if (e.key === '1' || e.key === 'a') playerInput('jamung');
+    if (e.key === '2' || e.key === 's') playerInput('nasihat');
+    if (e.key === '3' || e.key === 'd') playerInput('keris');
+});
+
+</script>
+</body>
+</html>
